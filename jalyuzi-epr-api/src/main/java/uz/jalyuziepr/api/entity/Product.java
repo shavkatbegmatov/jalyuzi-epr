@@ -13,6 +13,9 @@ import uz.jalyuziepr.api.enums.ControlType;
 import uz.jalyuziepr.api.enums.ProductType;
 import uz.jalyuziepr.api.enums.UnitType;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +38,22 @@ public class Product extends BaseEntity implements Auditable {
     private String name;
 
     // Mahsulot turi (FINISHED_PRODUCT, RAW_MATERIAL, ACCESSORY)
+    // Deprecated: use productTypeEntity instead
     @Enumerated(EnumType.STRING)
     @Column(name = "product_type", length = 20)
     @Builder.Default
     private ProductType productType = ProductType.FINISHED_PRODUCT;
+
+    // Yangi mahsulot turi tizimi (V24+)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_type_id")
+    private uz.jalyuziepr.api.entity.ProductType productTypeEntity;
+
+    // Dinamik atributlar (JSONB)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "custom_attributes", columnDefinition = "jsonb")
+    @Builder.Default
+    private Map<String, Object> customAttributes = new HashMap<>();
 
     // O'lchov birligi
     @Enumerated(EnumType.STRING)
@@ -155,6 +170,25 @@ public class Product extends BaseEntity implements Auditable {
         return sellingPrice;
     }
 
+    // Helper method: custom atributni olish
+    @SuppressWarnings("unchecked")
+    public <T> T getCustomAttribute(String key) {
+        if (customAttributes == null) return null;
+        return (T) customAttributes.get(key);
+    }
+
+    // Helper method: custom atributni o'rnatish
+    public void setCustomAttribute(String key, Object value) {
+        if (customAttributes == null) {
+            customAttributes = new HashMap<>();
+        }
+        if (value == null) {
+            customAttributes.remove(key);
+        } else {
+            customAttributes.put(key, value);
+        }
+    }
+
     // ============================================
     // Auditable Interface Implementation
     // ============================================
@@ -173,6 +207,10 @@ public class Product extends BaseEntity implements Auditable {
         map.put("name", this.name);
         map.put("productType", this.productType);
         map.put("unitType", this.unitType);
+        map.put("customAttributes", this.customAttributes);
+        if (this.productTypeEntity != null) {
+            map.put("productTypeEntityId", this.productTypeEntity.getId());
+        }
         map.put("blindType", this.blindType);
         map.put("material", this.material);
         map.put("color", this.color);

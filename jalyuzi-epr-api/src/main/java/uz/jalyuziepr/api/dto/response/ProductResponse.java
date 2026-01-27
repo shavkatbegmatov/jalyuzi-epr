@@ -15,6 +15,7 @@ import uz.jalyuziepr.api.enums.ProductType;
 import uz.jalyuziepr.api.enums.UnitType;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Data
 @Builder
@@ -51,6 +52,14 @@ public class ProductResponse {
 
     @ExportColumn(header = "O'lchov birligi", order = 7, type = ColumnType.ENUM)
     private UnitType unitType;
+
+    // Yangi mahsulot turi tizimi (V24+)
+    private Long productTypeId;
+    private String productTypeCode;
+    private String productTypeName;
+
+    // Dinamik atributlar
+    private Map<String, Object> customAttributes;
 
     // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
     @ExportColumn(header = "Jalyuzi turi", order = 8, type = ColumnType.ENUM)
@@ -137,6 +146,10 @@ public class ProductResponse {
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
                 .productType(product.getProductType())
                 .unitType(product.getUnitType())
+                .productTypeId(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getId() : null)
+                .productTypeCode(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getCode() : null)
+                .productTypeName(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getName() : null)
+                .customAttributes(product.getCustomAttributes())
                 .blindType(product.getBlindType())
                 .material(product.getMaterial())
                 .color(product.getColor())

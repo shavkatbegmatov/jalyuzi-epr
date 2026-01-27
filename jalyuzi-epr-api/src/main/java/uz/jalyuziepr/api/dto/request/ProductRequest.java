@@ -12,6 +12,7 @@ import uz.jalyuziepr.api.enums.ProductType;
 import uz.jalyuziepr.api.enums.UnitType;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Data
 @Builder
@@ -36,6 +37,12 @@ public class ProductRequest {
 
     @Builder.Default
     private UnitType unitType = UnitType.PIECE;
+
+    // Yangi mahsulot turi tizimi (V24+)
+    private Long productTypeId;
+
+    // Dinamik atributlar
+    private Map<String, Object> customAttributes;
 
     // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
     private BlindType blindType;
