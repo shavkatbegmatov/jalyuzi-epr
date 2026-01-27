@@ -219,24 +219,24 @@ public class ReportService {
 
         // Basic stats
         long totalProducts = allProducts.size();
-        long totalStock = allProducts.stream().mapToLong(Product::getQuantity).sum();
+        long totalStock = allProducts.stream().map(Product::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add).longValue();
         long lowStockCount = allProducts.stream()
-                .filter(p -> p.getQuantity() > 0 && p.getQuantity() <= p.getMinStockLevel())
+                .filter(p -> p.getQuantity().compareTo(BigDecimal.ZERO) > 0 && p.getQuantity().compareTo(p.getMinStockLevel()) <= 0)
                 .count();
         long outOfStockCount = allProducts.stream()
-                .filter(p -> p.getQuantity() == 0)
+                .filter(p -> p.getQuantity().compareTo(BigDecimal.ZERO) == 0)
                 .count();
 
         // Stock value calculation
         BigDecimal totalStockValue = allProducts.stream()
                 .map(p -> {
                     BigDecimal price = p.getPurchasePrice() != null ? p.getPurchasePrice() : BigDecimal.ZERO;
-                    return price.multiply(BigDecimal.valueOf(p.getQuantity()));
+                    return price.multiply(p.getQuantity());
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal totalPotentialRevenue = allProducts.stream()
-                .map(p -> p.getSellingPrice().multiply(BigDecimal.valueOf(p.getQuantity())))
+                .map(p -> p.getSellingPrice().multiply(p.getQuantity()))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Movement stats
@@ -266,15 +266,15 @@ public class ReportService {
 
         // Low stock products
         List<WarehouseReportResponse.LowStockProduct> lowStockProducts = allProducts.stream()
-                .filter(p -> p.getQuantity() <= p.getMinStockLevel())
-                .sorted(Comparator.comparingInt(Product::getQuantity))
+                .filter(p -> p.getQuantity().compareTo(p.getMinStockLevel()) <= 0)
+                .sorted(Comparator.comparing(Product::getQuantity))
                 .limit(20)
                 .map(p -> WarehouseReportResponse.LowStockProduct.builder()
                         .productId(p.getId())
                         .productName(p.getName())
                         .productSku(p.getSku())
-                        .currentStock(p.getQuantity())
-                        .minStockLevel(p.getMinStockLevel())
+                        .currentStock(p.getQuantity().intValue())
+                        .minStockLevel(p.getMinStockLevel().intValue())
                         .sellingPrice(p.getSellingPrice())
                         .build())
                 .collect(Collectors.toList());
@@ -520,9 +520,9 @@ public class ReportService {
                 return a;
             });
             agg.productCount++;
-            agg.totalStock += product.getQuantity();
+            agg.totalStock += product.getQuantity().longValue();
             BigDecimal price = product.getPurchasePrice() != null ? product.getPurchasePrice() : BigDecimal.ZERO;
-            agg.stockValue = agg.stockValue.add(price.multiply(BigDecimal.valueOf(product.getQuantity())));
+            agg.stockValue = agg.stockValue.add(price.multiply(product.getQuantity()));
         }
 
         return categoryMap.values().stream()
@@ -551,9 +551,9 @@ public class ReportService {
                 return a;
             });
             agg.productCount++;
-            agg.totalStock += product.getQuantity();
+            agg.totalStock += product.getQuantity().longValue();
             BigDecimal price = product.getPurchasePrice() != null ? product.getPurchasePrice() : BigDecimal.ZERO;
-            agg.stockValue = agg.stockValue.add(price.multiply(BigDecimal.valueOf(product.getQuantity())));
+            agg.stockValue = agg.stockValue.add(price.multiply(product.getQuantity()));
         }
 
         return brandMap.values().stream()

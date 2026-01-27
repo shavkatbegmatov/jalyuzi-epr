@@ -118,7 +118,7 @@ public class PurchaseService {
             createStockMovement(product, itemRequest.getQuantity(), purchase.getOrderNumber(), currentUser);
 
             // Update product stock
-            product.setQuantity(product.getQuantity() + itemRequest.getQuantity());
+            product.setQuantity(product.getQuantity().add(BigDecimal.valueOf(itemRequest.getQuantity())));
             productRepository.save(product);
         }
 
@@ -391,15 +391,15 @@ public class PurchaseService {
             Product product = returnItem.getProduct();
 
             // Create stock movement (OUT)
-            int previousStock = product.getQuantity();
-            int newStock = previousStock - returnItem.getReturnedQuantity();
+            BigDecimal previousStock = product.getQuantity();
+            BigDecimal newStock = previousStock.subtract(BigDecimal.valueOf(returnItem.getReturnedQuantity()));
 
             StockMovement movement = StockMovement.builder()
                     .product(product)
                     .movementType(MovementType.OUT)
                     .quantity(returnItem.getReturnedQuantity())
-                    .previousStock(previousStock)
-                    .newStock(newStock)
+                    .previousStock(previousStock.intValue())
+                    .newStock(newStock.intValue())
                     .referenceType("PURCHASE_RETURN")
                     .referenceId(purchaseReturn.getId())
                     .notes("Qaytarish: " + purchaseReturn.getReturnNumber())
@@ -467,15 +467,15 @@ public class PurchaseService {
     }
 
     private void createStockMovement(Product product, int quantity, String referenceNumber, User user) {
-        int previousStock = product.getQuantity();
-        int newStock = previousStock + quantity;
+        BigDecimal previousStock = product.getQuantity();
+        BigDecimal newStock = previousStock.add(BigDecimal.valueOf(quantity));
 
         StockMovement movement = StockMovement.builder()
                 .product(product)
                 .movementType(MovementType.IN)
                 .quantity(quantity)
-                .previousStock(previousStock)
-                .newStock(newStock)
+                .previousStock(previousStock.intValue())
+                .newStock(newStock.intValue())
                 .referenceType("PURCHASE")
                 .referenceId(null)
                 .notes("Xarid: " + referenceNumber)

@@ -7,6 +7,13 @@ interface CartState {
   discount: number;
   discountPercent: number;
 
+  // O'rnatish maydonlari
+  installationEnabled: boolean;
+  installationDate: string | null;
+  installationAddress: string;
+  installationNotes: string;
+  technicianId: number | null;
+
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: number) => void;
   updateQuantity: (productId: number, quantity: number) => void;
@@ -15,6 +22,14 @@ interface CartState {
   setDiscount: (discount: number) => void;
   setDiscountPercent: (percent: number) => void;
   clear: () => void;
+
+  // O'rnatish metodlari
+  setInstallationEnabled: (enabled: boolean) => void;
+  setInstallationDate: (date: string | null) => void;
+  setInstallationAddress: (address: string) => void;
+  setInstallationNotes: (notes: string) => void;
+  setTechnicianId: (id: number | null) => void;
+  clearInstallation: () => void;
 
   getSubtotal: () => number;
   getDiscountAmount: () => number;
@@ -27,6 +42,13 @@ export const useCartStore = create<CartState>((set, get) => ({
   customer: null,
   discount: 0,
   discountPercent: 0,
+
+  // O'rnatish maydonlari
+  installationEnabled: false,
+  installationDate: null,
+  installationAddress: '',
+  installationNotes: '',
+  technicianId: null,
 
   addItem: (product, quantity = 1) => {
     set((state) => {
@@ -87,6 +109,26 @@ export const useCartStore = create<CartState>((set, get) => ({
       customer: null,
       discount: 0,
       discountPercent: 0,
+      installationEnabled: false,
+      installationDate: null,
+      installationAddress: '',
+      installationNotes: '',
+      technicianId: null,
+    }),
+
+  // O'rnatish metodlari
+  setInstallationEnabled: (enabled) => set({ installationEnabled: enabled }),
+  setInstallationDate: (date) => set({ installationDate: date }),
+  setInstallationAddress: (address) => set({ installationAddress: address }),
+  setInstallationNotes: (notes) => set({ installationNotes: notes }),
+  setTechnicianId: (id) => set({ technicianId: id }),
+  clearInstallation: () =>
+    set({
+      installationEnabled: false,
+      installationDate: null,
+      installationAddress: '',
+      installationNotes: '',
+      technicianId: null,
     }),
 
   getSubtotal: () => {

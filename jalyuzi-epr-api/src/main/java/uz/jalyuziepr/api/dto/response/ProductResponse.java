@@ -11,6 +11,8 @@ import uz.jalyuziepr.api.entity.Product;
 import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
+import uz.jalyuziepr.api.enums.ProductType;
+import uz.jalyuziepr.api.enums.UnitType;
 
 import java.math.BigDecimal;
 
@@ -43,61 +45,85 @@ public class ProductResponse {
 
     private Long categoryId;
 
-    // Jalyuzi xususiyatlari
-    @ExportColumn(header = "Turi", order = 6, type = ColumnType.ENUM)
+    // Mahsulot turi va o'lchov birligi
+    @ExportColumn(header = "Mahsulot turi", order = 6, type = ColumnType.ENUM)
+    private ProductType productType;
+
+    @ExportColumn(header = "O'lchov birligi", order = 7, type = ColumnType.ENUM)
+    private UnitType unitType;
+
+    // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
+    @ExportColumn(header = "Jalyuzi turi", order = 8, type = ColumnType.ENUM)
     private BlindType blindType;
 
-    @ExportColumn(header = "Material", order = 7, type = ColumnType.ENUM)
+    @ExportColumn(header = "Material", order = 9, type = ColumnType.ENUM)
     private BlindMaterial material;
 
-    @ExportColumn(header = "Rang", order = 8)
+    @ExportColumn(header = "Rang", order = 10)
     private String color;
 
-    @ExportColumn(header = "Boshqaruv", order = 9, type = ColumnType.ENUM)
+    @ExportColumn(header = "Boshqaruv", order = 11, type = ColumnType.ENUM)
     private ControlType controlType;
 
-    // O'lcham cheklovlari
-    @ExportColumn(header = "Min kenglik", order = 10, type = ColumnType.NUMBER)
+    // O'lcham cheklovlari (FINISHED_PRODUCT uchun)
+    @ExportColumn(header = "Min kenglik", order = 12, type = ColumnType.NUMBER)
     private Integer minWidth;
 
-    @ExportColumn(header = "Max kenglik", order = 11, type = ColumnType.NUMBER)
+    @ExportColumn(header = "Max kenglik", order = 13, type = ColumnType.NUMBER)
     private Integer maxWidth;
 
-    @ExportColumn(header = "Min balandlik", order = 12, type = ColumnType.NUMBER)
+    @ExportColumn(header = "Min balandlik", order = 14, type = ColumnType.NUMBER)
     private Integer minHeight;
 
-    @ExportColumn(header = "Max balandlik", order = 13, type = ColumnType.NUMBER)
+    @ExportColumn(header = "Max balandlik", order = 15, type = ColumnType.NUMBER)
     private Integer maxHeight;
 
-    @ExportColumn(header = "O'lcham diapazoni", order = 14)
+    @ExportColumn(header = "O'lcham diapazoni", order = 16)
     private String sizeRangeString;
 
     // Narxlar
-    @ExportColumn(header = "Xarid narxi", order = 15, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "Xarid narxi", order = 17, type = ColumnType.CURRENCY)
     private BigDecimal purchasePrice;
 
-    @ExportColumn(header = "Sotuv narxi", order = 16, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "Sotuv narxi", order = 18, type = ColumnType.CURRENCY)
     private BigDecimal sellingPrice;
 
-    @ExportColumn(header = "Narx/m²", order = 17, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "Narx/m²", order = 19, type = ColumnType.CURRENCY)
     private BigDecimal pricePerSquareMeter;
 
-    @ExportColumn(header = "O'rnatish narxi", order = 18, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "O'rnatish narxi", order = 20, type = ColumnType.CURRENCY)
     private BigDecimal installationPrice;
 
-    @ExportColumn(header = "Miqdor", order = 19, type = ColumnType.NUMBER)
-    private Integer quantity;
+    @ExportColumn(header = "Miqdor", order = 21, type = ColumnType.NUMBER)
+    private BigDecimal quantity;
 
-    @ExportColumn(header = "Minimal zaxira", order = 20, type = ColumnType.NUMBER)
-    private Integer minStockLevel;
+    @ExportColumn(header = "Minimal zaxira", order = 22, type = ColumnType.NUMBER)
+    private BigDecimal minStockLevel;
 
-    @ExportColumn(header = "Kam zaxira", order = 21, type = ColumnType.BOOLEAN)
+    @ExportColumn(header = "Kam zaxira", order = 23, type = ColumnType.BOOLEAN)
     private boolean lowStock;
+
+    // Xomashyo uchun maydonlar (RAW_MATERIAL)
+    @ExportColumn(header = "Rulon kengligi (m)", order = 24, type = ColumnType.NUMBER)
+    private BigDecimal rollWidth;
+
+    @ExportColumn(header = "Rulon uzunligi (m)", order = 25, type = ColumnType.NUMBER)
+    private BigDecimal rollLength;
+
+    @ExportColumn(header = "Profil uzunligi (m)", order = 26, type = ColumnType.NUMBER)
+    private BigDecimal profileLength;
+
+    @ExportColumn(header = "Birlik og'irligi (kg)", order = 27, type = ColumnType.NUMBER)
+    private BigDecimal weightPerUnit;
+
+    // Aksessuar uchun maydonlar (ACCESSORY)
+    @ExportColumn(header = "Mos jalyuzi turlari", order = 28)
+    private String compatibleBlindTypes;
 
     private String description;
     private String imageUrl;
 
-    @ExportColumn(header = "Faol", order = 22, type = ColumnType.BOOLEAN)
+    @ExportColumn(header = "Faol", order = 29, type = ColumnType.BOOLEAN)
     private Boolean active;
 
     public static ProductResponse from(Product product) {
@@ -109,6 +135,8 @@ public class ProductResponse {
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
+                .productType(product.getProductType())
+                .unitType(product.getUnitType())
                 .blindType(product.getBlindType())
                 .material(product.getMaterial())
                 .color(product.getColor())
@@ -124,7 +152,12 @@ public class ProductResponse {
                 .installationPrice(product.getInstallationPrice())
                 .quantity(product.getQuantity())
                 .minStockLevel(product.getMinStockLevel())
-                .lowStock(product.getQuantity() <= product.getMinStockLevel())
+                .lowStock(product.getQuantity().compareTo(product.getMinStockLevel()) <= 0)
+                .rollWidth(product.getRollWidth())
+                .rollLength(product.getRollLength())
+                .profileLength(product.getProfileLength())
+                .weightPerUnit(product.getWeightPerUnit())
+                .compatibleBlindTypes(product.getCompatibleBlindTypes())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
                 .active(product.getActive())

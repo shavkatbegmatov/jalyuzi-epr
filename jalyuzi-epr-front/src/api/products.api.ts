@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, BlindMaterial, BlindType, Brand, Category, ControlType, PagedResponse, PriceCalculationResponse, Product, ProductRequest } from '../types';
+import type { ApiResponse, BlindMaterial, BlindType, Brand, Category, ControlType, ProductType, PagedResponse, PriceCalculationResponse, Product, ProductRequest } from '../types';
 import { createExportApi } from './export.utils';
 
 export interface ProductFilters {
@@ -11,6 +11,7 @@ export interface ProductFilters {
   blindType?: BlindType;
   material?: BlindMaterial;
   controlType?: ControlType;
+  productType?: ProductType;
 }
 
 export interface PriceCalculationParams {
@@ -31,6 +32,7 @@ export const productsApi = {
     if (filters.blindType) params.append('blindType', filters.blindType);
     if (filters.material) params.append('material', filters.material);
     if (filters.controlType) params.append('controlType', filters.controlType);
+    if (filters.productType) params.append('productType', filters.productType);
 
     const response = await api.get<ApiResponse<PagedResponse<Product>>>(`/v1/products?${params}`);
     return response.data.data;

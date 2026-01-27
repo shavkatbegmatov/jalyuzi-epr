@@ -143,6 +143,10 @@ export type ControlType = 'CHAIN' | 'CORD' | 'MOTORIZED' | 'REMOTE' | 'SMART';
 export type OrderType = 'PRODUCT_SALE' | 'INSTALLATION' | 'MEASUREMENT' | 'CONSULTATION';
 export type InstallationStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
+// Universal mahsulot turlari
+export type ProductType = 'FINISHED_PRODUCT' | 'RAW_MATERIAL' | 'ACCESSORY';
+export type UnitType = 'PIECE' | 'METER' | 'SQUARE_METER' | 'KILOGRAM' | 'ROLL';
+
 // Product Types (deprecated - keeping for compatibility)
 export type Season = 'SUMMER' | 'WINTER' | 'ALL_SEASON';
 
@@ -172,12 +176,15 @@ export interface Product {
   brandId?: number;
   categoryName?: string;
   categoryId?: number;
-  // Jalyuzi xususiyatlari
+  // Mahsulot turi va o'lchov birligi
+  productType?: ProductType;
+  unitType?: UnitType;
+  // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
   blindType?: BlindType;
   material?: BlindMaterial;
   color?: string;
   controlType?: ControlType;
-  // O'lcham cheklovlari (mm)
+  // O'lcham cheklovlari (mm) - FINISHED_PRODUCT uchun
   minWidth?: number;
   maxWidth?: number;
   minHeight?: number;
@@ -192,6 +199,13 @@ export interface Product {
   quantity: number;
   minStockLevel: number;
   lowStock: boolean;
+  // Xomashyo uchun maydonlar (RAW_MATERIAL)
+  rollWidth?: number;
+  rollLength?: number;
+  profileLength?: number;
+  weightPerUnit?: number;
+  // Aksessuar uchun maydonlar (ACCESSORY)
+  compatibleBlindTypes?: string;
   description?: string;
   imageUrl?: string;
   active: boolean;
@@ -202,12 +216,15 @@ export interface ProductRequest {
   name: string;
   brandId?: number;
   categoryId?: number;
-  // Jalyuzi xususiyatlari
+  // Mahsulot turi va o'lchov birligi
+  productType?: ProductType;
+  unitType?: UnitType;
+  // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
   blindType?: BlindType;
   material?: BlindMaterial;
   color?: string;
   controlType?: ControlType;
-  // O'lcham cheklovlari (mm)
+  // O'lcham cheklovlari (mm) - FINISHED_PRODUCT uchun
   minWidth?: number;
   maxWidth?: number;
   minHeight?: number;
@@ -220,6 +237,13 @@ export interface ProductRequest {
   // Zaxira
   quantity?: number;
   minStockLevel?: number;
+  // Xomashyo uchun maydonlar (RAW_MATERIAL)
+  rollWidth?: number;
+  rollLength?: number;
+  profileLength?: number;
+  weightPerUnit?: number;
+  // Aksessuar uchun maydonlar (ACCESSORY)
+  compatibleBlindTypes?: string;
   description?: string;
   imageUrl?: string;
 }

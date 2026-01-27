@@ -19,6 +19,7 @@ import uz.jalyuziepr.api.repository.StockMovementRepository;
 import uz.jalyuziepr.api.repository.UserRepository;
 import uz.jalyuziepr.api.security.CustomUserDetails;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -61,28 +62,28 @@ public class StockMovementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Mahsulot", "id", request.getProductId()));
 
         User currentUser = getCurrentUser();
-        int previousStock = product.getQuantity();
-        int quantity = request.getQuantity();
-        int newStock;
+        BigDecimal previousStock = product.getQuantity();
+        BigDecimal quantity = BigDecimal.valueOf(request.getQuantity());
+        BigDecimal newStock;
 
         // Calculate new stock based on movement type
         switch (request.getMovementType()) {
             case IN:
-                newStock = previousStock + quantity;
+                newStock = previousStock.add(quantity);
                 break;
             case OUT:
-                if (quantity > previousStock) {
+                if (quantity.compareTo(previousStock) > 0) {
                     throw new BadRequestException(
-                            String.format("Chiqim miqdori (%d) mavjud zaxiradan (%d) ko'p bo'lishi mumkin emas",
-                                    quantity, previousStock));
+                            String.format("Chiqim miqdori (%s) mavjud zaxiradan (%s) ko'p bo'lishi mumkin emas",
+                                    quantity.toPlainString(), previousStock.toPlainString()));
                 }
-                newStock = previousStock - quantity;
-                quantity = -quantity; // Store as negative for OUT movements
+                newStock = previousStock.subtract(quantity);
+                quantity = quantity.negate(); // Store as negative for OUT movements
                 break;
             case ADJUSTMENT:
                 // For adjustment, quantity is the absolute new value
                 newStock = quantity;
-                quantity = newStock - previousStock; // Calculate difference
+                quantity = newStock.subtract(previousStock); // Calculate difference
                 break;
             default:
                 throw new BadRequestException("Noto'g'ri harakat turi");
@@ -96,9 +97,9 @@ public class StockMovementService {
         StockMovement movement = StockMovement.builder()
                 .product(product)
                 .movementType(request.getMovementType())
-                .quantity(quantity)
-                .previousStock(previousStock)
-                .newStock(newStock)
+                .quantity(quantity.intValue())
+                .previousStock(previousStock.intValue())
+                .newStock(newStock.intValue())
                 .referenceType(request.getReferenceType() != null ? request.getReferenceType() : "MANUAL")
                 .notes(request.getNotes())
                 .createdBy(currentUser)
@@ -114,7 +115,7 @@ public class StockMovementService {
 
         // Total products and stock
         long totalProducts = productRepository.countActiveProducts();
-        Long totalStock = productRepository.getTotalStock();
+        BigDecimal totalStock = productRepository.getTotalStock();
 
         // Low stock count
         long lowStockCount = productRepository.findLowStockProducts().size();
@@ -127,7 +128,7 @@ public class StockMovementService {
         long todayOutMovements = stockMovementRepository.countByMovementTypeAndDateAfter(MovementType.OUT, startOfDay);
 
         stats.put("totalProducts", totalProducts);
-        stats.put("totalStock", totalStock != null ? totalStock : 0);
+        stats.put("totalStock", totalStock != null ? totalStock.longValue() : 0);
         stats.put("lowStockCount", lowStockCount);
         stats.put("todayIncoming", todayIncoming != null ? todayIncoming : 0);
         stats.put("todayOutgoing", todayOutgoing != null ? todayOutgoing : 0);

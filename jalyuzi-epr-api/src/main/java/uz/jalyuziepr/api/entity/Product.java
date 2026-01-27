@@ -10,6 +10,8 @@ import uz.jalyuziepr.api.entity.base.BaseEntity;
 import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
+import uz.jalyuziepr.api.enums.ProductType;
+import uz.jalyuziepr.api.enums.UnitType;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -31,6 +33,18 @@ public class Product extends BaseEntity implements Auditable {
 
     @Column(nullable = false, length = 200)
     private String name;
+
+    // Mahsulot turi (FINISHED_PRODUCT, RAW_MATERIAL, ACCESSORY)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_type", length = 20)
+    @Builder.Default
+    private ProductType productType = ProductType.FINISHED_PRODUCT;
+
+    // O'lchov birligi
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unit_type", length = 20)
+    @Builder.Default
+    private UnitType unitType = UnitType.PIECE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "brand_id")
@@ -83,13 +97,30 @@ public class Product extends BaseEntity implements Auditable {
     @Column(name = "selling_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal sellingPrice;
 
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 15, scale = 3)
     @Builder.Default
-    private Integer quantity = 0;
+    private BigDecimal quantity = BigDecimal.ZERO;
 
-    @Column(name = "min_stock_level")
+    @Column(name = "min_stock_level", precision = 15, scale = 3)
     @Builder.Default
-    private Integer minStockLevel = 5;
+    private BigDecimal minStockLevel = new BigDecimal("5");
+
+    // Xomashyo uchun maydonlar
+    @Column(name = "roll_width", precision = 10, scale = 2)
+    private BigDecimal rollWidth;  // Rulon kengligi (m)
+
+    @Column(name = "roll_length", precision = 10, scale = 2)
+    private BigDecimal rollLength;  // Rulon uzunligi (m)
+
+    @Column(name = "profile_length", precision = 10, scale = 2)
+    private BigDecimal profileLength;  // Profil uzunligi (m)
+
+    @Column(name = "weight_per_unit", precision = 10, scale = 3)
+    private BigDecimal weightPerUnit;  // Birlik og'irligi (kg)
+
+    // Aksessuar uchun maydonlar
+    @Column(name = "compatible_blind_types", length = 200)
+    private String compatibleBlindTypes;  // Mos jalyuzi turlari
 
     @Column(length = 1000)
     private String description;
@@ -140,6 +171,8 @@ public class Product extends BaseEntity implements Auditable {
         map.put("id", getId());
         map.put("sku", this.sku);
         map.put("name", this.name);
+        map.put("productType", this.productType);
+        map.put("unitType", this.unitType);
         map.put("blindType", this.blindType);
         map.put("material", this.material);
         map.put("color", this.color);
@@ -154,6 +187,11 @@ public class Product extends BaseEntity implements Auditable {
         map.put("sellingPrice", this.sellingPrice);
         map.put("quantity", this.quantity);
         map.put("minStockLevel", this.minStockLevel);
+        map.put("rollWidth", this.rollWidth);
+        map.put("rollLength", this.rollLength);
+        map.put("profileLength", this.profileLength);
+        map.put("weightPerUnit", this.weightPerUnit);
+        map.put("compatibleBlindTypes", this.compatibleBlindTypes);
         map.put("description", this.description);
         map.put("imageUrl", this.imageUrl);
         map.put("active", this.active);

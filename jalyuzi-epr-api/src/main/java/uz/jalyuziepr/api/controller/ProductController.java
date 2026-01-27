@@ -24,6 +24,9 @@ import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
 import uz.jalyuziepr.api.enums.PermissionCode;
+import uz.jalyuziepr.api.enums.ProductType;
+
+import java.math.BigDecimal;
 import uz.jalyuziepr.api.security.RequiresPermission;
 import uz.jalyuziepr.api.service.ProductService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
@@ -50,11 +53,12 @@ public class ProductController {
             @RequestParam(required = false) BlindType blindType,
             @RequestParam(required = false) BlindMaterial material,
             @RequestParam(required = false) ControlType controlType,
+            @RequestParam(required = false) ProductType productType,
             @RequestParam(required = false) String search,
             @PageableDefault(size = 20) Pageable pageable) {
 
         Page<ProductResponse> products = productService.getProductsWithFilters(
-                brandId, categoryId, blindType, material, controlType, search, pageable);
+                brandId, categoryId, blindType, material, controlType, productType, search, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(products)));
     }
@@ -125,7 +129,7 @@ public class ProductController {
     @RequiresPermission(PermissionCode.PRODUCTS_UPDATE)
     public ResponseEntity<ApiResponse<ProductResponse>> adjustStock(
             @PathVariable Long id,
-            @RequestParam int adjustment) {
+            @RequestParam BigDecimal adjustment) {
         ProductResponse product = productService.adjustStock(id, adjustment);
         return ResponseEntity.ok(ApiResponse.success("Zaxira yangilandi", product));
     }
@@ -139,6 +143,7 @@ public class ProductController {
             @RequestParam(required = false) BlindType blindType,
             @RequestParam(required = false) BlindMaterial material,
             @RequestParam(required = false) ControlType controlType,
+            @RequestParam(required = false) ProductType productType,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "excel") String format,
             @RequestParam(defaultValue = "10000") int maxRecords
@@ -146,7 +151,7 @@ public class ProductController {
         try {
             Pageable pageable = PageRequest.of(0, maxRecords);
             Page<ProductResponse> page = productService.getProductsWithFilters(
-                    brandId, categoryId, blindType, material, controlType, search, pageable);
+                    brandId, categoryId, blindType, material, controlType, productType, search, pageable);
 
             ByteArrayOutputStream output = genericExportService.export(
                     page.getContent(),

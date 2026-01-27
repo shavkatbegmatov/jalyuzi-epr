@@ -10,6 +10,9 @@ import uz.jalyuziepr.api.entity.Product;
 import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
+import uz.jalyuziepr.api.enums.ProductType;
+
+import java.math.BigDecimal;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +43,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND (:blindType IS NULL OR p.blindType = :blindType) " +
             "AND (:material IS NULL OR p.material = :material) " +
             "AND (:controlType IS NULL OR p.controlType = :controlType) " +
+            "AND (:productType IS NULL OR p.productType = :productType) " +
             "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Product> findWithFilters(
             @Param("brandId") Long brandId,
@@ -47,9 +51,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("blindType") BlindType blindType,
             @Param("material") BlindMaterial material,
             @Param("controlType") ControlType controlType,
+            @Param("productType") ProductType productType,
             @Param("search") String search,
             Pageable pageable
     );
+
+    List<Product> findByProductTypeAndActiveTrue(ProductType productType);
 
     @Query("SELECT p FROM Product p WHERE p.active = true AND p.quantity <= p.minStockLevel")
     List<Product> findLowStockProducts();
@@ -58,7 +65,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     long countActiveProducts();
 
     @Query("SELECT SUM(p.quantity) FROM Product p WHERE p.active = true")
-    Long getTotalStock();
+    BigDecimal getTotalStock();
 
     List<Product> findByBrandIdAndActiveTrue(Long brandId);
 

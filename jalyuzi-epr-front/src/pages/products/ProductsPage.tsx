@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Package, BadgeCheck, AlertTriangle, X } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
-import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES } from '../../config/constants';
+import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES, PRODUCT_TYPES, UNIT_TYPES } from '../../config/constants';
 import { NumberInput } from '../../components/ui/NumberInput';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { Select } from '../../components/ui/Select';
@@ -14,12 +14,14 @@ import { useNotificationsStore } from '../../store/notificationsStore';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { useHighlight } from '../../hooks/useHighlight';
-import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductRequest } from '../../types';
+import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductType, UnitType, ProductRequest } from '../../types';
 
 const emptyFormData: ProductRequest = {
   sku: '',
   name: '',
   sellingPrice: 0,
+  productType: 'FINISHED_PRODUCT',
+  unitType: 'PIECE',
 };
 
 export function ProductsPage() {
@@ -34,6 +36,7 @@ export function ProductsPage() {
   const [blindTypeFilter, setBlindTypeFilter] = useState<BlindType | ''>('');
   const [materialFilter, setMaterialFilter] = useState<BlindMaterial | ''>('');
   const [controlTypeFilter, setControlTypeFilter] = useState<ControlType | ''>('');
+  const [productTypeFilter, setProductTypeFilter] = useState<ProductType | ''>('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,8 +58,9 @@ export function ProductsPage() {
     if (blindTypeFilter) count += 1;
     if (materialFilter) count += 1;
     if (controlTypeFilter) count += 1;
+    if (productTypeFilter) count += 1;
     return count;
-  }, [brandFilter, categoryFilter, search, blindTypeFilter, materialFilter, controlTypeFilter]);
+  }, [brandFilter, categoryFilter, search, blindTypeFilter, materialFilter, controlTypeFilter, productTypeFilter]);
 
   const columns: Column<Product>[] = useMemo(() => [
     {
@@ -75,8 +79,24 @@ export function ProductsPage() {
       ),
     },
     {
+      key: 'productType',
+      header: 'Mahsulot turi',
+      render: (product) => {
+        const typeInfo = PRODUCT_TYPES[product.productType || 'FINISHED_PRODUCT'];
+        return (
+          <span className={clsx('badge badge-sm', {
+            'badge-primary': product.productType === 'FINISHED_PRODUCT',
+            'badge-secondary': product.productType === 'RAW_MATERIAL',
+            'badge-accent': product.productType === 'ACCESSORY',
+          })}>
+            {typeInfo?.label}
+          </span>
+        );
+      },
+    },
+    {
       key: 'blindType',
-      header: 'Turi',
+      header: 'Jalyuzi turi',
       render: (product) =>
         product.blindType ? (
           <span className="badge badge-outline badge-sm">{BLIND_TYPES[product.blindType]?.label}</span>
@@ -157,6 +177,7 @@ export function ProductsPage() {
         blindType: blindTypeFilter || undefined,
         material: materialFilter || undefined,
         controlType: controlTypeFilter || undefined,
+        productType: productTypeFilter || undefined,
       });
       setProducts(data.content);
       setTotalPages(data.totalPages);
@@ -167,7 +188,7 @@ export function ProductsPage() {
       setInitialLoading(false);
       setRefreshing(false);
     }
-  }, [brandFilter, categoryFilter, page, pageSize, search, blindTypeFilter, materialFilter, controlTypeFilter]);
+  }, [brandFilter, categoryFilter, page, pageSize, search, blindTypeFilter, materialFilter, controlTypeFilter, productTypeFilter]);
 
   useEffect(() => {
     void loadData();
@@ -178,7 +199,7 @@ export function ProductsPage() {
   useEffect(() => {
     void loadProducts();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, pageSize, search, brandFilter, categoryFilter, blindTypeFilter, materialFilter, controlTypeFilter]);
+  }, [page, pageSize, search, brandFilter, categoryFilter, blindTypeFilter, materialFilter, controlTypeFilter, productTypeFilter]);
 
   useEffect(() => {
     if (notifications.length > 0) {
@@ -194,6 +215,7 @@ export function ProductsPage() {
     setBlindTypeFilter('');
     setMaterialFilter('');
     setControlTypeFilter('');
+    setProductTypeFilter('');
     setPage(0);
   };
 
@@ -220,6 +242,8 @@ export function ProductsPage() {
       name: product.name,
       brandId: product.brandId,
       categoryId: product.categoryId,
+      productType: product.productType || 'FINISHED_PRODUCT',
+      unitType: product.unitType || 'PIECE',
       blindType: product.blindType,
       material: product.material,
       color: product.color,
@@ -234,6 +258,11 @@ export function ProductsPage() {
       installationPrice: product.installationPrice,
       quantity: product.quantity,
       minStockLevel: product.minStockLevel,
+      rollWidth: product.rollWidth,
+      rollLength: product.rollLength,
+      profileLength: product.profileLength,
+      weightPerUnit: product.weightPerUnit,
+      compatibleBlindTypes: product.compatibleBlindTypes,
       description: product.description,
       imageUrl: product.imageUrl,
     });
@@ -271,6 +300,7 @@ export function ProductsPage() {
       blindType: blindTypeFilter || undefined,
       material: materialFilter || undefined,
       controlType: controlTypeFilter || undefined,
+      productType: productTypeFilter || undefined,
       search: search || undefined,
     });
   };
@@ -319,7 +349,7 @@ export function ProductsPage() {
             <span className="pill">{totalElements} ta mahsulot</span>
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
           <SearchInput
             value={search}
             onValueChange={(value) => {
@@ -331,7 +361,15 @@ export function ProductsPage() {
           />
 
           <Select
-            label="Turi"
+            label="Mahsulot turi"
+            value={productTypeFilter}
+            onChange={(value) => { setProductTypeFilter(value as ProductType | ''); setPage(0); }}
+            placeholder="Barcha turlar"
+            options={Object.entries(PRODUCT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+          />
+
+          <Select
+            label="Jalyuzi turi"
             value={blindTypeFilter}
             onChange={(value) => { setBlindTypeFilter(value as BlindType | ''); setPage(0); }}
             placeholder="Barcha turlar"
@@ -555,7 +593,7 @@ export function ProductsPage() {
 
             <div className="mt-6 space-y-4">
               {/* Asosiy ma'lumotlar */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                 <label className="form-control">
                   <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">SKU *</span>
                   <input type="text" className="input input-bordered w-full" value={formData.sku} onChange={(e) => handleFormChange('sku', e.target.value)} placeholder="JAL-001" />
@@ -564,39 +602,22 @@ export function ProductsPage() {
                   <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Nomi *</span>
                   <input type="text" className="input input-bordered w-full" value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Roletka Premium Oq" />
                 </label>
-              </div>
-
-              {/* Jalyuzi xususiyatlari */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <Select
-                  label="Turi"
-                  value={formData.blindType || ''}
-                  onChange={(value) => handleFormChange('blindType', value as BlindType || undefined)}
-                  placeholder="Tanlang..."
-                  options={Object.entries(BLIND_TYPES).map(([key, { label }]) => ({ value: key, label }))}
-                />
-                <Select
-                  label="Material"
-                  value={formData.material || ''}
-                  onChange={(value) => handleFormChange('material', value as BlindMaterial || undefined)}
-                  placeholder="Tanlang..."
-                  options={Object.entries(BLIND_MATERIALS).map(([key, { label }]) => ({ value: key, label }))}
-                />
-                <label className="form-control">
-                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rang</span>
-                  <input type="text" className="input input-bordered w-full" value={formData.color || ''} onChange={(e) => handleFormChange('color', e.target.value || undefined)} placeholder="Oq" />
-                </label>
-                <Select
-                  label="Boshqaruv"
-                  value={formData.controlType || ''}
-                  onChange={(value) => handleFormChange('controlType', value as ControlType || undefined)}
-                  placeholder="Tanlang..."
-                  options={Object.entries(CONTROL_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                  label="Mahsulot turi *"
+                  value={formData.productType || 'FINISHED_PRODUCT'}
+                  onChange={(value) => handleFormChange('productType', value as ProductType || 'FINISHED_PRODUCT')}
+                  options={Object.entries(PRODUCT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
                 />
               </div>
 
-              {/* Brend va kategoriya */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* O'lchov birligi */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                <Select
+                  label="O'lchov birligi"
+                  value={formData.unitType || 'PIECE'}
+                  onChange={(value) => handleFormChange('unitType', value as UnitType || 'PIECE')}
+                  options={Object.entries(UNIT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                />
                 <Select
                   label="Brend"
                   value={formData.brandId || ''}
@@ -611,28 +632,93 @@ export function ProductsPage() {
                   placeholder="Tanlang..."
                   options={categories.map((category) => ({ value: category.id, label: category.name }))}
                 />
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rang</span>
+                  <input type="text" className="input input-bordered w-full" value={formData.color || ''} onChange={(e) => handleFormChange('color', e.target.value || undefined)} placeholder="Oq" />
+                </label>
               </div>
 
-              {/* O'lcham cheklovlari */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <NumberInput label="Min kenglik (mm)" value={formData.minWidth ?? ''} onChange={(val) => handleFormChange('minWidth', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
-                <NumberInput label="Max kenglik (mm)" value={formData.maxWidth ?? ''} onChange={(val) => handleFormChange('maxWidth', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
-                <NumberInput label="Min balandlik (mm)" value={formData.minHeight ?? ''} onChange={(val) => handleFormChange('minHeight', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
-                <NumberInput label="Max balandlik (mm)" value={formData.maxHeight ?? ''} onChange={(val) => handleFormChange('maxHeight', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
-              </div>
+              {/* Tayyor jalyuzi xususiyatlari - FINISHED_PRODUCT uchun */}
+              {formData.productType === 'FINISHED_PRODUCT' && (
+                <>
+                  <div className="divider text-xs text-base-content/50">Jalyuzi xususiyatlari</div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <Select
+                      label="Jalyuzi turi"
+                      value={formData.blindType || ''}
+                      onChange={(value) => handleFormChange('blindType', value as BlindType || undefined)}
+                      placeholder="Tanlang..."
+                      options={Object.entries(BLIND_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                    />
+                    <Select
+                      label="Material"
+                      value={formData.material || ''}
+                      onChange={(value) => handleFormChange('material', value as BlindMaterial || undefined)}
+                      placeholder="Tanlang..."
+                      options={Object.entries(BLIND_MATERIALS).map(([key, { label }]) => ({ value: key, label }))}
+                    />
+                    <Select
+                      label="Boshqaruv"
+                      value={formData.controlType || ''}
+                      onChange={(value) => handleFormChange('controlType', value as ControlType || undefined)}
+                      placeholder="Tanlang..."
+                      options={Object.entries(CONTROL_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                    />
+                  </div>
+
+                  {/* O'lcham cheklovlari */}
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <NumberInput label="Min kenglik (mm)" value={formData.minWidth ?? ''} onChange={(val) => handleFormChange('minWidth', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
+                    <NumberInput label="Max kenglik (mm)" value={formData.maxWidth ?? ''} onChange={(val) => handleFormChange('maxWidth', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
+                    <NumberInput label="Min balandlik (mm)" value={formData.minHeight ?? ''} onChange={(val) => handleFormChange('minHeight', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
+                    <NumberInput label="Max balandlik (mm)" value={formData.maxHeight ?? ''} onChange={(val) => handleFormChange('maxHeight', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
+                  </div>
+                </>
+              )}
+
+              {/* Xomashyo maydonlari - RAW_MATERIAL uchun */}
+              {formData.productType === 'RAW_MATERIAL' && (
+                <>
+                  <div className="divider text-xs text-base-content/50">Xomashyo xususiyatlari</div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <NumberInput label="Rulon kengligi (m)" value={formData.rollWidth ?? ''} onChange={(val) => handleFormChange('rollWidth', val === '' ? undefined : Number(val))} placeholder="1.5" showButtons={false} min={0} step={0.01} />
+                    <NumberInput label="Rulon uzunligi (m)" value={formData.rollLength ?? ''} onChange={(val) => handleFormChange('rollLength', val === '' ? undefined : Number(val))} placeholder="50" showButtons={false} min={0} step={0.01} />
+                    <NumberInput label="Profil uzunligi (m)" value={formData.profileLength ?? ''} onChange={(val) => handleFormChange('profileLength', val === '' ? undefined : Number(val))} placeholder="6" showButtons={false} min={0} step={0.01} />
+                    <NumberInput label="Birlik og'irligi (kg)" value={formData.weightPerUnit ?? ''} onChange={(val) => handleFormChange('weightPerUnit', val === '' ? undefined : Number(val))} placeholder="0.5" showButtons={false} min={0} step={0.001} />
+                  </div>
+                </>
+              )}
+
+              {/* Aksessuar maydonlari - ACCESSORY uchun */}
+              {formData.productType === 'ACCESSORY' && (
+                <>
+                  <div className="divider text-xs text-base-content/50">Aksessuar xususiyatlari</div>
+                  <label className="form-control">
+                    <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Mos jalyuzi turlari</span>
+                    <input type="text" className="input input-bordered w-full" value={formData.compatibleBlindTypes || ''} onChange={(e) => handleFormChange('compatibleBlindTypes', e.target.value || undefined)} placeholder="ROLLER, VERTICAL, HORIZONTAL" />
+                    <span className="label-text-alt text-xs text-base-content/50 mt-1">Vergul bilan ajrating: ROLLER, VERTICAL, HORIZONTAL, ROMAN, CELLULAR, MOTORIZED</span>
+                  </label>
+                </>
+              )}
 
               {/* Narxlar */}
+              <div className="divider text-xs text-base-content/50">Narxlar</div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                 <CurrencyInput label="Kelish narxi" value={formData.purchasePrice ?? 0} onChange={(val) => handleFormChange('purchasePrice', val || undefined)} min={0} />
                 <CurrencyInput label="Sotish narxi *" value={formData.sellingPrice ?? 0} onChange={(val) => handleFormChange('sellingPrice', val)} min={0} />
-                <CurrencyInput label="Narx/m²" value={formData.pricePerSquareMeter ?? 0} onChange={(val) => handleFormChange('pricePerSquareMeter', val || undefined)} min={0} />
-                <CurrencyInput label="O'rnatish narxi" value={formData.installationPrice ?? 0} onChange={(val) => handleFormChange('installationPrice', val || undefined)} min={0} />
+                {formData.productType === 'FINISHED_PRODUCT' && (
+                  <>
+                    <CurrencyInput label="Narx/m²" value={formData.pricePerSquareMeter ?? 0} onChange={(val) => handleFormChange('pricePerSquareMeter', val || undefined)} min={0} />
+                    <CurrencyInput label="O'rnatish narxi" value={formData.installationPrice ?? 0} onChange={(val) => handleFormChange('installationPrice', val || undefined)} min={0} />
+                  </>
+                )}
               </div>
 
               {/* Zaxira */}
+              <div className="divider text-xs text-base-content/50">Zaxira</div>
               <div className="grid grid-cols-2 gap-4">
-                <NumberInput label="Miqdor" value={formData.quantity ?? ''} onChange={(val) => handleFormChange('quantity', val === '' ? undefined : Number(val))} placeholder="0" min={0} />
-                <NumberInput label="Min zaxira" value={formData.minStockLevel ?? ''} onChange={(val) => handleFormChange('minStockLevel', val === '' ? undefined : Number(val))} placeholder="5" min={0} />
+                <NumberInput label="Miqdor" value={formData.quantity ?? ''} onChange={(val) => handleFormChange('quantity', val === '' ? undefined : Number(val))} placeholder="0" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
+                <NumberInput label="Min zaxira" value={formData.minStockLevel ?? ''} onChange={(val) => handleFormChange('minStockLevel', val === '' ? undefined : Number(val))} placeholder="5" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
               </div>
 
               <label className="form-control">

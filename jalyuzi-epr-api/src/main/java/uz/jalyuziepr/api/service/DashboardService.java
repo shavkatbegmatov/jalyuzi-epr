@@ -48,7 +48,7 @@ public class DashboardService {
         BigDecimal todayRevenue = saleRepository.getTodayRevenue(startOfDay, endOfDay);
         BigDecimal totalRevenue = saleRepository.getTotalRevenue();
         long totalProducts = productRepository.countActiveProducts();
-        Long totalStock = productRepository.getTotalStock();
+        BigDecimal totalStock = productRepository.getTotalStock();
         long lowStockCount = productRepository.findLowStockProducts().size();
         long totalCustomers = customerRepository.countActiveCustomers();
         BigDecimal totalDebt = debtRepository.getTotalActiveDebt();
@@ -58,7 +58,7 @@ public class DashboardService {
                 .todayRevenue(todayRevenue != null ? todayRevenue : BigDecimal.ZERO)
                 .totalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO)
                 .totalProducts(totalProducts)
-                .totalStock(totalStock != null ? totalStock : 0L)
+                .totalStock(totalStock != null ? totalStock.longValue() : 0L)
                 .lowStockCount(lowStockCount)
                 .totalCustomers(totalCustomers)
                 .totalDebt(totalDebt != null ? totalDebt.abs() : BigDecimal.ZERO)

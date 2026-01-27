@@ -16,6 +16,8 @@ import uz.jalyuziepr.api.entity.User;
 import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
+import uz.jalyuziepr.api.enums.ProductType;
+import uz.jalyuziepr.api.enums.UnitType;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.BrandRepository;
@@ -51,8 +53,8 @@ public class ProductService {
     public Page<ProductResponse> getProductsWithFilters(
             Long brandId, Long categoryId, BlindType blindType,
             BlindMaterial material, ControlType controlType,
-            String search, Pageable pageable) {
-        return productRepository.findWithFilters(brandId, categoryId, blindType, material, controlType, search, pageable)
+            ProductType productType, String search, Pageable pageable) {
+        return productRepository.findWithFilters(brandId, categoryId, blindType, material, controlType, productType, search, pageable)
                 .map(ProductResponse::from);
     }
 
@@ -112,12 +114,12 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse adjustStock(Long id, int adjustment) {
+    public ProductResponse adjustStock(Long id, BigDecimal adjustment) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Mahsulot", "id", id));
 
-        int newQuantity = product.getQuantity() + adjustment;
-        if (newQuantity < 0) {
+        BigDecimal newQuantity = product.getQuantity().add(adjustment);
+        if (newQuantity.compareTo(BigDecimal.ZERO) < 0) {
             throw new BadRequestException("Zaxira manfiy bo'lishi mumkin emas");
         }
 
@@ -198,13 +200,17 @@ public class ProductService {
         product.setSku(request.getSku());
         product.setName(request.getName());
 
-        // Jalyuzi xususiyatlari
+        // Mahsulot turi va o'lchov birligi
+        product.setProductType(request.getProductType() != null ? request.getProductType() : ProductType.FINISHED_PRODUCT);
+        product.setUnitType(request.getUnitType() != null ? request.getUnitType() : UnitType.PIECE);
+
+        // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
         product.setBlindType(request.getBlindType());
         product.setMaterial(request.getMaterial());
         product.setColor(request.getColor());
         product.setControlType(request.getControlType());
 
-        // O'lcham cheklovlari
+        // O'lcham cheklovlari (FINISHED_PRODUCT uchun)
         product.setMinWidth(request.getMinWidth());
         product.setMaxWidth(request.getMaxWidth());
         product.setMinHeight(request.getMinHeight());
@@ -216,10 +222,19 @@ public class ProductService {
         product.setPricePerSquareMeter(request.getPricePerSquareMeter());
         product.setInstallationPrice(request.getInstallationPrice());
 
-        product.setQuantity(request.getQuantity() != null ? request.getQuantity() : 0);
-        product.setMinStockLevel(request.getMinStockLevel() != null ? request.getMinStockLevel() : 5);
+        product.setQuantity(request.getQuantity() != null ? request.getQuantity() : BigDecimal.ZERO);
+        product.setMinStockLevel(request.getMinStockLevel() != null ? request.getMinStockLevel() : new BigDecimal("5"));
         product.setDescription(request.getDescription());
         product.setImageUrl(request.getImageUrl());
+
+        // Xomashyo uchun maydonlar (RAW_MATERIAL)
+        product.setRollWidth(request.getRollWidth());
+        product.setRollLength(request.getRollLength());
+        product.setProfileLength(request.getProfileLength());
+        product.setWeightPerUnit(request.getWeightPerUnit());
+
+        // Aksessuar uchun maydonlar (ACCESSORY)
+        product.setCompatibleBlindTypes(request.getCompatibleBlindTypes());
 
         if (request.getBrandId() != null) {
             Brand brand = brandRepository.findById(request.getBrandId())

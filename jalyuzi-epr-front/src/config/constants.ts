@@ -100,6 +100,22 @@ export const INSTALLATION_STATUSES = {
   CANCELLED: { label: 'Bekor qilindi', value: 'CANCELLED', color: 'badge-error' },
 } as const;
 
+// Universal mahsulot turlari
+export const PRODUCT_TYPES = {
+  FINISHED_PRODUCT: { label: 'Tayyor jalyuzi', value: 'FINISHED_PRODUCT' },
+  RAW_MATERIAL: { label: 'Xomashyo', value: 'RAW_MATERIAL' },
+  ACCESSORY: { label: 'Aksessuar', value: 'ACCESSORY' },
+} as const;
+
+// O'lchov birliklari
+export const UNIT_TYPES = {
+  PIECE: { label: 'Dona', value: 'PIECE' },
+  METER: { label: 'Metr', value: 'METER' },
+  SQUARE_METER: { label: 'm²', value: 'SQUARE_METER' },
+  KILOGRAM: { label: 'kg', value: 'KILOGRAM' },
+  ROLL: { label: 'Rulon', value: 'ROLL' },
+} as const;
+
 // Deprecated - eski tizim uchun
 export const SEASONS = {
   SUMMER: { label: 'Yozgi', value: 'SUMMER' },

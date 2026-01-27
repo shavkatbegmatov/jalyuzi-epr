@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
+import uz.jalyuziepr.api.enums.ProductType;
+import uz.jalyuziepr.api.enums.UnitType;
 
 import java.math.BigDecimal;
 
@@ -28,7 +30,14 @@ public class ProductRequest {
     private Long brandId;
     private Long categoryId;
 
-    // Jalyuzi xususiyatlari
+    // Mahsulot turi va o'lchov birligi
+    @Builder.Default
+    private ProductType productType = ProductType.FINISHED_PRODUCT;
+
+    @Builder.Default
+    private UnitType unitType = UnitType.PIECE;
+
+    // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
     private BlindType blindType;
     private BlindMaterial material;
 
@@ -64,13 +73,30 @@ public class ProductRequest {
     @DecimalMin(value = "0", message = "O'rnatish narxi manfiy bo'lmasligi kerak")
     private BigDecimal installationPrice;
 
-    @Min(value = 0, message = "Miqdor manfiy bo'lmasligi kerak")
+    @DecimalMin(value = "0", message = "Miqdor manfiy bo'lmasligi kerak")
     @Builder.Default
-    private Integer quantity = 0;
+    private BigDecimal quantity = BigDecimal.ZERO;
 
-    @Min(value = 0, message = "Minimal zaxira manfiy bo'lmasligi kerak")
+    @DecimalMin(value = "0", message = "Minimal zaxira manfiy bo'lmasligi kerak")
     @Builder.Default
-    private Integer minStockLevel = 5;
+    private BigDecimal minStockLevel = new BigDecimal("5");
+
+    // Xomashyo uchun maydonlar (RAW_MATERIAL)
+    @DecimalMin(value = "0", message = "Rulon kengligi manfiy bo'lmasligi kerak")
+    private BigDecimal rollWidth;  // Rulon kengligi (m)
+
+    @DecimalMin(value = "0", message = "Rulon uzunligi manfiy bo'lmasligi kerak")
+    private BigDecimal rollLength;  // Rulon uzunligi (m)
+
+    @DecimalMin(value = "0", message = "Profil uzunligi manfiy bo'lmasligi kerak")
+    private BigDecimal profileLength;  // Profil uzunligi (m)
+
+    @DecimalMin(value = "0", message = "Birlik og'irligi manfiy bo'lmasligi kerak")
+    private BigDecimal weightPerUnit;  // Birlik og'irligi (kg)
+
+    // Aksessuar uchun maydonlar (ACCESSORY)
+    @Size(max = 200, message = "Mos jalyuzi turlari 200 ta belgidan oshmasligi kerak")
+    private String compatibleBlindTypes;  // Mos jalyuzi turlari
 
     private String description;
     private String imageUrl;

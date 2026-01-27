@@ -36,6 +36,7 @@ public class SaleService {
     private final UserRepository userRepository;
     private final DebtRepository debtRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final InstallationRepository installationRepository;
     private final StaffNotificationService staffNotificationService;
     private final NotificationService customerNotificationService;
     private final SettingsService settingsService;
@@ -122,10 +123,10 @@ public class SaleService {
                     .orElseThrow(() -> new ResourceNotFoundException("Mahsulot", "id", itemRequest.getProductId()));
 
             // Check stock
-            if (product.getQuantity() < itemRequest.getQuantity()) {
+            if (product.getQuantity().compareTo(BigDecimal.valueOf(itemRequest.getQuantity())) < 0) {
                 throw new InsufficientStockException(
                         product.getName(),
-                        product.getQuantity(),
+                        product.getQuantity().intValue(),
                         itemRequest.getQuantity()
                 );
             }
@@ -179,14 +180,14 @@ public class SaleService {
             subtotal = subtotal.add(itemFinalTotal);
 
             // Reduce stock
-            int previousStock = product.getQuantity();
-            int newStock = previousStock - itemRequest.getQuantity();
+            BigDecimal previousStock = product.getQuantity();
+            BigDecimal newStock = previousStock.subtract(BigDecimal.valueOf(itemRequest.getQuantity()));
             product.setQuantity(newStock);
             productRepository.save(product);
 
             // Check for low stock and notify
-            if (newStock > 0 && newStock <= 5) {
-                staffNotificationService.notifyLowStock(product.getName(), newStock, product.getId());
+            if (newStock.compareTo(BigDecimal.ZERO) > 0 && newStock.compareTo(new BigDecimal("5")) <= 0) {
+                staffNotificationService.notifyLowStock(product.getName(), newStock.intValue(), product.getId());
             }
 
             // Record stock movement
@@ -194,8 +195,8 @@ public class SaleService {
                     .product(product)
                     .movementType(MovementType.OUT)
                     .quantity(-itemRequest.getQuantity())
-                    .previousStock(previousStock)
-                    .newStock(newStock)
+                    .previousStock(previousStock.intValue())
+                    .newStock(newStock.intValue())
                     .referenceType("SALE")
                     .notes("Sotuv: " + sale.getInvoiceNumber())
                     .createdBy(currentUser)
@@ -280,6 +281,41 @@ public class SaleService {
             customerRepository.save(customer);
         }
 
+        // O'rnatish yaratish (agar o'rnatish ma'lumotlari berilgan bo'lsa)
+        if (request.getInstallationDate() != null && technician != null) {
+            String installAddress = request.getInstallationAddress();
+            if (installAddress == null || installAddress.isBlank()) {
+                installAddress = customer != null ? customer.getInstallationAddress() : null;
+            }
+            if (installAddress == null || installAddress.isBlank()) {
+                installAddress = customer != null ? customer.getAddress() : "Manzil ko'rsatilmagan";
+            }
+
+            Installation installation = Installation.builder()
+                    .sale(savedSale)
+                    .technician(technician)
+                    .scheduledDate(request.getInstallationDate().toLocalDate())
+                    .scheduledTimeStart(request.getInstallationDate().toLocalTime())
+                    .address(installAddress)
+                    .contactPhone(customer != null ? customer.getPhone() : null)
+                    .notes(request.getInstallationNotes())
+                    .status(InstallationStatus.SCHEDULED)
+                    .createdBy(currentUser)
+                    .build();
+            installationRepository.save(installation);
+
+            // Sale'ning o'rnatish statusini yangilash
+            savedSale.setInstallationStatus(InstallationStatus.SCHEDULED);
+            saleRepository.save(savedSale);
+
+            // Xodimga notification yuborish
+            staffNotificationService.notifyNewOrder(
+                    "O'rnatish: " + savedSale.getInvoiceNumber(),
+                    technician.getFullName() + " ga tayinlandi",
+                    savedSale.getId()
+            );
+        }
+
         return SaleResponse.from(savedSale);
     }
 
@@ -297,8 +333,9 @@ public class SaleService {
         // Restore stock
         for (SaleItem item : sale.getItems()) {
             Product product = item.getProduct();
-            int previousStock = product.getQuantity();
-            product.setQuantity(previousStock + item.getQuantity());
+            BigDecimal previousStock = product.getQuantity();
+            BigDecimal newStock = previousStock.add(BigDecimal.valueOf(item.getQuantity()));
+            product.setQuantity(newStock);
             productRepository.save(product);
 
             // Record stock movement
@@ -306,8 +343,8 @@ public class SaleService {
                     .product(product)
                     .movementType(MovementType.IN)
                     .quantity(item.getQuantity())
-                    .previousStock(previousStock)
-                    .newStock(product.getQuantity())
+                    .previousStock(previousStock.intValue())
+                    .newStock(newStock.intValue())
                     .referenceType("SALE_CANCEL")
                     .referenceId(sale.getId())
                     .notes("Sotuv bekor qilindi: " + sale.getInvoiceNumber())

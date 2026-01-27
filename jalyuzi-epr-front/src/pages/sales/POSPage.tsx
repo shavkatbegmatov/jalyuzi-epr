@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, User, X, Users, ArrowRight, Phone } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, User, X, Users, ArrowRight, Phone, Wrench, Calendar, MapPin, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
+import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '../../api/products.api';
 import { salesApi } from '../../api/sales.api';
 import { customersApi } from '../../api/customers.api';
+import { employeesApi } from '../../api/employees.api';
 import { useCartStore } from '../../store/cartStore';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { formatCurrency, PAYMENT_METHODS, CUSTOMER_TYPES } from '../../config/constants';
@@ -39,6 +41,13 @@ export function POSPage() {
 
   const cart = useCartStore();
   const { notifications } = useNotificationsStore();
+
+  // Texniklarni olish (faqat o'rnatish yoqilganda)
+  const { data: technicians = [] } = useQuery({
+    queryKey: ['technicians'],
+    queryFn: () => employeesApi.getTechnicians(),
+    enabled: cart.installationEnabled,
+  });
   const loadProducts = useCallback(async () => {
     try {
       const data = await productsApi.getAll({
@@ -186,6 +195,22 @@ export function POSPage() {
       return;
     }
 
+    // O'rnatish validatsiyasi
+    if (cart.installationEnabled) {
+      if (!cart.installationDate) {
+        toast.error('O\'rnatish sanasini tanlang');
+        return;
+      }
+      if (!cart.technicianId) {
+        toast.error('Texnikni tanlang');
+        return;
+      }
+      if (!cart.installationAddress.trim()) {
+        toast.error('O\'rnatish manzilini kiriting');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       await salesApi.create({
@@ -199,6 +224,11 @@ export function POSPage() {
         discountPercent: cart.discountPercent,
         paidAmount,
         paymentMethod,
+        orderType: cart.installationEnabled ? 'INSTALLATION' : 'PRODUCT_SALE',
+        installationDate: cart.installationDate || undefined,
+        installationAddress: cart.installationAddress || undefined,
+        installationNotes: cart.installationNotes || undefined,
+        technicianId: cart.technicianId || undefined,
       });
 
       toast.success('Sotuv muvaffaqiyatli yakunlandi!');
@@ -482,6 +512,97 @@ export function POSPage() {
               <span className="text-base-content/60">Chegirma:</span>
               <span className="font-semibold text-success">{discountSummary || '-'}</span>
             </div>
+          </div>
+        </div>
+
+        {/* O'rnatish xizmati */}
+        <div className="border-t border-base-200 p-4">
+          <div className="surface-soft rounded-xl p-3 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="checkbox checkbox-primary checkbox-sm"
+                checked={cart.installationEnabled}
+                onChange={(e) => {
+                  cart.setInstallationEnabled(e.target.checked);
+                  if (!e.target.checked) {
+                    cart.clearInstallation();
+                  } else if (cart.customer?.installationAddress) {
+                    cart.setInstallationAddress(cart.customer.installationAddress);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <Wrench className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">O'rnatish kerak</span>
+              </div>
+            </label>
+
+            {cart.installationEnabled && (
+              <div className="space-y-3 pt-2">
+                {/* Sana va vaqt */}
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text text-xs flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      Sana va vaqt
+                    </span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="input input-bordered input-sm w-full"
+                    value={cart.installationDate || ''}
+                    onChange={(e) => cart.setInstallationDate(e.target.value || null)}
+                  />
+                </div>
+
+                {/* Texnik */}
+                <Select
+                  label="Texnik"
+                  value={cart.technicianId?.toString() || ''}
+                  onChange={(val) => cart.setTechnicianId(val ? Number(val) : null)}
+                  options={technicians.map((t) => ({
+                    value: t.id.toString(),
+                    label: t.fullName,
+                  }))}
+                  placeholder="Texnikni tanlang"
+                />
+
+                {/* Manzil */}
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text text-xs flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      Manzil
+                    </span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered input-sm w-full"
+                    placeholder="O'rnatish manzili"
+                    value={cart.installationAddress}
+                    onChange={(e) => cart.setInstallationAddress(e.target.value)}
+                  />
+                </div>
+
+                {/* Izoh */}
+                <div className="form-control">
+                  <label className="label py-1">
+                    <span className="label-text text-xs flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      Izoh
+                    </span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered textarea-sm w-full"
+                    placeholder="Qo'shimcha ma'lumot..."
+                    rows={2}
+                    value={cart.installationNotes}
+                    onChange={(e) => cart.setInstallationNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
