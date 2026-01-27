@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    # localhost - Windows/IntelliJ uchun, 172.17.0.1 - WSL uchun
+    url: jdbc:postgresql://${DB_HOST:localhost}:5432/jalyuzi_epr_db
+    username: jalyuzi_epr_user
+    password: f3300955#F123456
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+  # Vault va Cloud tekshiruvlarini dev muhitda o'chirish
+  cloud:
+    vault:
+      enabled: false
+    compatibility-verifier:
+      enabled: false
+
+logging:
+  level:
+    uz.jalyuziepr: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

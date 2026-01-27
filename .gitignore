@@ -1,0 +1,15 @@
+﻿# IDE
+.idea/
+*.iml
+
+# Local tooling
+.claude/
+
+# Maven
+jalyuzi-epr-api/target/
+
+# Node
+jalyuzi-epr-front/node_modules/
+jalyuzi-epr-front/dist/
+jalyuzi-epr-front/.vite/
+*.tsbuildinfo
