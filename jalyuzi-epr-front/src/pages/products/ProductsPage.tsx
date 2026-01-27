@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Package, BadgeCheck, AlertTriangle, X } from 'lucide-react';
+import { Plus, Package, BadgeCheck, AlertTriangle, X, Blinds, Layers, Wrench, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
 import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES, PRODUCT_TYPES, UNIT_TYPES } from '../../config/constants';
@@ -15,6 +15,46 @@ import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { useHighlight } from '../../hooks/useHighlight';
 import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductType, UnitType, ProductRequest } from '../../types';
+import type { LucideIcon } from 'lucide-react';
+
+// Mahsulot turi kartalari konfiguratsiyasi
+const PRODUCT_TYPE_CARDS: {
+  type: ProductType;
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  gradient: string;
+  borderColor: string;
+  iconColor: string;
+}[] = [
+  {
+    type: 'FINISHED_PRODUCT',
+    icon: Blinds,
+    title: 'Tayyor Jalyuzi',
+    description: "O'rnatishga tayyor mahsulotlar",
+    gradient: 'from-primary/20 to-primary/5',
+    borderColor: 'border-primary',
+    iconColor: 'text-primary',
+  },
+  {
+    type: 'RAW_MATERIAL',
+    icon: Layers,
+    title: 'Xomashyo',
+    description: 'Ishlab chiqarish materiallari',
+    gradient: 'from-secondary/20 to-secondary/5',
+    borderColor: 'border-secondary',
+    iconColor: 'text-secondary',
+  },
+  {
+    type: 'ACCESSORY',
+    icon: Wrench,
+    title: 'Aksessuar',
+    description: "Qo'shimcha qismlar va jihozlar",
+    gradient: 'from-accent/20 to-accent/5',
+    borderColor: 'border-accent',
+    iconColor: 'text-accent',
+  },
+];
 
 const emptyFormData: ProductRequest = {
   sku: '',
@@ -272,6 +312,19 @@ export function ProductsPage() {
   const handleFormChange = (field: keyof ProductRequest, value: string | number | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  // Tur o'zgarganda o'lchov birligini avtomatik sozlash
+  useEffect(() => {
+    if (!showNewProductModal) return;
+
+    if (formData.productType === 'FINISHED_PRODUCT') {
+      setFormData((prev) => ({ ...prev, unitType: 'PIECE' }));
+    } else if (formData.productType === 'RAW_MATERIAL') {
+      setFormData((prev) => ({ ...prev, unitType: 'METER' }));
+    } else if (formData.productType === 'ACCESSORY') {
+      setFormData((prev) => ({ ...prev, unitType: 'PIECE' }));
+    }
+  }, [formData.productType, showNewProductModal]);
 
   const handleSaveProduct = async () => {
     if (!formData.sku.trim() || !formData.name.trim() || formData.sellingPrice <= 0) {
@@ -581,161 +634,250 @@ export function ProductsPage() {
       <ModalPortal isOpen={showNewProductModal} onClose={handleCloseNewProductModal}>
         <div className="w-full max-w-3xl bg-base-100 rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
           <div className="p-4 sm:p-6">
+            {/* Header */}
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-semibold">{editingProductId ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'}</h3>
-                <p className="text-sm text-base-content/60">{editingProductId ? "Mahsulot ma'lumotlarini yangilash" : "Yangi jalyuzi qo'shish"}</p>
+                <p className="text-sm text-base-content/60">Mahsulot ma'lumotlarini kiriting</p>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={handleCloseNewProductModal}>
-                <X className="h-4 w-4" />
+              <button className="btn btn-ghost btn-sm btn-circle" onClick={handleCloseNewProductModal}>
+                <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-6 space-y-6">
+              {/* Mahsulot turi kartalari */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                  Mahsulot turini tanlang
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {PRODUCT_TYPE_CARDS.map((card) => {
+                    const Icon = card.icon;
+                    const isSelected = formData.productType === card.type;
+                    return (
+                      <button
+                        key={card.type}
+                        type="button"
+                        onClick={() => handleFormChange('productType', card.type)}
+                        className={clsx(
+                          'group relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200',
+                          'hover:scale-[1.02] hover:shadow-lg',
+                          isSelected
+                            ? `${card.borderColor} bg-gradient-to-br ${card.gradient}`
+                            : 'border-base-300 hover:border-base-content/30'
+                        )}
+                      >
+                        <div className={clsx(
+                          'p-3 rounded-full mb-2 transition-colors',
+                          isSelected ? `bg-base-100 ${card.iconColor}` : 'bg-base-200 text-base-content/60'
+                        )}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                        <span className={clsx(
+                          'font-semibold text-sm',
+                          isSelected ? 'text-base-content' : 'text-base-content/80'
+                        )}>
+                          {card.title}
+                        </span>
+                        <span className="text-xs text-base-content/50 text-center mt-1">
+                          {card.description}
+                        </span>
+                        {isSelected && (
+                          <div className="absolute top-2 right-2">
+                            <Check className={clsx('h-4 w-4', card.iconColor)} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Asosiy ma'lumotlar */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                <label className="form-control">
-                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">SKU *</span>
-                  <input type="text" className="input input-bordered w-full" value={formData.sku} onChange={(e) => handleFormChange('sku', e.target.value)} placeholder="JAL-001" />
-                </label>
-                <label className="form-control sm:col-span-2">
-                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Nomi *</span>
-                  <input type="text" className="input input-bordered w-full" value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Roletka Premium Oq" />
-                </label>
-                <Select
-                  label="Mahsulot turi *"
-                  value={formData.productType || 'FINISHED_PRODUCT'}
-                  onChange={(value) => handleFormChange('productType', value as ProductType || 'FINISHED_PRODUCT')}
-                  options={Object.entries(PRODUCT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
-                />
-              </div>
-
-              {/* O'lchov birligi */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-                <Select
-                  label="O'lchov birligi"
-                  value={formData.unitType || 'PIECE'}
-                  onChange={(value) => handleFormChange('unitType', value as UnitType || 'PIECE')}
-                  options={Object.entries(UNIT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
-                />
-                <Select
-                  label="Brend"
-                  value={formData.brandId || ''}
-                  onChange={(value) => handleFormChange('brandId', value ? Number(value) : undefined)}
-                  placeholder="Tanlang..."
-                  options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
-                />
-                <Select
-                  label="Kategoriya"
-                  value={formData.categoryId || ''}
-                  onChange={(value) => handleFormChange('categoryId', value ? Number(value) : undefined)}
-                  placeholder="Tanlang..."
-                  options={categories.map((category) => ({ value: category.id, label: category.name }))}
-                />
-                <label className="form-control">
-                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rang</span>
-                  <input type="text" className="input input-bordered w-full" value={formData.color || ''} onChange={(e) => handleFormChange('color', e.target.value || undefined)} placeholder="Oq" />
-                </label>
-              </div>
-
-              {/* Tayyor jalyuzi xususiyatlari - FINISHED_PRODUCT uchun */}
-              {formData.productType === 'FINISHED_PRODUCT' && (
-                <>
-                  <div className="divider text-xs text-base-content/50">Jalyuzi xususiyatlari</div>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    <Select
-                      label="Jalyuzi turi"
-                      value={formData.blindType || ''}
-                      onChange={(value) => handleFormChange('blindType', value as BlindType || undefined)}
-                      placeholder="Tanlang..."
-                      options={Object.entries(BLIND_TYPES).map(([key, { label }]) => ({ value: key, label }))}
-                    />
-                    <Select
-                      label="Material"
-                      value={formData.material || ''}
-                      onChange={(value) => handleFormChange('material', value as BlindMaterial || undefined)}
-                      placeholder="Tanlang..."
-                      options={Object.entries(BLIND_MATERIALS).map(([key, { label }]) => ({ value: key, label }))}
-                    />
-                    <Select
-                      label="Boshqaruv"
-                      value={formData.controlType || ''}
-                      onChange={(value) => handleFormChange('controlType', value as ControlType || undefined)}
-                      placeholder="Tanlang..."
-                      options={Object.entries(CONTROL_TYPES).map(([key, { label }]) => ({ value: key, label }))}
-                    />
-                  </div>
-
-                  {/* O'lcham cheklovlari */}
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <NumberInput label="Min kenglik (mm)" value={formData.minWidth ?? ''} onChange={(val) => handleFormChange('minWidth', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
-                    <NumberInput label="Max kenglik (mm)" value={formData.maxWidth ?? ''} onChange={(val) => handleFormChange('maxWidth', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
-                    <NumberInput label="Min balandlik (mm)" value={formData.minHeight ?? ''} onChange={(val) => handleFormChange('minHeight', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
-                    <NumberInput label="Max balandlik (mm)" value={formData.maxHeight ?? ''} onChange={(val) => handleFormChange('maxHeight', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
-                  </div>
-                </>
-              )}
-
-              {/* Xomashyo maydonlari - RAW_MATERIAL uchun */}
-              {formData.productType === 'RAW_MATERIAL' && (
-                <>
-                  <div className="divider text-xs text-base-content/50">Xomashyo xususiyatlari</div>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <NumberInput label="Rulon kengligi (m)" value={formData.rollWidth ?? ''} onChange={(val) => handleFormChange('rollWidth', val === '' ? undefined : Number(val))} placeholder="1.5" showButtons={false} min={0} step={0.01} />
-                    <NumberInput label="Rulon uzunligi (m)" value={formData.rollLength ?? ''} onChange={(val) => handleFormChange('rollLength', val === '' ? undefined : Number(val))} placeholder="50" showButtons={false} min={0} step={0.01} />
-                    <NumberInput label="Profil uzunligi (m)" value={formData.profileLength ?? ''} onChange={(val) => handleFormChange('profileLength', val === '' ? undefined : Number(val))} placeholder="6" showButtons={false} min={0} step={0.01} />
-                    <NumberInput label="Birlik og'irligi (kg)" value={formData.weightPerUnit ?? ''} onChange={(val) => handleFormChange('weightPerUnit', val === '' ? undefined : Number(val))} placeholder="0.5" showButtons={false} min={0} step={0.001} />
-                  </div>
-                </>
-              )}
-
-              {/* Aksessuar maydonlari - ACCESSORY uchun */}
-              {formData.productType === 'ACCESSORY' && (
-                <>
-                  <div className="divider text-xs text-base-content/50">Aksessuar xususiyatlari</div>
+              <div className="surface-soft rounded-xl p-4 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                  Asosiy ma'lumotlar
+                </p>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
                   <label className="form-control">
-                    <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Mos jalyuzi turlari</span>
-                    <input type="text" className="input input-bordered w-full" value={formData.compatibleBlindTypes || ''} onChange={(e) => handleFormChange('compatibleBlindTypes', e.target.value || undefined)} placeholder="ROLLER, VERTICAL, HORIZONTAL" />
-                    <span className="label-text-alt text-xs text-base-content/50 mt-1">Vergul bilan ajrating: ROLLER, VERTICAL, HORIZONTAL, ROMAN, CELLULAR, MOTORIZED</span>
+                    <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">SKU *</span>
+                    <input type="text" className="input input-bordered w-full" value={formData.sku} onChange={(e) => handleFormChange('sku', e.target.value)} placeholder="JAL-001" />
                   </label>
-                </>
-              )}
-
-              {/* Narxlar */}
-              <div className="divider text-xs text-base-content/50">Narxlar</div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <CurrencyInput label="Kelish narxi" value={formData.purchasePrice ?? 0} onChange={(val) => handleFormChange('purchasePrice', val || undefined)} min={0} />
-                <CurrencyInput label="Sotish narxi *" value={formData.sellingPrice ?? 0} onChange={(val) => handleFormChange('sellingPrice', val)} min={0} />
-                {formData.productType === 'FINISHED_PRODUCT' && (
-                  <>
-                    <CurrencyInput label="Narx/m²" value={formData.pricePerSquareMeter ?? 0} onChange={(val) => handleFormChange('pricePerSquareMeter', val || undefined)} min={0} />
-                    <CurrencyInput label="O'rnatish narxi" value={formData.installationPrice ?? 0} onChange={(val) => handleFormChange('installationPrice', val || undefined)} min={0} />
-                  </>
-                )}
+                  <label className="form-control sm:col-span-2">
+                    <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Nomi *</span>
+                    <input type="text" className="input input-bordered w-full" value={formData.name} onChange={(e) => handleFormChange('name', e.target.value)} placeholder="Roletka Premium Oq" />
+                  </label>
+                  <Select
+                    label="Brend"
+                    value={formData.brandId || ''}
+                    onChange={(value) => handleFormChange('brandId', value ? Number(value) : undefined)}
+                    placeholder="Tanlang..."
+                    options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                  <Select
+                    label="Kategoriya"
+                    value={formData.categoryId || ''}
+                    onChange={(value) => handleFormChange('categoryId', value ? Number(value) : undefined)}
+                    placeholder="Tanlang..."
+                    options={categories.map((category) => ({ value: category.id, label: category.name }))}
+                  />
+                  <Select
+                    label="O'lchov birligi"
+                    value={formData.unitType || 'PIECE'}
+                    onChange={(value) => handleFormChange('unitType', value as UnitType || 'PIECE')}
+                    options={Object.entries(UNIT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                  />
+                  <label className="form-control sm:col-span-2">
+                    <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rang</span>
+                    <input type="text" className="input input-bordered w-full" value={formData.color || ''} onChange={(e) => handleFormChange('color', e.target.value || undefined)} placeholder="Oq" />
+                  </label>
+                </div>
               </div>
 
-              {/* Zaxira */}
-              <div className="divider text-xs text-base-content/50">Zaxira</div>
-              <div className="grid grid-cols-2 gap-4">
-                <NumberInput label="Miqdor" value={formData.quantity ?? ''} onChange={(val) => handleFormChange('quantity', val === '' ? undefined : Number(val))} placeholder="0" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
-                <NumberInput label="Min zaxira" value={formData.minStockLevel ?? ''} onChange={(val) => handleFormChange('minStockLevel', val === '' ? undefined : Number(val))} placeholder="5" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
+              {/* Turga xos xususiyatlar - dinamik animatsiya bilan */}
+              <div className="overflow-hidden">
+                {/* FINISHED_PRODUCT seksiyasi */}
+                <div className={clsx(
+                  'transition-all duration-300 ease-in-out',
+                  formData.productType === 'FINISHED_PRODUCT'
+                    ? 'opacity-100 max-h-[600px]'
+                    : 'opacity-0 max-h-0 overflow-hidden'
+                )}>
+                  {formData.productType === 'FINISHED_PRODUCT' && (
+                    <div className="surface-soft rounded-xl p-4 space-y-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                        Jalyuzi xususiyatlari
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                        <Select
+                          label="Jalyuzi turi"
+                          value={formData.blindType || ''}
+                          onChange={(value) => handleFormChange('blindType', value as BlindType || undefined)}
+                          placeholder="Tanlang..."
+                          options={Object.entries(BLIND_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                        />
+                        <Select
+                          label="Material"
+                          value={formData.material || ''}
+                          onChange={(value) => handleFormChange('material', value as BlindMaterial || undefined)}
+                          placeholder="Tanlang..."
+                          options={Object.entries(BLIND_MATERIALS).map(([key, { label }]) => ({ value: key, label }))}
+                        />
+                        <Select
+                          label="Boshqaruv"
+                          value={formData.controlType || ''}
+                          onChange={(value) => handleFormChange('controlType', value as ControlType || undefined)}
+                          placeholder="Tanlang..."
+                          options={Object.entries(CONTROL_TYPES).map(([key, { label }]) => ({ value: key, label }))}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <NumberInput label="Min kenglik (mm)" value={formData.minWidth ?? ''} onChange={(val) => handleFormChange('minWidth', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
+                        <NumberInput label="Max kenglik (mm)" value={formData.maxWidth ?? ''} onChange={(val) => handleFormChange('maxWidth', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
+                        <NumberInput label="Min balandlik (mm)" value={formData.minHeight ?? ''} onChange={(val) => handleFormChange('minHeight', val === '' ? undefined : Number(val))} placeholder="300" showButtons={false} min={100} />
+                        <NumberInput label="Max balandlik (mm)" value={formData.maxHeight ?? ''} onChange={(val) => handleFormChange('maxHeight', val === '' ? undefined : Number(val))} placeholder="3000" showButtons={false} min={100} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* RAW_MATERIAL seksiyasi */}
+                <div className={clsx(
+                  'transition-all duration-300 ease-in-out',
+                  formData.productType === 'RAW_MATERIAL'
+                    ? 'opacity-100 max-h-[400px]'
+                    : 'opacity-0 max-h-0 overflow-hidden'
+                )}>
+                  {formData.productType === 'RAW_MATERIAL' && (
+                    <div className="surface-soft rounded-xl p-4 space-y-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                        Xomashyo xususiyatlari
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <NumberInput label="Rulon kengligi (m)" value={formData.rollWidth ?? ''} onChange={(val) => handleFormChange('rollWidth', val === '' ? undefined : Number(val))} placeholder="1.5" showButtons={false} min={0} step={0.01} />
+                        <NumberInput label="Rulon uzunligi (m)" value={formData.rollLength ?? ''} onChange={(val) => handleFormChange('rollLength', val === '' ? undefined : Number(val))} placeholder="50" showButtons={false} min={0} step={0.01} />
+                        <NumberInput label="Profil uzunligi (m)" value={formData.profileLength ?? ''} onChange={(val) => handleFormChange('profileLength', val === '' ? undefined : Number(val))} placeholder="6" showButtons={false} min={0} step={0.01} />
+                        <NumberInput label="Birlik og'irligi (kg)" value={formData.weightPerUnit ?? ''} onChange={(val) => handleFormChange('weightPerUnit', val === '' ? undefined : Number(val))} placeholder="0.5" showButtons={false} min={0} step={0.001} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ACCESSORY seksiyasi */}
+                <div className={clsx(
+                  'transition-all duration-300 ease-in-out',
+                  formData.productType === 'ACCESSORY'
+                    ? 'opacity-100 max-h-[300px]'
+                    : 'opacity-0 max-h-0 overflow-hidden'
+                )}>
+                  {formData.productType === 'ACCESSORY' && (
+                    <div className="surface-soft rounded-xl p-4 space-y-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                        Aksessuar xususiyatlari
+                      </p>
+                      <label className="form-control">
+                        <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Mos jalyuzi turlari</span>
+                        <input type="text" className="input input-bordered w-full" value={formData.compatibleBlindTypes || ''} onChange={(e) => handleFormChange('compatibleBlindTypes', e.target.value || undefined)} placeholder="ROLLER, VERTICAL, HORIZONTAL" />
+                        <span className="label-text-alt text-xs text-base-content/50 mt-1">Vergul bilan ajrating: ROLLER, VERTICAL, HORIZONTAL, ROMAN, CELLULAR, MOTORIZED</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <label className="form-control">
-                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Tavsif</span>
-                <textarea className="textarea textarea-bordered w-full" rows={2} value={formData.description || ''} onChange={(e) => handleFormChange('description', e.target.value || undefined)} placeholder="Mahsulot haqida qo'shimcha ma'lumot..." />
-              </label>
+              {/* Narxlar va Zaxira */}
+              <div className="surface-soft rounded-xl p-4 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                  Narxlar va Zaxira
+                </p>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <CurrencyInput label="Kelish narxi" value={formData.purchasePrice ?? 0} onChange={(val) => handleFormChange('purchasePrice', val || undefined)} min={0} />
+                  <CurrencyInput label="Sotish narxi *" value={formData.sellingPrice ?? 0} onChange={(val) => handleFormChange('sellingPrice', val)} min={0} />
+                  {formData.productType === 'FINISHED_PRODUCT' && (
+                    <>
+                      <CurrencyInput label="Narx/m²" value={formData.pricePerSquareMeter ?? 0} onChange={(val) => handleFormChange('pricePerSquareMeter', val || undefined)} min={0} />
+                      <CurrencyInput label="O'rnatish narxi" value={formData.installationPrice ?? 0} onChange={(val) => handleFormChange('installationPrice', val || undefined)} min={0} />
+                    </>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <NumberInput label="Miqdor" value={formData.quantity ?? ''} onChange={(val) => handleFormChange('quantity', val === '' ? undefined : Number(val))} placeholder="0" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
+                  <NumberInput label="Min zaxira" value={formData.minStockLevel ?? ''} onChange={(val) => handleFormChange('minStockLevel', val === '' ? undefined : Number(val))} placeholder="5" min={0} step={formData.productType === 'RAW_MATERIAL' ? 0.001 : 1} />
+                </div>
+              </div>
 
-              <label className="form-control">
-                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rasm URL</span>
-                <input type="text" className="input input-bordered w-full" value={formData.imageUrl || ''} onChange={(e) => handleFormChange('imageUrl', e.target.value || undefined)} placeholder="https://..." />
-              </label>
+              {/* Qo'shimcha ma'lumotlar */}
+              <div className="space-y-4">
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Tavsif</span>
+                  <textarea className="textarea textarea-bordered w-full" rows={2} value={formData.description || ''} onChange={(e) => handleFormChange('description', e.target.value || undefined)} placeholder="Mahsulot haqida qo'shimcha ma'lumot..." />
+                </label>
+
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Rasm URL</span>
+                  <input type="text" className="input input-bordered w-full" value={formData.imageUrl || ''} onChange={(e) => handleFormChange('imageUrl', e.target.value || undefined)} placeholder="https://..." />
+                </label>
+              </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
-              <button className="btn btn-ghost" onClick={handleCloseNewProductModal} disabled={saving}>Bekor qilish</button>
-              <button className="btn btn-primary" onClick={handleSaveProduct} disabled={saving || !formData.sku.trim() || !formData.name.trim() || formData.sellingPrice <= 0}>
-                {saving && <span className="loading loading-spinner loading-sm" />}
+            {/* Footer buttons */}
+            <div className="mt-6 flex justify-end gap-2 pt-4 border-t border-base-200">
+              <button className="btn btn-ghost" onClick={handleCloseNewProductModal} disabled={saving}>
+                Bekor qilish
+              </button>
+              <button
+                className="btn btn-primary gap-2"
+                onClick={handleSaveProduct}
+                disabled={saving || !formData.sku.trim() || !formData.name.trim() || formData.sellingPrice <= 0}
+              >
+                {saving ? (
+                  <span className="loading loading-spinner loading-sm" />
+                ) : (
+                  <Package className="h-4 w-4" />
+                )}
                 Saqlash
               </button>
             </div>
