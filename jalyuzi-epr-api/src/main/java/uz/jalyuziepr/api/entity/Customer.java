@@ -82,6 +82,25 @@ public class Customer extends BaseEntity implements Auditable {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    // O'rnatish xizmati maydonlari
+    @Column(name = "installation_address", length = 500)
+    private String installationAddress;
+
+    @Column(name = "access_instructions", length = 500)
+    private String accessInstructions;
+
+    @Column(name = "preferred_time_morning")
+    @Builder.Default
+    private Boolean preferredTimeMorning = true;
+
+    @Column(name = "preferred_time_afternoon")
+    @Builder.Default
+    private Boolean preferredTimeAfternoon = true;
+
+    @Column(name = "preferred_time_evening")
+    @Builder.Default
+    private Boolean preferredTimeEvening = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -116,6 +135,11 @@ public class Customer extends BaseEntity implements Auditable {
         map.put("preferredLanguage", this.preferredLanguage);
         map.put("portalEnabled", this.portalEnabled);
         map.put("lastLoginAt", this.lastLoginAt);
+        map.put("installationAddress", this.installationAddress);
+        map.put("accessInstructions", this.accessInstructions);
+        map.put("preferredTimeMorning", this.preferredTimeMorning);
+        map.put("preferredTimeAfternoon", this.preferredTimeAfternoon);
+        map.put("preferredTimeEvening", this.preferredTimeEvening);
 
         // Avoid lazy loading
         if (this.createdBy != null) {

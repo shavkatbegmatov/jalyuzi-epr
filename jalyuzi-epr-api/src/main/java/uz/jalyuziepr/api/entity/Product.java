@@ -7,7 +7,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import uz.jalyuziepr.api.audit.Auditable;
 import uz.jalyuziepr.api.audit.AuditEntityListener;
 import uz.jalyuziepr.api.entity.base.BaseEntity;
-import uz.jalyuziepr.api.enums.Season;
+import uz.jalyuziepr.api.enums.BlindMaterial;
+import uz.jalyuziepr.api.enums.BlindType;
+import uz.jalyuziepr.api.enums.ControlType;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -38,25 +40,42 @@ public class Product extends BaseEntity implements Auditable {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    // Shina o'lchamlari
-    @Column(name = "width")
-    private Integer width;          // 205, 225 (mm)
-
-    @Column(name = "profile")
-    private Integer profile;        // 55, 60 (%)
-
-    @Column(name = "diameter")
-    private Integer diameter;       // 16, 17, 18 (inch)
-
-    @Column(name = "load_index", length = 10)
-    private String loadIndex;       // 91, 94
-
-    @Column(name = "speed_rating", length = 5)
-    private String speedRating;     // H, V, W
+    // Jalyuzi xususiyatlari
+    @Enumerated(EnumType.STRING)
+    @Column(name = "blind_type", length = 20)
+    private BlindType blindType;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private Season season;
+    private BlindMaterial material;
+
+    @Column(length = 50)
+    private String color;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "control_type", length = 20)
+    private ControlType controlType;
+
+    // O'lcham cheklovlari (mm)
+    @Column(name = "min_width")
+    private Integer minWidth;
+
+    @Column(name = "max_width")
+    private Integer maxWidth;
+
+    @Column(name = "min_height")
+    private Integer minHeight;
+
+    @Column(name = "max_height")
+    private Integer maxHeight;
+
+    // Kvadrat metr narxi
+    @Column(name = "price_per_sqm", precision = 15, scale = 2)
+    private BigDecimal pricePerSquareMeter;
+
+    // O'rnatish narxi
+    @Column(name = "installation_price", precision = 15, scale = 2)
+    private BigDecimal installationPrice;
 
     @Column(name = "purchase_price", precision = 15, scale = 2)
     private BigDecimal purchasePrice;
@@ -86,12 +105,23 @@ public class Product extends BaseEntity implements Auditable {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
-    // Helper method: shina o'lchami string
-    public String getSizeString() {
-        if (width != null && profile != null && diameter != null) {
-            return String.format("%d/%d R%d", width, profile, diameter);
+    // Helper method: o'lcham diapazoni string
+    public String getSizeRangeString() {
+        if (minWidth != null && maxWidth != null && minHeight != null && maxHeight != null) {
+            return String.format("%d-%d x %d-%d mm", minWidth, maxWidth, minHeight, maxHeight);
         }
         return null;
+    }
+
+    // Helper method: narx hisoblash (m² bo'yicha)
+    public BigDecimal calculatePrice(int widthMm, int heightMm) {
+        if (pricePerSquareMeter != null) {
+            BigDecimal sqm = BigDecimal.valueOf(widthMm)
+                    .multiply(BigDecimal.valueOf(heightMm))
+                    .divide(BigDecimal.valueOf(1_000_000), 4, java.math.RoundingMode.HALF_UP);
+            return pricePerSquareMeter.multiply(sqm).setScale(2, java.math.RoundingMode.HALF_UP);
+        }
+        return sellingPrice;
     }
 
     // ============================================
@@ -110,12 +140,16 @@ public class Product extends BaseEntity implements Auditable {
         map.put("id", getId());
         map.put("sku", this.sku);
         map.put("name", this.name);
-        map.put("width", this.width);
-        map.put("profile", this.profile);
-        map.put("diameter", this.diameter);
-        map.put("loadIndex", this.loadIndex);
-        map.put("speedRating", this.speedRating);
-        map.put("season", this.season);
+        map.put("blindType", this.blindType);
+        map.put("material", this.material);
+        map.put("color", this.color);
+        map.put("controlType", this.controlType);
+        map.put("minWidth", this.minWidth);
+        map.put("maxWidth", this.maxWidth);
+        map.put("minHeight", this.minHeight);
+        map.put("maxHeight", this.maxHeight);
+        map.put("pricePerSquareMeter", this.pricePerSquareMeter);
+        map.put("installationPrice", this.installationPrice);
         map.put("purchasePrice", this.purchasePrice);
         map.put("sellingPrice", this.sellingPrice);
         map.put("quantity", this.quantity);

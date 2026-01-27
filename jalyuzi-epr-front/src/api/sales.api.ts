@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, PagedResponse, Sale, SaleRequest } from '../types';
+import type { ApiResponse, InstallationStatus, OrderType, PagedResponse, Sale, SaleRequest } from '../types';
 import { createExportApi } from './export.utils';
 
 export interface SaleFilters {
@@ -8,6 +8,9 @@ export interface SaleFilters {
   sort?: string;
   startDate?: string;
   endDate?: string;
+  orderType?: OrderType;
+  installationStatus?: InstallationStatus;
+  technicianId?: number;
 }
 
 export const salesApi = {
@@ -18,6 +21,9 @@ export const salesApi = {
     if (filters.sort) params.append('sort', filters.sort);
     if (filters.startDate) params.append('startDate', filters.startDate);
     if (filters.endDate) params.append('endDate', filters.endDate);
+    if (filters.orderType) params.append('orderType', filters.orderType);
+    if (filters.installationStatus) params.append('installationStatus', filters.installationStatus);
+    if (filters.technicianId) params.append('technicianId', filters.technicianId.toString());
 
     const response = await api.get<ApiResponse<PagedResponse<Sale>>>(`/v1/sales?${params}`);
     return response.data.data;

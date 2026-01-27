@@ -42,4 +42,10 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     @Query("SELECT COUNT(e) FROM Employee e WHERE e.status = :status")
     long countByStatus(@Param("status") EmployeeStatus status);
+
+    // Texniklar uchun metodlar
+    List<Employee> findByIsTechnicianTrueAndStatus(EmployeeStatus status);
+
+    @Query("SELECT e FROM Employee e WHERE e.isTechnician = true AND e.status = 'ACTIVE'")
+    List<Employee> findActiveTechnicians();
 }

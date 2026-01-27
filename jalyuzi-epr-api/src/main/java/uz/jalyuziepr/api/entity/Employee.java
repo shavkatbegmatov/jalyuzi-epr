@@ -76,6 +76,18 @@ public class Employee extends BaseEntity implements Auditable {
     @JoinColumn(name = "user_id", unique = true)
     private User user;
 
+    // Texnik maydonlari
+    @Column(name = "is_technician")
+    @Builder.Default
+    private Boolean isTechnician = false;
+
+    @Column(name = "technician_skills", length = 500)
+    private String technicianSkills;
+
+    @Column(name = "max_daily_installations")
+    @Builder.Default
+    private Integer maxDailyInstallations = 3;
+
     // ============================================
     // Auditable Interface Implementation
     // ============================================
@@ -104,6 +116,9 @@ public class Employee extends BaseEntity implements Auditable {
         map.put("bankAccountNumber", this.bankAccountNumber); // Will be masked
         map.put("emergencyContactName", this.emergencyContactName);
         map.put("emergencyContactPhone", this.emergencyContactPhone);
+        map.put("isTechnician", this.isTechnician);
+        map.put("technicianSkills", this.technicianSkills);
+        map.put("maxDailyInstallations", this.maxDailyInstallations);
 
         // Avoid lazy loading
         if (this.user != null) {

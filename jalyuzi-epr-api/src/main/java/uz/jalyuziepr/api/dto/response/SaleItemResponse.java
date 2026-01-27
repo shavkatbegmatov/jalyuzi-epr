@@ -28,8 +28,13 @@ public class SaleItemResponse {
     @ExportColumn(header = "SKU", order = 3)
     private String productSku;
 
-    @ExportColumn(header = "O'lcham", order = 4)
-    private String sizeString;
+    @ExportColumn(header = "Rang", order = 4)
+    private String color;
+
+    // Jalyuzi o'lchami (mm)
+    private Integer customWidth;
+    private Integer customHeight;
+    private BigDecimal calculatedSqm;
 
     @ExportColumn(header = "Miqdor", order = 5, type = ColumnType.NUMBER)
     private Integer quantity;
@@ -49,7 +54,10 @@ public class SaleItemResponse {
                 .productId(item.getProduct().getId())
                 .productName(item.getProduct().getName())
                 .productSku(item.getProduct().getSku())
-                .sizeString(item.getProduct().getSizeString())
+                .color(item.getProduct().getColor())
+                .customWidth(item.getCustomWidth())
+                .customHeight(item.getCustomHeight())
+                .calculatedSqm(item.getCalculatedSqm())
                 .quantity(item.getQuantity())
                 .unitPrice(item.getUnitPrice())
                 .discount(item.getDiscount())

@@ -39,6 +39,7 @@ public class SaleService {
     private final StaffNotificationService staffNotificationService;
     private final NotificationService customerNotificationService;
     private final SettingsService settingsService;
+    private final EmployeeRepository employeeRepository;
 
     public Page<SaleResponse> getAllSales(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         LocalDate effectiveStart = startDate;
@@ -88,6 +89,16 @@ public class SaleService {
                     .orElseThrow(() -> new ResourceNotFoundException("Mijoz", "id", request.getCustomerId()));
         }
 
+        // Texnik olish (agar ko'rsatilgan bo'lsa)
+        Employee technician = null;
+        if (request.getTechnicianId() != null) {
+            technician = employeeRepository.findById(request.getTechnicianId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Texnik", "id", request.getTechnicianId()));
+            if (!Boolean.TRUE.equals(technician.getIsTechnician())) {
+                throw new BadRequestException("Tanlangan xodim texnik emas");
+            }
+        }
+
         // Create sale
         Sale sale = Sale.builder()
                 .invoiceNumber(generateInvoiceNumber())
@@ -95,6 +106,12 @@ public class SaleService {
                 .saleDate(LocalDateTime.now())
                 .paymentMethod(request.getPaymentMethod())
                 .notes(request.getNotes())
+                .orderType(request.getOrderType() != null ? request.getOrderType() : OrderType.PRODUCT_SALE)
+                .installationDate(request.getInstallationDate())
+                .installationAddress(request.getInstallationAddress())
+                .installationNotes(request.getInstallationNotes())
+                .technician(technician)
+                .installationStatus(request.getInstallationDate() != null ? InstallationStatus.PENDING : null)
                 .createdBy(currentUser)
                 .build();
 
@@ -113,11 +130,35 @@ public class SaleService {
                 );
             }
 
-            // Get price
-            BigDecimal unitPrice = itemRequest.getCustomPrice() != null ?
-                    itemRequest.getCustomPrice() : product.getSellingPrice();
+            // Jalyuzi uchun maxsus o'lcham va narx hisoblash
+            BigDecimal calculatedSqm = null;
+            BigDecimal calculatedPrice = null;
+            Integer customWidth = itemRequest.getCustomWidth();
+            Integer customHeight = itemRequest.getCustomHeight();
+
+            BigDecimal unitPrice;
+            if (customWidth != null && customHeight != null && product.getPricePerSquareMeter() != null) {
+                // Kvadrat metr hisoblash
+                calculatedSqm = BigDecimal.valueOf(customWidth)
+                        .multiply(BigDecimal.valueOf(customHeight))
+                        .divide(BigDecimal.valueOf(1_000_000), 4, RoundingMode.HALF_UP);
+                calculatedPrice = product.getPricePerSquareMeter()
+                        .multiply(calculatedSqm)
+                        .setScale(2, RoundingMode.HALF_UP);
+                unitPrice = calculatedPrice;
+            } else if (itemRequest.getCustomPrice() != null) {
+                unitPrice = itemRequest.getCustomPrice();
+            } else {
+                unitPrice = product.getSellingPrice();
+            }
 
             BigDecimal itemTotal = unitPrice.multiply(BigDecimal.valueOf(itemRequest.getQuantity()));
+
+            // O'rnatish narxi qo'shish
+            if (Boolean.TRUE.equals(itemRequest.getInstallationIncluded()) && product.getInstallationPrice() != null) {
+                itemTotal = itemTotal.add(product.getInstallationPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
+            }
+
             BigDecimal discount = itemRequest.getDiscount() != null ? itemRequest.getDiscount() : BigDecimal.ZERO;
             BigDecimal itemFinalTotal = itemTotal.subtract(discount);
 
@@ -127,6 +168,11 @@ public class SaleService {
                     .unitPrice(unitPrice)
                     .discount(discount)
                     .totalPrice(itemFinalTotal)
+                    .customWidth(customWidth)
+                    .customHeight(customHeight)
+                    .calculatedSqm(calculatedSqm)
+                    .calculatedPrice(calculatedPrice)
+                    .installationIncluded(itemRequest.getInstallationIncluded())
                     .build();
 
             sale.addItem(saleItem);

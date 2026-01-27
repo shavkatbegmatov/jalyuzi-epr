@@ -33,6 +33,7 @@ const EmployeeDetailPage = lazy(() => import('../pages/employees/EmployeeDetailP
 const RolesPage = lazy(() => import('../pages/roles/RolesPage').then(m => ({ default: m.RolesPage })));
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
+const InstallationsPage = lazy(() => import('../pages/installations/InstallationsPage').then(m => ({ default: m.InstallationsPage })));
 
 // Lazy-loaded portal pages
 const PortalLayout = lazy(() => import('../portal/components/layout/PortalLayout'));
@@ -305,6 +306,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Audit Loglar' },
+      },
+      {
+        path: 'installations',
+        element: (
+          <ProtectedRoute permission={PermissionCode.SALES_VIEW}>
+            <LazyRoute>
+              <InstallationsPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: "O'rnatishlar" },
       },
       {
         path: 'profile',

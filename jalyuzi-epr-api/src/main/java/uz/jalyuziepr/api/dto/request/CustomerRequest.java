@@ -37,4 +37,20 @@ public class CustomerRequest {
 
     @Size(max = 500, message = "Izoh 500 ta belgidan oshmasligi kerak")
     private String notes;
+
+    // O'rnatish xizmati uchun qo'shimcha maydonlar
+    @Size(max = 500, message = "O'rnatish manzili 500 ta belgidan oshmasligi kerak")
+    private String installationAddress;
+
+    @Size(max = 500, message = "Kirish ko'rsatmalari 500 ta belgidan oshmasligi kerak")
+    private String accessInstructions;
+
+    @Builder.Default
+    private Boolean preferredTimeMorning = true;
+
+    @Builder.Default
+    private Boolean preferredTimeAfternoon = true;
+
+    @Builder.Default
+    private Boolean preferredTimeEvening = false;
 }

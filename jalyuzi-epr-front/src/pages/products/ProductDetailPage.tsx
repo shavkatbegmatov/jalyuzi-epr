@@ -7,15 +7,16 @@ import {
   DollarSign,
   Warehouse,
   Ruler,
-  Thermometer,
-  Gauge,
-  Zap,
+  Palette,
+  Settings2,
   AlertCircle,
   FileText,
+  Wrench,
+  Square,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi } from '../../api/products.api';
-import { formatCurrency } from '../../config/constants';
+import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES } from '../../config/constants';
 import type { Product } from '../../types';
 
 export function ProductDetailPage() {
@@ -41,32 +42,22 @@ export function ProductDetailPage() {
     void loadProduct();
   }, [loadProduct]);
 
-  // Season label helper
-  const getSeasonLabel = (season?: string) => {
-    switch (season) {
-      case 'SUMMER':
-        return 'Yozgi';
-      case 'WINTER':
-        return 'Qishki';
-      case 'ALL_SEASON':
-        return 'Barcha mavsumlar';
-      default:
-        return '—';
-    }
+  // Blind type label helper
+  const getBlindTypeLabel = (type?: string) => {
+    if (!type) return '—';
+    return BLIND_TYPES[type as keyof typeof BLIND_TYPES]?.label || type;
   };
 
-  // Season badge style
-  const getSeasonBadgeClass = (season?: string) => {
-    switch (season) {
-      case 'SUMMER':
-        return 'badge-warning';
-      case 'WINTER':
-        return 'badge-info';
-      case 'ALL_SEASON':
-        return 'badge-success';
-      default:
-        return 'badge-ghost';
-    }
+  // Material label helper
+  const getMaterialLabel = (material?: string) => {
+    if (!material) return '—';
+    return BLIND_MATERIALS[material as keyof typeof BLIND_MATERIALS]?.label || material;
+  };
+
+  // Control type label helper
+  const getControlTypeLabel = (control?: string) => {
+    if (!control) return '—';
+    return CONTROL_TYPES[control as keyof typeof CONTROL_TYPES]?.label || control;
   };
 
   if (loading) {
@@ -117,9 +108,9 @@ export function ProductDetailPage() {
           {product.lowStock && (
             <span className="badge badge-warning">Kam qoldi</span>
           )}
-          {product.season && (
-            <span className={clsx('badge', getSeasonBadgeClass(product.season))}>
-              {getSeasonLabel(product.season)}
+          {product.blindType && (
+            <span className="badge badge-primary">
+              {getBlindTypeLabel(product.blindType)}
             </span>
           )}
         </div>
@@ -157,8 +148,12 @@ export function ProductDetailPage() {
               <DollarSign className="h-5 w-5 text-success" />
             </div>
             <div>
-              <p className="text-xs text-base-content/60">Sotish narxi</p>
-              <p className="font-semibold">{formatCurrency(product.sellingPrice)}</p>
+              <p className="text-xs text-base-content/60">Narx/m²</p>
+              <p className="font-semibold">
+                {product.pricePerSquareMeter
+                  ? formatCurrency(product.pricePerSquareMeter)
+                  : formatCurrency(product.sellingPrice)}
+              </p>
             </div>
           </div>
         </div>
@@ -186,87 +181,79 @@ export function ProductDetailPage() {
         {/* Technical Specifications */}
         <div className="surface-card p-4">
           <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-base-content/60 mb-4">
-            Texnik xususiyatlari
+            Jalyuzi xususiyatlari
           </h3>
           <div className="space-y-4">
-            {/* Size */}
-            {product.sizeString && (
+            {/* Blind Type */}
+            {product.blindType && (
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-base-200 p-2">
+                  <Square className="h-4 w-4 text-base-content/60" />
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/60">Jalyuzi turi</p>
+                  <p className="font-semibold">{getBlindTypeLabel(product.blindType)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Material */}
+            {product.material && (
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-base-200 p-2">
+                  <Package className="h-4 w-4 text-base-content/60" />
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/60">Material</p>
+                  <p className="font-semibold">{getMaterialLabel(product.material)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Color */}
+            {product.color && (
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-base-200 p-2">
+                  <Palette className="h-4 w-4 text-base-content/60" />
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/60">Rang</p>
+                  <p className="font-semibold">{product.color}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Control Type */}
+            {product.controlType && (
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-base-200 p-2">
+                  <Settings2 className="h-4 w-4 text-base-content/60" />
+                </div>
+                <div>
+                  <p className="text-xs text-base-content/60">Boshqaruv turi</p>
+                  <p className="font-semibold">{getControlTypeLabel(product.controlType)}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Size Range */}
+            {(product.minWidth || product.maxWidth || product.minHeight || product.maxHeight) && (
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-base-200 p-2">
                   <Ruler className="h-4 w-4 text-base-content/60" />
                 </div>
                 <div>
-                  <p className="text-xs text-base-content/60">O'lchami</p>
-                  <p className="font-semibold">{product.sizeString}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Dimensions breakdown */}
-            {(product.width || product.profile || product.diameter) && (
-              <div className="grid grid-cols-3 gap-4 pl-11">
-                {product.width && (
-                  <div>
-                    <p className="text-xs text-base-content/60">Kengligi</p>
-                    <p className="font-medium">{product.width} mm</p>
+                  <p className="text-xs text-base-content/60">O'lcham diapazoni</p>
+                  <div className="font-semibold text-sm">
+                    <p>Eni: {product.minWidth || 0} - {product.maxWidth || 0} mm</p>
+                    <p>Bo'yi: {product.minHeight || 0} - {product.maxHeight || 0} mm</p>
                   </div>
-                )}
-                {product.profile && (
-                  <div>
-                    <p className="text-xs text-base-content/60">Profil</p>
-                    <p className="font-medium">{product.profile}%</p>
-                  </div>
-                )}
-                {product.diameter && (
-                  <div>
-                    <p className="text-xs text-base-content/60">Diametr</p>
-                    <p className="font-medium">R{product.diameter}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Season */}
-            {product.season && (
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-base-200 p-2">
-                  <Thermometer className="h-4 w-4 text-base-content/60" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Mavsum</p>
-                  <p className="font-semibold">{getSeasonLabel(product.season)}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Load Index */}
-            {product.loadIndex && (
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-base-200 p-2">
-                  <Gauge className="h-4 w-4 text-base-content/60" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Yuklanish indeksi</p>
-                  <p className="font-semibold">{product.loadIndex}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Speed Rating */}
-            {product.speedRating && (
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-base-200 p-2">
-                  <Zap className="h-4 w-4 text-base-content/60" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Tezlik reytingi</p>
-                  <p className="font-semibold">{product.speedRating}</p>
                 </div>
               </div>
             )}
 
             {/* Show placeholder if no specs */}
-            {!product.sizeString && !product.season && !product.loadIndex && !product.speedRating && (
+            {!product.blindType && !product.material && !product.color && !product.controlType && (
               <p className="text-base-content/50 text-center py-4">
                 Texnik xususiyatlar mavjud emas
               </p>
@@ -280,30 +267,36 @@ export function ProductDetailPage() {
             Narx va ombor
           </h3>
           <div className="space-y-4">
+            {/* Price per m² */}
+            {product.pricePerSquareMeter !== undefined && (
+              <div className="flex items-center justify-between py-2 border-b border-base-200">
+                <span className="text-base-content/70">Narx/m²</span>
+                <span className="font-semibold text-success">{formatCurrency(product.pricePerSquareMeter)}</span>
+              </div>
+            )}
+
+            {/* Base Price */}
+            <div className="flex items-center justify-between py-2 border-b border-base-200">
+              <span className="text-base-content/70">Asosiy narx</span>
+              <span className="font-semibold">{formatCurrency(product.sellingPrice)}</span>
+            </div>
+
+            {/* Installation Price */}
+            {product.installationPrice !== undefined && product.installationPrice > 0 && (
+              <div className="flex items-center justify-between py-2 border-b border-base-200">
+                <span className="text-base-content/70 flex items-center gap-1">
+                  <Wrench className="h-4 w-4" />
+                  O'rnatish narxi
+                </span>
+                <span className="font-semibold text-info">{formatCurrency(product.installationPrice)}</span>
+              </div>
+            )}
+
             {/* Purchase Price */}
             {product.purchasePrice !== undefined && (
               <div className="flex items-center justify-between py-2 border-b border-base-200">
                 <span className="text-base-content/70">Xarid narxi</span>
                 <span className="font-semibold">{formatCurrency(product.purchasePrice)}</span>
-              </div>
-            )}
-
-            {/* Selling Price */}
-            <div className="flex items-center justify-between py-2 border-b border-base-200">
-              <span className="text-base-content/70">Sotish narxi</span>
-              <span className="font-semibold text-success">{formatCurrency(product.sellingPrice)}</span>
-            </div>
-
-            {/* Profit Margin */}
-            {product.purchasePrice !== undefined && product.purchasePrice > 0 && (
-              <div className="flex items-center justify-between py-2 border-b border-base-200">
-                <span className="text-base-content/70">Foyda</span>
-                <span className="font-semibold text-primary">
-                  {formatCurrency(product.sellingPrice - product.purchasePrice)}
-                  <span className="text-xs text-base-content/50 ml-1">
-                    ({Math.round(((product.sellingPrice - product.purchasePrice) / product.purchasePrice) * 100)}%)
-                  </span>
-                </span>
               </div>
             )}
 

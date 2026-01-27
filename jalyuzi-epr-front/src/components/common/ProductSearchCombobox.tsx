@@ -219,10 +219,10 @@ export function ProductSearchCombobox({
                 </p>
                 <div className="flex items-center gap-2 text-xs opacity-70">
                   <span>{highlightMatch(product.sku, value)}</span>
-                  {product.sizeString && (
+                  {product.color && (
                     <>
                       <span>|</span>
-                      <span>{product.sizeString}</span>
+                      <span>{product.color}</span>
                     </>
                   )}
                   {product.quantity !== undefined && (

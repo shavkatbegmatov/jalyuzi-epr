@@ -44,6 +44,23 @@ public class SaleItem extends BaseEntity implements Auditable {
     @Column(name = "total_price", nullable = false, precision = 15, scale = 2)
     private BigDecimal totalPrice;
 
+    // Maxsus o'lcham maydonlari (jalyuzi uchun)
+    @Column(name = "custom_width")
+    private Integer customWidth;  // mm
+
+    @Column(name = "custom_height")
+    private Integer customHeight;  // mm
+
+    @Column(name = "calculated_sqm", precision = 10, scale = 4)
+    private BigDecimal calculatedSqm;
+
+    @Column(name = "calculated_price", precision = 15, scale = 2)
+    private BigDecimal calculatedPrice;
+
+    @Column(name = "installation_included")
+    @Builder.Default
+    private Boolean installationIncluded = false;
+
     // ============================================
     // Auditable Interface Implementation
     // ============================================
@@ -62,6 +79,11 @@ public class SaleItem extends BaseEntity implements Auditable {
         map.put("unitPrice", this.unitPrice);
         map.put("discount", this.discount);
         map.put("totalPrice", this.totalPrice);
+        map.put("customWidth", this.customWidth);
+        map.put("customHeight", this.customHeight);
+        map.put("calculatedSqm", this.calculatedSqm);
+        map.put("calculatedPrice", this.calculatedPrice);
+        map.put("installationIncluded", this.installationIncluded);
 
         // Avoid lazy loading
         if (this.sale != null) {

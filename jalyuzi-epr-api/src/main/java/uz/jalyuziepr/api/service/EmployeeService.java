@@ -164,6 +164,12 @@ public class EmployeeService {
         return employeeRepository.findAllDepartments();
     }
 
+    public List<EmployeeResponse> getActiveTechnicians() {
+        return employeeRepository.findActiveTechnicians().stream()
+                .map(EmployeeResponse::from)
+                .collect(Collectors.toList());
+    }
+
     public List<User> getAvailableUsers() {
         List<Long> linkedUserIds = employeeRepository.findAll().stream()
                 .filter(e -> e.getUser() != null)

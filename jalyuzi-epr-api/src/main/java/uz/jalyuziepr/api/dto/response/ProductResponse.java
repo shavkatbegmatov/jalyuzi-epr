@@ -8,7 +8,9 @@ import uz.jalyuziepr.api.annotation.ExportColumn;
 import uz.jalyuziepr.api.annotation.ExportColumn.ColumnType;
 import uz.jalyuziepr.api.annotation.ExportEntity;
 import uz.jalyuziepr.api.entity.Product;
-import uz.jalyuziepr.api.enums.Season;
+import uz.jalyuziepr.api.enums.BlindMaterial;
+import uz.jalyuziepr.api.enums.BlindType;
+import uz.jalyuziepr.api.enums.ControlType;
 
 import java.math.BigDecimal;
 
@@ -18,7 +20,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @ExportEntity(
     sheetName = "Mahsulotlar",
-    title = "Mahsulotlar Hisoboti",
+    title = "Jalyuzi Mahsulotlari Hisoboti",
     orientation = ExportEntity.Orientation.LANDSCAPE
 )
 public class ProductResponse {
@@ -34,53 +36,68 @@ public class ProductResponse {
     @ExportColumn(header = "Brend", order = 4)
     private String brandName;
 
-    private Long brandId; // Not exported
+    private Long brandId;
 
     @ExportColumn(header = "Kategoriya", order = 5)
     private String categoryName;
 
-    private Long categoryId; // Not exported
+    private Long categoryId;
 
-    @ExportColumn(header = "Kenglik", order = 6, type = ColumnType.NUMBER)
-    private Integer width;
+    // Jalyuzi xususiyatlari
+    @ExportColumn(header = "Turi", order = 6, type = ColumnType.ENUM)
+    private BlindType blindType;
 
-    @ExportColumn(header = "Profil", order = 7, type = ColumnType.NUMBER)
-    private Integer profile;
+    @ExportColumn(header = "Material", order = 7, type = ColumnType.ENUM)
+    private BlindMaterial material;
 
-    @ExportColumn(header = "Diametr", order = 8, type = ColumnType.NUMBER)
-    private Integer diameter;
+    @ExportColumn(header = "Rang", order = 8)
+    private String color;
 
-    @ExportColumn(header = "O'lcham", order = 9)
-    private String sizeString;
+    @ExportColumn(header = "Boshqaruv", order = 9, type = ColumnType.ENUM)
+    private ControlType controlType;
 
-    @ExportColumn(header = "Yuk indeksi", order = 10)
-    private String loadIndex;
+    // O'lcham cheklovlari
+    @ExportColumn(header = "Min kenglik", order = 10, type = ColumnType.NUMBER)
+    private Integer minWidth;
 
-    @ExportColumn(header = "Tezlik reytingi", order = 11)
-    private String speedRating;
+    @ExportColumn(header = "Max kenglik", order = 11, type = ColumnType.NUMBER)
+    private Integer maxWidth;
 
-    @ExportColumn(header = "Mavsum", order = 12, type = ColumnType.ENUM)
-    private Season season;
+    @ExportColumn(header = "Min balandlik", order = 12, type = ColumnType.NUMBER)
+    private Integer minHeight;
 
-    @ExportColumn(header = "Xarid narxi", order = 13, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "Max balandlik", order = 13, type = ColumnType.NUMBER)
+    private Integer maxHeight;
+
+    @ExportColumn(header = "O'lcham diapazoni", order = 14)
+    private String sizeRangeString;
+
+    // Narxlar
+    @ExportColumn(header = "Xarid narxi", order = 15, type = ColumnType.CURRENCY)
     private BigDecimal purchasePrice;
 
-    @ExportColumn(header = "Sotuv narxi", order = 14, type = ColumnType.CURRENCY)
+    @ExportColumn(header = "Sotuv narxi", order = 16, type = ColumnType.CURRENCY)
     private BigDecimal sellingPrice;
 
-    @ExportColumn(header = "Miqdor", order = 15, type = ColumnType.NUMBER)
+    @ExportColumn(header = "Narx/m²", order = 17, type = ColumnType.CURRENCY)
+    private BigDecimal pricePerSquareMeter;
+
+    @ExportColumn(header = "O'rnatish narxi", order = 18, type = ColumnType.CURRENCY)
+    private BigDecimal installationPrice;
+
+    @ExportColumn(header = "Miqdor", order = 19, type = ColumnType.NUMBER)
     private Integer quantity;
 
-    @ExportColumn(header = "Minimal zaxira", order = 16, type = ColumnType.NUMBER)
+    @ExportColumn(header = "Minimal zaxira", order = 20, type = ColumnType.NUMBER)
     private Integer minStockLevel;
 
-    @ExportColumn(header = "Kam zaxira", order = 17, type = ColumnType.BOOLEAN)
+    @ExportColumn(header = "Kam zaxira", order = 21, type = ColumnType.BOOLEAN)
     private boolean lowStock;
 
-    private String description; // Not exported
-    private String imageUrl; // Not exported
+    private String description;
+    private String imageUrl;
 
-    @ExportColumn(header = "Faol", order = 18, type = ColumnType.BOOLEAN)
+    @ExportColumn(header = "Faol", order = 22, type = ColumnType.BOOLEAN)
     private Boolean active;
 
     public static ProductResponse from(Product product) {
@@ -92,15 +109,19 @@ public class ProductResponse {
                 .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .width(product.getWidth())
-                .profile(product.getProfile())
-                .diameter(product.getDiameter())
-                .sizeString(product.getSizeString())
-                .loadIndex(product.getLoadIndex())
-                .speedRating(product.getSpeedRating())
-                .season(product.getSeason())
+                .blindType(product.getBlindType())
+                .material(product.getMaterial())
+                .color(product.getColor())
+                .controlType(product.getControlType())
+                .minWidth(product.getMinWidth())
+                .maxWidth(product.getMaxWidth())
+                .minHeight(product.getMinHeight())
+                .maxHeight(product.getMaxHeight())
+                .sizeRangeString(product.getSizeRangeString())
                 .purchasePrice(product.getPurchasePrice())
                 .sellingPrice(product.getSellingPrice())
+                .pricePerSquareMeter(product.getPricePerSquareMeter())
+                .installationPrice(product.getInstallationPrice())
                 .quantity(product.getQuantity())
                 .minStockLevel(product.getMinStockLevel())
                 .lowStock(product.getQuantity() <= product.getMinStockLevel())

@@ -136,7 +136,14 @@ export interface PagedResponse<T> {
   first: boolean;
 }
 
-// Product Types
+// Jalyuzi Enum Types
+export type BlindType = 'ROLLER' | 'VERTICAL' | 'HORIZONTAL' | 'ROMAN' | 'CELLULAR' | 'MOTORIZED';
+export type BlindMaterial = 'ALUMINUM' | 'WOOD' | 'FABRIC' | 'PVC' | 'BAMBOO';
+export type ControlType = 'CHAIN' | 'CORD' | 'MOTORIZED' | 'REMOTE' | 'SMART';
+export type OrderType = 'PRODUCT_SALE' | 'INSTALLATION' | 'MEASUREMENT' | 'CONSULTATION';
+export type InstallationStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+
+// Product Types (deprecated - keeping for compatibility)
 export type Season = 'SUMMER' | 'WINTER' | 'ALL_SEASON';
 
 export interface Brand {
@@ -165,15 +172,23 @@ export interface Product {
   brandId?: number;
   categoryName?: string;
   categoryId?: number;
-  width?: number;
-  profile?: number;
-  diameter?: number;
-  sizeString?: string;
-  loadIndex?: string;
-  speedRating?: string;
-  season?: Season;
+  // Jalyuzi xususiyatlari
+  blindType?: BlindType;
+  material?: BlindMaterial;
+  color?: string;
+  controlType?: ControlType;
+  // O'lcham cheklovlari (mm)
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  sizeRangeString?: string;
+  // Narxlar
   purchasePrice?: number;
   sellingPrice: number;
+  pricePerSquareMeter?: number;
+  installationPrice?: number;
+  // Zaxira
   quantity: number;
   minStockLevel: number;
   lowStock: boolean;
@@ -187,14 +202,22 @@ export interface ProductRequest {
   name: string;
   brandId?: number;
   categoryId?: number;
-  width?: number;
-  profile?: number;
-  diameter?: number;
-  loadIndex?: string;
-  speedRating?: string;
-  season?: Season;
+  // Jalyuzi xususiyatlari
+  blindType?: BlindType;
+  material?: BlindMaterial;
+  color?: string;
+  controlType?: ControlType;
+  // O'lcham cheklovlari (mm)
+  minWidth?: number;
+  maxWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  // Narxlar
   purchasePrice?: number;
   sellingPrice: number;
+  pricePerSquareMeter?: number;
+  installationPrice?: number;
+  // Zaxira
   quantity?: number;
   minStockLevel?: number;
   description?: string;
@@ -216,6 +239,12 @@ export interface Customer {
   hasDebt: boolean;
   notes?: string;
   active: boolean;
+  // O'rnatish xizmati maydonlari
+  installationAddress?: string;
+  accessInstructions?: string;
+  preferredTimeMorning?: boolean;
+  preferredTimeAfternoon?: boolean;
+  preferredTimeEvening?: boolean;
 }
 
 export interface CustomerRequest {
@@ -226,6 +255,12 @@ export interface CustomerRequest {
   companyName?: string;
   customerType?: CustomerType;
   notes?: string;
+  // O'rnatish xizmati maydonlari
+  installationAddress?: string;
+  accessInstructions?: string;
+  preferredTimeMorning?: boolean;
+  preferredTimeAfternoon?: boolean;
+  preferredTimeEvening?: boolean;
 }
 
 // Sale Types
@@ -243,6 +278,12 @@ export interface SaleItem {
   unitPrice: number;
   discount: number;
   totalPrice: number;
+  // Jalyuzi maxsus o'lcham
+  customWidth?: number;
+  customHeight?: number;
+  calculatedSqm?: number;
+  calculatedPrice?: number;
+  installationIncluded?: boolean;
 }
 
 export interface Sale {
@@ -264,6 +305,14 @@ export interface Sale {
   notes?: string;
   createdByName?: string;
   items?: SaleItem[];
+  // O'rnatish xizmati maydonlari
+  orderType?: OrderType;
+  installationDate?: string;
+  installationAddress?: string;
+  installationNotes?: string;
+  technicianId?: number;
+  technicianName?: string;
+  installationStatus?: InstallationStatus;
 }
 
 export interface SaleItemRequest {
@@ -271,6 +320,10 @@ export interface SaleItemRequest {
   quantity: number;
   discount?: number;
   customPrice?: number;
+  // Jalyuzi maxsus o'lcham (mm)
+  customWidth?: number;
+  customHeight?: number;
+  installationIncluded?: boolean;
 }
 
 export interface SaleRequest {
@@ -281,6 +334,12 @@ export interface SaleRequest {
   paidAmount: number;
   paymentMethod: PaymentMethod;
   notes?: string;
+  // O'rnatish xizmati maydonlari
+  orderType?: OrderType;
+  installationDate?: string;
+  installationAddress?: string;
+  installationNotes?: string;
+  technicianId?: number;
 }
 
 // Debt Types
@@ -755,6 +814,10 @@ export interface Employee {
   hasUserAccount: boolean;
   // Yangi yaratilgan credential'lar (faqat bir marta ko'rsatiladi)
   newCredentials?: CredentialsInfo;
+  // Texnik maydonlari
+  isTechnician?: boolean;
+  technicianSkills?: string;
+  maxDailyInstallations?: number;
 }
 
 export interface EmployeeRequest {
@@ -776,6 +839,61 @@ export interface EmployeeRequest {
   // User yaratish
   createUserAccount?: boolean;
   roleCode?: string;
+}
+
+// Installation Types
+export interface Installation {
+  id: number;
+  saleId: number;
+  invoiceNumber?: string;
+  technicianId: number;
+  technicianName?: string;
+  customerName?: string;
+  customerPhone?: string;
+  scheduledDate: string;
+  scheduledTimeStart?: string;
+  scheduledTimeEnd?: string;
+  actualDate?: string;
+  actualTimeStart?: string;
+  actualTimeEnd?: string;
+  status: InstallationStatus;
+  address: string;
+  contactPhone?: string;
+  accessInstructions?: string;
+  notes?: string;
+  completionNotes?: string;
+  customerSignature?: string;
+  photosBefore?: string;
+  photosAfter?: string;
+  createdAt?: string;
+  createdByName?: string;
+}
+
+export interface InstallationRequest {
+  saleId: number;
+  technicianId: number;
+  scheduledDate: string;
+  scheduledTimeStart?: string;
+  scheduledTimeEnd?: string;
+  address: string;
+  contactPhone?: string;
+  accessInstructions?: string;
+  notes?: string;
+}
+
+export interface PriceCalculationResponse {
+  productId: number;
+  productName: string;
+  width: number;
+  height: number;
+  squareMeters?: number;
+  productPrice?: number;
+  installationPrice?: number;
+  totalPrice?: number;
+  pricePerSquareMeter?: number;
+  basePrice?: number;
+  validSize: boolean;
+  validationMessage?: string;
 }
 
 // Audit Log Detail Types

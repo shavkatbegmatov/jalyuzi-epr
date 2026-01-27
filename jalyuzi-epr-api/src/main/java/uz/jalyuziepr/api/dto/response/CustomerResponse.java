@@ -54,6 +54,15 @@ public class CustomerResponse {
     @ExportColumn(header = "Faol", order = 11, type = ColumnType.BOOLEAN)
     private Boolean active;
 
+    // O'rnatish xizmati maydonlari
+    @ExportColumn(header = "O'rnatish manzili", order = 12)
+    private String installationAddress;
+
+    private String accessInstructions;
+    private Boolean preferredTimeMorning;
+    private Boolean preferredTimeAfternoon;
+    private Boolean preferredTimeEvening;
+
     public static CustomerResponse from(Customer customer) {
         return CustomerResponse.builder()
                 .id(customer.getId())
@@ -67,6 +76,11 @@ public class CustomerResponse {
                 .hasDebt(customer.getBalance().compareTo(BigDecimal.ZERO) < 0)
                 .notes(customer.getNotes())
                 .active(customer.getActive())
+                .installationAddress(customer.getInstallationAddress())
+                .accessInstructions(customer.getAccessInstructions())
+                .preferredTimeMorning(customer.getPreferredTimeMorning())
+                .preferredTimeAfternoon(customer.getPreferredTimeAfternoon())
+                .preferredTimeEvening(customer.getPreferredTimeEvening())
                 .build();
     }
 }

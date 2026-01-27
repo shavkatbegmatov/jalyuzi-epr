@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import uz.jalyuziepr.api.entity.Product;
-import uz.jalyuziepr.api.enums.Season;
+import uz.jalyuziepr.api.enums.BlindMaterial;
+import uz.jalyuziepr.api.enums.BlindType;
+import uz.jalyuziepr.api.enums.ControlType;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,12 +37,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "WHERE p.active = true " +
             "AND (:brandId IS NULL OR b.id = :brandId) " +
             "AND (:categoryId IS NULL OR c.id = :categoryId) " +
-            "AND (:season IS NULL OR p.season = :season) " +
+            "AND (:blindType IS NULL OR p.blindType = :blindType) " +
+            "AND (:material IS NULL OR p.material = :material) " +
+            "AND (:controlType IS NULL OR p.controlType = :controlType) " +
             "AND (:search IS NULL OR :search = '' OR LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(p.sku) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Product> findWithFilters(
             @Param("brandId") Long brandId,
             @Param("categoryId") Long categoryId,
-            @Param("season") Season season,
+            @Param("blindType") BlindType blindType,
+            @Param("material") BlindMaterial material,
+            @Param("controlType") ControlType controlType,
             @Param("search") String search,
             Pageable pageable
     );
@@ -57,4 +63,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByBrandIdAndActiveTrue(Long brandId);
 
     List<Product> findByCategoryIdAndActiveTrue(Long categoryId);
+
+    List<Product> findByBlindTypeAndActiveTrue(BlindType blindType);
+
+    List<Product> findByMaterialAndActiveTrue(BlindMaterial material);
+
+    List<Product> findByControlTypeAndActiveTrue(ControlType controlType);
 }

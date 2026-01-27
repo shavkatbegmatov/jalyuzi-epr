@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import uz.jalyuziepr.api.enums.Season;
+import uz.jalyuziepr.api.enums.BlindMaterial;
+import uz.jalyuziepr.api.enums.BlindType;
+import uz.jalyuziepr.api.enums.ControlType;
 
 import java.math.BigDecimal;
 
@@ -26,28 +28,41 @@ public class ProductRequest {
     private Long brandId;
     private Long categoryId;
 
-    @Min(value = 100, message = "Kenglik kamida 100 mm bo'lishi kerak")
-    @Max(value = 400, message = "Kenglik 400 mm dan oshmasligi kerak")
-    private Integer width;
+    // Jalyuzi xususiyatlari
+    private BlindType blindType;
+    private BlindMaterial material;
 
-    @Min(value = 20, message = "Profil kamida 20% bo'lishi kerak")
-    @Max(value = 100, message = "Profil 100% dan oshmasligi kerak")
-    private Integer profile;
+    @Size(max = 50, message = "Rang 50 ta belgidan oshmasligi kerak")
+    private String color;
 
-    @Min(value = 10, message = "Diametr kamida 10 dyuym bo'lishi kerak")
-    @Max(value = 30, message = "Diametr 30 dyuymdan oshmasligi kerak")
-    private Integer diameter;
+    private ControlType controlType;
 
-    private String loadIndex;
-    private String speedRating;
-    private Season season;
+    // O'lcham cheklovlari (mm)
+    @Min(value = 100, message = "Minimal kenglik kamida 100 mm bo'lishi kerak")
+    private Integer minWidth;
 
+    @Max(value = 5000, message = "Maksimal kenglik 5000 mm dan oshmasligi kerak")
+    private Integer maxWidth;
+
+    @Min(value = 100, message = "Minimal balandlik kamida 100 mm bo'lishi kerak")
+    private Integer minHeight;
+
+    @Max(value = 5000, message = "Maksimal balandlik 5000 mm dan oshmasligi kerak")
+    private Integer maxHeight;
+
+    // Narxlar
     @DecimalMin(value = "0", message = "Sotib olish narxi manfiy bo'lmasligi kerak")
     private BigDecimal purchasePrice;
 
     @NotNull(message = "Sotish narxi kiritilishi shart")
     @DecimalMin(value = "0.01", message = "Sotish narxi musbat bo'lishi kerak")
     private BigDecimal sellingPrice;
+
+    @DecimalMin(value = "0", message = "Kvadrat metr narxi manfiy bo'lmasligi kerak")
+    private BigDecimal pricePerSquareMeter;
+
+    @DecimalMin(value = "0", message = "O'rnatish narxi manfiy bo'lmasligi kerak")
+    private BigDecimal installationPrice;
 
     @Min(value = 0, message = "Miqdor manfiy bo'lmasligi kerak")
     @Builder.Default

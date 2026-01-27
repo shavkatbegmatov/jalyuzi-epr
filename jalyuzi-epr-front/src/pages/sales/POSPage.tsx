@@ -275,7 +275,7 @@ export function POSPage() {
                     {product.name}
                   </h3>
                   <p className="mt-1 text-xs text-base-content/60">
-                    {product.sizeString || "O'lcham ko'rsatilmagan"}
+                    {product.color || product.blindType || "Ma'lumot yo'q"}
                   </p>
                 </div>
                 <div className="mt-3 flex items-center justify-between">

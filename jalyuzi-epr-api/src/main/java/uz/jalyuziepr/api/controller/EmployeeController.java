@@ -88,6 +88,13 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success(employeeService.getAllDepartments()));
     }
 
+    @GetMapping("/technicians")
+    @RequiresPermission(PermissionCode.EMPLOYEES_VIEW)
+    @Operation(summary = "Get active technicians", description = "Faol texniklarni olish")
+    public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getActiveTechnicians() {
+        return ResponseEntity.ok(ApiResponse.success(employeeService.getActiveTechnicians()));
+    }
+
     @GetMapping("/available-users")
     @RequiresPermission(PermissionCode.EMPLOYEES_VIEW)
     @Operation(summary = "Get available users", description = "Xodimga bog'lanmagan foydalanuvchilar")

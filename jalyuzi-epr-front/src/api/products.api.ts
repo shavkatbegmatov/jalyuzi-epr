@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, Brand, Category, PagedResponse, Product, ProductRequest, Season } from '../types';
+import type { ApiResponse, BlindMaterial, BlindType, Brand, Category, ControlType, PagedResponse, PriceCalculationResponse, Product, ProductRequest } from '../types';
 import { createExportApi } from './export.utils';
 
 export interface ProductFilters {
@@ -8,7 +8,16 @@ export interface ProductFilters {
   search?: string;
   brandId?: number;
   categoryId?: number;
-  season?: Season;
+  blindType?: BlindType;
+  material?: BlindMaterial;
+  controlType?: ControlType;
+}
+
+export interface PriceCalculationParams {
+  productId: number;
+  widthMm: number;
+  heightMm: number;
+  includeInstallation?: boolean;
 }
 
 export const productsApi = {
@@ -19,9 +28,24 @@ export const productsApi = {
     if (filters.search) params.append('search', filters.search);
     if (filters.brandId) params.append('brandId', filters.brandId.toString());
     if (filters.categoryId) params.append('categoryId', filters.categoryId.toString());
-    if (filters.season) params.append('season', filters.season);
+    if (filters.blindType) params.append('blindType', filters.blindType);
+    if (filters.material) params.append('material', filters.material);
+    if (filters.controlType) params.append('controlType', filters.controlType);
 
     const response = await api.get<ApiResponse<PagedResponse<Product>>>(`/v1/products?${params}`);
+    return response.data.data;
+  },
+
+  calculatePrice: async (params: PriceCalculationParams): Promise<PriceCalculationResponse> => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('productId', params.productId.toString());
+    queryParams.append('widthMm', params.widthMm.toString());
+    queryParams.append('heightMm', params.heightMm.toString());
+    if (params.includeInstallation !== undefined) {
+      queryParams.append('includeInstallation', params.includeInstallation.toString());
+    }
+
+    const response = await api.get<ApiResponse<PriceCalculationResponse>>(`/v1/products/calculate-price?${queryParams}`);
     return response.data.data;
   },
 

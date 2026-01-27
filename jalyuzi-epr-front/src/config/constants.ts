@@ -55,6 +55,52 @@ export const getDateYearsAgo = (years: number): string => {
   return formatDateForApi(date);
 };
 
+// Jalyuzi turlari
+export const BLIND_TYPES = {
+  ROLLER: { label: 'Roletka', value: 'ROLLER' },
+  VERTICAL: { label: 'Vertikal', value: 'VERTICAL' },
+  HORIZONTAL: { label: 'Gorizontal', value: 'HORIZONTAL' },
+  ROMAN: { label: 'Rim pardasi', value: 'ROMAN' },
+  CELLULAR: { label: 'Uyali', value: 'CELLULAR' },
+  MOTORIZED: { label: 'Motorli', value: 'MOTORIZED' },
+} as const;
+
+// Jalyuzi materiallari
+export const BLIND_MATERIALS = {
+  ALUMINUM: { label: 'Alyuminiy', value: 'ALUMINUM' },
+  WOOD: { label: "Yog'och", value: 'WOOD' },
+  FABRIC: { label: 'Mato', value: 'FABRIC' },
+  PVC: { label: 'PVC', value: 'PVC' },
+  BAMBOO: { label: 'Bambuk', value: 'BAMBOO' },
+} as const;
+
+// Boshqaruv turlari
+export const CONTROL_TYPES = {
+  CHAIN: { label: 'Zanjirli', value: 'CHAIN' },
+  CORD: { label: 'Ipli', value: 'CORD' },
+  MOTORIZED: { label: 'Motorli', value: 'MOTORIZED' },
+  REMOTE: { label: 'Pultli', value: 'REMOTE' },
+  SMART: { label: 'Smart', value: 'SMART' },
+} as const;
+
+// Buyurtma turlari
+export const ORDER_TYPES = {
+  PRODUCT_SALE: { label: 'Mahsulot sotish', value: 'PRODUCT_SALE' },
+  INSTALLATION: { label: "O'rnatish", value: 'INSTALLATION' },
+  MEASUREMENT: { label: "O'lchov", value: 'MEASUREMENT' },
+  CONSULTATION: { label: 'Konsultatsiya', value: 'CONSULTATION' },
+} as const;
+
+// O'rnatish statuslari
+export const INSTALLATION_STATUSES = {
+  PENDING: { label: 'Kutilmoqda', value: 'PENDING', color: 'badge-warning' },
+  SCHEDULED: { label: 'Rejalashtirilgan', value: 'SCHEDULED', color: 'badge-info' },
+  IN_PROGRESS: { label: 'Jarayonda', value: 'IN_PROGRESS', color: 'badge-primary' },
+  COMPLETED: { label: 'Bajarildi', value: 'COMPLETED', color: 'badge-success' },
+  CANCELLED: { label: 'Bekor qilindi', value: 'CANCELLED', color: 'badge-error' },
+} as const;
+
+// Deprecated - eski tizim uchun
 export const SEASONS = {
   SUMMER: { label: 'Yozgi', value: 'SUMMER' },
   WINTER: { label: 'Qishki', value: 'WINTER' },
@@ -153,4 +199,26 @@ export const formatDateTime = (dateStr: string): string => {
     hour: '2-digit',
     minute: '2-digit',
   });
+};
+
+// Kvadrat metr hisoblash (mm dan m² ga)
+export const calculateSquareMeters = (widthMm: number, heightMm: number): number => {
+  return (widthMm * heightMm) / 1_000_000;
+};
+
+// Kvadrat metr formati
+export const formatSquareMeters = (sqm: number): string => {
+  return sqm.toFixed(2) + ' m²';
+};
+
+// O'lcham formati (mm)
+export const formatDimensions = (widthMm: number, heightMm: number): string => {
+  return `${widthMm} x ${heightMm} mm`;
+};
+
+// Vaqt formati (HH:mm)
+export const formatTime = (timeStr: string): string => {
+  if (!timeStr) return '—';
+  // Backend'dan "HH:mm:ss" yoki "HH:mm" formatida keladi
+  return timeStr.substring(0, 5);
 };

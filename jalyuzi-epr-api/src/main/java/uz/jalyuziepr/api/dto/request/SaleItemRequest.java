@@ -29,4 +29,15 @@ public class SaleItemRequest {
 
     // Agar narx o'zgartirilsa
     private BigDecimal customPrice;
+
+    // Jalyuzi uchun maxsus o'lcham (mm)
+    @Min(value = 100, message = "Kenglik kamida 100 mm bo'lishi kerak")
+    private Integer customWidth;
+
+    @Min(value = 100, message = "Balandlik kamida 100 mm bo'lishi kerak")
+    private Integer customHeight;
+
+    // O'rnatish xizmati
+    @Builder.Default
+    private Boolean installationIncluded = false;
 }

@@ -18,9 +18,12 @@ import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.request.ProductRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
+import uz.jalyuziepr.api.dto.response.PriceCalculationResponse;
 import uz.jalyuziepr.api.dto.response.ProductResponse;
+import uz.jalyuziepr.api.enums.BlindMaterial;
+import uz.jalyuziepr.api.enums.BlindType;
+import uz.jalyuziepr.api.enums.ControlType;
 import uz.jalyuziepr.api.enums.PermissionCode;
-import uz.jalyuziepr.api.enums.Season;
 import uz.jalyuziepr.api.security.RequiresPermission;
 import uz.jalyuziepr.api.service.ProductService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
@@ -32,7 +35,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/v1/products")
 @RequiredArgsConstructor
-@Tag(name = "Products", description = "Mahsulotlar API")
+@Tag(name = "Products", description = "Jalyuzi mahsulotlari API")
 public class ProductController {
 
     private final ProductService productService;
@@ -44,13 +47,14 @@ public class ProductController {
     public ResponseEntity<ApiResponse<PagedResponse<ProductResponse>>> getAllProducts(
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Season season,
+            @RequestParam(required = false) BlindType blindType,
+            @RequestParam(required = false) BlindMaterial material,
+            @RequestParam(required = false) ControlType controlType,
             @RequestParam(required = false) String search,
             @PageableDefault(size = 20) Pageable pageable) {
 
-        // Always use filtered query - it handles null values correctly
         Page<ProductResponse> products = productService.getProductsWithFilters(
-                brandId, categoryId, season, search, pageable);
+                brandId, categoryId, blindType, material, controlType, search, pageable);
 
         return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(products)));
     }
@@ -74,6 +78,18 @@ public class ProductController {
     @RequiresPermission(PermissionCode.PRODUCTS_VIEW)
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getLowStockProducts() {
         return ResponseEntity.ok(ApiResponse.success(productService.getLowStockProducts()));
+    }
+
+    @GetMapping("/{id}/calculate-price")
+    @Operation(summary = "Calculate price", description = "O'lcham bo'yicha narx hisoblash")
+    @RequiresPermission(PermissionCode.PRODUCTS_VIEW)
+    public ResponseEntity<ApiResponse<PriceCalculationResponse>> calculatePrice(
+            @PathVariable Long id,
+            @RequestParam Integer width,
+            @RequestParam Integer height,
+            @RequestParam(defaultValue = "false") Boolean includeInstallation) {
+        PriceCalculationResponse result = productService.calculatePrice(id, width, height, includeInstallation);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @PostMapping
@@ -120,26 +136,25 @@ public class ProductController {
     public ResponseEntity<Resource> exportProducts(
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Season season,
+            @RequestParam(required = false) BlindType blindType,
+            @RequestParam(required = false) BlindMaterial material,
+            @RequestParam(required = false) ControlType controlType,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "excel") String format,
             @RequestParam(defaultValue = "10000") int maxRecords
     ) {
         try {
-            // Reuse existing filter logic
             Pageable pageable = PageRequest.of(0, maxRecords);
             Page<ProductResponse> page = productService.getProductsWithFilters(
-                    brandId, categoryId, season, search, pageable);
+                    brandId, categoryId, blindType, material, controlType, search, pageable);
 
-            // Generic export
             ByteArrayOutputStream output = genericExportService.export(
                     page.getContent(),
                     ProductResponse.class,
                     GenericExportService.ExportFormat.valueOf(format.toUpperCase()),
-                    "Mahsulotlar Hisoboti"
+                    "Jalyuzi Mahsulotlari Hisoboti"
             );
 
-            // Build response
             String extension = format.equalsIgnoreCase("excel") ? "xlsx" : "pdf";
             String contentType = format.equalsIgnoreCase("excel")
                     ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

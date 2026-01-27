@@ -6,9 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uz.jalyuziepr.api.enums.OrderType;
 import uz.jalyuziepr.api.enums.PaymentMethod;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -40,4 +42,18 @@ public class SaleRequest {
     private PaymentMethod paymentMethod;
 
     private String notes;
+
+    // O'rnatish xizmati maydonlari
+    @Builder.Default
+    private OrderType orderType = OrderType.PRODUCT_SALE;
+
+    private LocalDateTime installationDate;
+
+    @Size(max = 500, message = "O'rnatish manzili 500 ta belgidan oshmasligi kerak")
+    private String installationAddress;
+
+    @Size(max = 1000, message = "O'rnatish eslatmalari 1000 ta belgidan oshmasligi kerak")
+    private String installationNotes;
+
+    private Long technicianId;
 }

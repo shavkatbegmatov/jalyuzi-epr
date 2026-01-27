@@ -38,6 +38,11 @@ export const employeesApi = {
     return response.data.data;
   },
 
+  getTechnicians: async (): Promise<Employee[]> => {
+    const response = await api.get<ApiResponse<Employee[]>>('/v1/employees/technicians');
+    return response.data.data;
+  },
+
   getAvailableUsers: async (): Promise<User[]> => {
     const response = await api.get<ApiResponse<User[]>>('/v1/employees/available-users');
     return response.data.data;

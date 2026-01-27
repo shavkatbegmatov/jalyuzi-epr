@@ -7,6 +7,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import uz.jalyuziepr.api.audit.Auditable;
 import uz.jalyuziepr.api.audit.AuditEntityListener;
 import uz.jalyuziepr.api.entity.base.BaseEntity;
+import uz.jalyuziepr.api.enums.InstallationStatus;
+import uz.jalyuziepr.api.enums.OrderType;
 import uz.jalyuziepr.api.enums.PaymentMethod;
 import uz.jalyuziepr.api.enums.PaymentStatus;
 import uz.jalyuziepr.api.enums.SaleStatus;
@@ -77,6 +79,29 @@ public class Sale extends BaseEntity implements Auditable {
     @Column(length = 500)
     private String notes;
 
+    // O'rnatish xizmati maydonlari
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_type", length = 20)
+    @Builder.Default
+    private OrderType orderType = OrderType.PRODUCT_SALE;
+
+    @Column(name = "installation_date")
+    private LocalDateTime installationDate;
+
+    @Column(name = "installation_address", length = 500)
+    private String installationAddress;
+
+    @Column(name = "installation_notes", length = 1000)
+    private String installationNotes;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "technician_id")
+    private Employee technician;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "installation_status", length = 20)
+    private InstallationStatus installationStatus;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
@@ -127,6 +152,11 @@ public class Sale extends BaseEntity implements Auditable {
         map.put("paymentStatus", this.paymentStatus);
         map.put("status", this.status);
         map.put("notes", this.notes);
+        map.put("orderType", this.orderType);
+        map.put("installationDate", this.installationDate);
+        map.put("installationAddress", this.installationAddress);
+        map.put("installationNotes", this.installationNotes);
+        map.put("installationStatus", this.installationStatus);
 
         // Avoid lazy loading
         if (this.customer != null) {
@@ -134,6 +164,9 @@ public class Sale extends BaseEntity implements Auditable {
         }
         if (this.createdBy != null) {
             map.put("createdById", this.createdBy.getId());
+        }
+        if (this.technician != null) {
+            map.put("technicianId", this.technician.getId());
         }
         if (this.items != null) {
             map.put("itemCount", this.items.size());

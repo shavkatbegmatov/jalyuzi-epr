@@ -16,6 +16,7 @@ import {
   UserCog,
   Shield,
   FileText,
+  Wrench,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -28,6 +29,7 @@ const menuItems = [
   { path: '/products', icon: Package, label: 'Mahsulotlar', permission: PermissionCode.PRODUCTS_VIEW },
   { path: '/pos', icon: ShoppingCart, label: 'Kassa (POS)', permission: PermissionCode.SALES_CREATE },
   { path: '/sales', icon: CreditCard, label: 'Sotuvlar', permission: PermissionCode.SALES_VIEW },
+  { path: '/installations', icon: Wrench, label: "O'rnatishlar", permission: PermissionCode.SALES_VIEW },
   { path: '/customers', icon: Users, label: 'Mijozlar', permission: PermissionCode.CUSTOMERS_VIEW },
   { path: '/debts', icon: CreditCard, label: 'Qarzlar', permission: PermissionCode.DEBTS_VIEW },
   { path: '/warehouse', icon: Warehouse, label: 'Ombor', permission: PermissionCode.WAREHOUSE_VIEW },
