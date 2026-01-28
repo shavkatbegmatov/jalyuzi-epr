@@ -19,45 +19,6 @@ import { useHighlight } from '../../hooks/useHighlight';
 import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductType, UnitType, ProductRequest, ProductTypeEntity } from '../../types';
 import type { LucideIcon } from 'lucide-react';
 
-// Mahsulot turi kartalari konfiguratsiyasi
-const PRODUCT_TYPE_CARDS: {
-  type: ProductType;
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  gradient: string;
-  borderColor: string;
-  iconColor: string;
-}[] = [
-  {
-    type: 'FINISHED_PRODUCT',
-    icon: Blinds,
-    title: 'Tayyor Jalyuzi',
-    description: "O'rnatishga tayyor mahsulotlar",
-    gradient: 'from-primary/20 to-primary/5',
-    borderColor: 'border-primary',
-    iconColor: 'text-primary',
-  },
-  {
-    type: 'RAW_MATERIAL',
-    icon: Layers,
-    title: 'Xomashyo',
-    description: 'Ishlab chiqarish materiallari',
-    gradient: 'from-secondary/20 to-secondary/5',
-    borderColor: 'border-secondary',
-    iconColor: 'text-secondary',
-  },
-  {
-    type: 'ACCESSORY',
-    icon: Wrench,
-    title: 'Aksessuar',
-    description: "Qo'shimcha qismlar va jihozlar",
-    gradient: 'from-accent/20 to-accent/5',
-    borderColor: 'border-accent',
-    iconColor: 'text-accent',
-  },
-];
-
 const emptyFormData: ProductRequest = {
   sku: '',
   name: '',
@@ -679,25 +640,42 @@ export function ProductsPage() {
                   Mahsulot turini tanlang
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {PRODUCT_TYPE_CARDS.map((card) => {
-                    const Icon = card.icon;
-                    const isSelected = formData.productType === card.type;
+                  {productTypes.map((pt) => {
+                    const isSelected = formData.productTypeId === pt.id ||
+                      (!formData.productTypeId && formData.productType === pt.code);
+                    // Dinamik ranglar
+                    const colorMap: Record<string, { border: string; bg: string; icon: string }> = {
+                      primary: { border: 'border-primary', bg: 'from-primary/20 to-primary/5', icon: 'text-primary' },
+                      secondary: { border: 'border-secondary', bg: 'from-secondary/20 to-secondary/5', icon: 'text-secondary' },
+                      accent: { border: 'border-accent', bg: 'from-accent/20 to-accent/5', icon: 'text-accent' },
+                      info: { border: 'border-info', bg: 'from-info/20 to-info/5', icon: 'text-info' },
+                      success: { border: 'border-success', bg: 'from-success/20 to-success/5', icon: 'text-success' },
+                      warning: { border: 'border-warning', bg: 'from-warning/20 to-warning/5', icon: 'text-warning' },
+                      error: { border: 'border-error', bg: 'from-error/20 to-error/5', icon: 'text-error' },
+                    };
+                    const colors = colorMap[pt.color || 'primary'] || colorMap.primary;
+                    // Icon mapping
+                    const IconMap: Record<string, LucideIcon> = { Blinds, Layers, Wrench, Package };
+                    const Icon = IconMap[pt.icon || 'Package'] || Package;
                     return (
                       <button
-                        key={card.type}
+                        key={pt.id}
                         type="button"
-                        onClick={() => handleFormChange('productType', card.type)}
+                        onClick={() => {
+                          handleFormChange('productTypeId', pt.id);
+                          handleFormChange('productType', pt.code as ProductType);
+                        }}
                         className={clsx(
                           'group relative flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200',
                           'hover:scale-[1.02] hover:shadow-lg',
                           isSelected
-                            ? `${card.borderColor} bg-gradient-to-br ${card.gradient}`
+                            ? `${colors.border} bg-gradient-to-br ${colors.bg}`
                             : 'border-base-300 hover:border-base-content/30'
                         )}
                       >
                         <div className={clsx(
                           'p-3 rounded-full mb-2 transition-colors',
-                          isSelected ? `bg-base-100 ${card.iconColor}` : 'bg-base-200 text-base-content/60'
+                          isSelected ? `bg-base-100 ${colors.icon}` : 'bg-base-200 text-base-content/60'
                         )}>
                           <Icon className="h-6 w-6" />
                         </div>
@@ -705,14 +683,14 @@ export function ProductsPage() {
                           'font-semibold text-sm',
                           isSelected ? 'text-base-content' : 'text-base-content/80'
                         )}>
-                          {card.title}
+                          {pt.name}
                         </span>
                         <span className="text-xs text-base-content/50 text-center mt-1">
-                          {card.description}
+                          {pt.description || pt.code}
                         </span>
                         {isSelected && (
                           <div className="absolute top-2 right-2">
-                            <Check className={clsx('h-4 w-4', card.iconColor)} />
+                            <Check className={clsx('h-4 w-4', colors.icon)} />
                           </div>
                         )}
                       </button>
