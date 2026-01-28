@@ -528,17 +528,18 @@ export function ProductTypesPage() {
                   type="text"
                   className="input input-bordered w-full font-mono"
                   value={typeForm.code}
-                  onChange={(e) =>
-                    setTypeForm((prev) => ({
-                      ...prev,
-                      code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, ''),
-                    }))
-                  }
+                  onChange={(e) => {
+                    // Convert to uppercase and remove invalid characters
+                    let value = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                    // Remove leading numbers and underscores (must start with letter)
+                    value = value.replace(/^[0-9_]+/, '');
+                    setTypeForm((prev) => ({ ...prev, code: value }));
+                  }}
                   placeholder="CUSTOM_TYPE"
                   disabled={!!editingType?.isSystem}
                 />
                 <span className="label-text-alt text-base-content/50 mt-1">
-                  Faqat katta harflar, raqamlar va pastki chiziq
+                  Harf bilan boshlanishi shart (A-Z, 0-9, _)
                 </span>
               </label>
 
