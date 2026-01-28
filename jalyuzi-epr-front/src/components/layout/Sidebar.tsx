@@ -17,6 +17,7 @@ import {
   Shield,
   FileText,
   Wrench,
+  Layers,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -40,6 +41,7 @@ const menuItems = [
   { path: '/employees', icon: UserCog, label: 'Xodimlar', permission: PermissionCode.EMPLOYEES_VIEW },
   { path: '/roles', icon: Shield, label: 'Rollar', permission: PermissionCode.ROLES_VIEW },
   { path: '/audit-logs', icon: FileText, label: 'Audit Loglar', permission: PermissionCode.SETTINGS_VIEW },
+  { path: '/product-types', icon: Layers, label: 'Mahsulot Turlari', permission: PermissionCode.PRODUCT_TYPES_VIEW },
   { path: '/settings', icon: Settings, label: 'Sozlamalar', permission: PermissionCode.SETTINGS_VIEW },
 ];
 

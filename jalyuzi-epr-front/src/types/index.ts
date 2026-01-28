@@ -176,9 +176,15 @@ export interface Product {
   brandId?: number;
   categoryName?: string;
   categoryId?: number;
-  // Mahsulot turi va o'lchov birligi
+  // Mahsulot turi va o'lchov birligi (deprecated enum)
   productType?: ProductType;
   unitType?: UnitType;
+  // Yangi mahsulot turi tizimi (V24+)
+  productTypeId?: number;
+  productTypeCode?: string;
+  productTypeName?: string;
+  // Dinamik atributlar
+  customAttributes?: Record<string, unknown>;
   // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
   blindType?: BlindType;
   material?: BlindMaterial;
@@ -216,9 +222,13 @@ export interface ProductRequest {
   name: string;
   brandId?: number;
   categoryId?: number;
-  // Mahsulot turi va o'lchov birligi
+  // Mahsulot turi va o'lchov birligi (deprecated enum)
   productType?: ProductType;
   unitType?: UnitType;
+  // Yangi mahsulot turi tizimi (V24+)
+  productTypeId?: number;
+  // Dinamik atributlar
+  customAttributes?: Record<string, unknown>;
   // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
   blindType?: BlindType;
   material?: BlindMaterial;
@@ -246,6 +256,104 @@ export interface ProductRequest {
   compatibleBlindTypes?: string;
   description?: string;
   imageUrl?: string;
+}
+
+// ========================================
+// Product Type Constructor System (V24+)
+// ========================================
+
+// Attribute data types for dynamic fields
+export type AttributeDataType =
+  | 'text'
+  | 'number'
+  | 'decimal'
+  | 'currency'
+  | 'boolean'
+  | 'date'
+  | 'select'
+  | 'multiselect';
+
+// Select option for dropdown/multiselect fields
+export interface SelectOption {
+  value: string;
+  label: string;
+  icon?: string;
+  color?: string;
+}
+
+// Validation rules for attributes
+export interface ValidationRules {
+  required?: boolean;
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  patternMessage?: string;
+}
+
+// Attribute group for organizing fields
+export interface AttributeGroup {
+  key: string;
+  label: string;
+  order?: number;
+  collapsed?: boolean;
+  description?: string;
+}
+
+// Individual attribute definition
+export interface AttributeDefinition {
+  key: string;
+  label: string;
+  dataType: AttributeDataType;
+  group?: string;
+  order?: number;
+  required?: boolean;
+  defaultValue?: unknown;
+  placeholder?: string;
+  helpText?: string;
+  unit?: string;
+  options?: SelectOption[];
+  validation?: ValidationRules;
+  showInList?: boolean;
+  showInCard?: boolean;
+  searchable?: boolean;
+}
+
+// Complete attribute schema for a product type
+export interface AttributeSchema {
+  groups?: AttributeGroup[];
+  attributes?: AttributeDefinition[];
+}
+
+// Product Type entity (from backend)
+export interface ProductTypeEntity {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  displayOrder?: number;
+  defaultUnitType?: UnitType;
+  attributeSchema?: AttributeSchema;
+  isSystem?: boolean;
+  isActive?: boolean;
+  productCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Request DTO for creating/updating product types
+export interface ProductTypeRequest {
+  code: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  displayOrder?: number;
+  defaultUnitType?: UnitType;
+  attributeSchema?: AttributeSchema;
 }
 
 // Customer Types

@@ -101,6 +101,12 @@ export const PermissionCode = {
   ROLES_CREATE: 'ROLES_CREATE',
   ROLES_UPDATE: 'ROLES_UPDATE',
   ROLES_DELETE: 'ROLES_DELETE',
+
+  // PRODUCT_TYPES
+  PRODUCT_TYPES_VIEW: 'PRODUCT_TYPES_VIEW',
+  PRODUCT_TYPES_CREATE: 'PRODUCT_TYPES_CREATE',
+  PRODUCT_TYPES_UPDATE: 'PRODUCT_TYPES_UPDATE',
+  PRODUCT_TYPES_DELETE: 'PRODUCT_TYPES_DELETE',
 } as const;
 
 export type PermissionCodeType = (typeof PermissionCode)[keyof typeof PermissionCode];
@@ -483,6 +489,27 @@ export function usePermission() {
     [permissions]
   );
 
+  // Product Types
+  const canViewProductTypes = useMemo(
+    () => permissions.has(PermissionCode.PRODUCT_TYPES_VIEW),
+    [permissions]
+  );
+
+  const canCreateProductTypes = useMemo(
+    () => permissions.has(PermissionCode.PRODUCT_TYPES_CREATE),
+    [permissions]
+  );
+
+  const canUpdateProductTypes = useMemo(
+    () => permissions.has(PermissionCode.PRODUCT_TYPES_UPDATE),
+    [permissions]
+  );
+
+  const canDeleteProductTypes = useMemo(
+    () => permissions.has(PermissionCode.PRODUCT_TYPES_DELETE),
+    [permissions]
+  );
+
   return {
     // Core permission checks
     hasPermission,
@@ -591,5 +618,11 @@ export function usePermission() {
     canCreateRoles,
     canUpdateRoles,
     canDeleteRoles,
+
+    // Product Types
+    canViewProductTypes,
+    canCreateProductTypes,
+    canUpdateProductTypes,
+    canDeleteProductTypes,
   };
 }
