@@ -13,6 +13,7 @@ import { ChangePasswordPage } from '../pages/auth/ChangePasswordPage';
 // Lazy-loaded main app pages
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProductsPage = lazy(() => import('../pages/products/ProductsPage').then(m => ({ default: m.ProductsPage })));
+const AddProductPage = lazy(() => import('../pages/products/AddProductPage').then(m => ({ default: m.AddProductPage })));
 const ProductDetailPage = lazy(() => import('../pages/products/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })));
 const CustomersPage = lazy(() => import('../pages/customers/CustomersPage').then(m => ({ default: m.CustomersPage })));
 const CustomerDetailPage = lazy(() => import('../pages/customers/CustomerDetailPage').then(m => ({ default: m.CustomerDetailPage })));
@@ -92,6 +93,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Mahsulotlar' },
+      },
+      {
+        path: 'products/new',
+        element: (
+          <ProtectedRoute permission={PermissionCode.PRODUCTS_CREATE}>
+            <LazyRoute>
+              <AddProductPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Yangi mahsulot' },
       },
       {
         path: 'products/:id',

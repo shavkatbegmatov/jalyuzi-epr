@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Plus, Package, BadgeCheck, AlertTriangle, X, Blinds, Layers, Wrench, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
@@ -54,6 +55,15 @@ export function ProductsPage() {
 
   const { notifications } = useNotificationsStore();
   const { highlightId, clearHighlight } = useHighlight();
+  const location = useLocation();
+
+  // Check if we should highlight a newly created product
+  useEffect(() => {
+    if (location.state?.highlightId) {
+      // Clear the state to avoid re-highlighting on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Tanlangan mahsulot turi (schema bilan)
   const selectedProductType = useMemo(() => {
@@ -244,12 +254,6 @@ export function ProductsPage() {
     setPage(0);
   };
 
-  const handleOpenNewProductModal = () => {
-    setFormData(emptyFormData);
-    setCustomAttributes({});
-    setShowNewProductModal(true);
-  };
-
   const handleCloseNewProductModal = () => {
     setShowNewProductModal(false);
     setEditingProductId(null);
@@ -367,10 +371,10 @@ export function ProductsPage() {
             loading={refreshing}
           />
           <PermissionGate permission={PermissionCode.PRODUCTS_CREATE}>
-            <button className="btn btn-primary" onClick={handleOpenNewProductModal}>
+            <Link to="/products/new" className="btn btn-primary">
               <Plus className="h-5 w-5" />
               Yangi mahsulot
-            </button>
+            </Link>
           </PermissionGate>
         </div>
       </div>
