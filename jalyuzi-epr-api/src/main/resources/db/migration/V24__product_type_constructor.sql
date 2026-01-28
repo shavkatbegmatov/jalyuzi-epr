@@ -293,18 +293,18 @@ UPDATE products SET custom_attributes = jsonb_strip_nulls(jsonb_build_object(
 WHERE custom_attributes = '{}'::jsonb OR custom_attributes IS NULL;
 
 -- 5. Qo'shimcha permission qo'shish (agar kerak bo'lsa)
-INSERT INTO permissions (code, name, description, module, created_at)
+INSERT INTO permissions (code, module, action, description)
 VALUES
-    ('PRODUCT_TYPES_VIEW', 'Mahsulot turlarini ko''rish', 'Mahsulot turlarini ko''rish ruxsati', 'SETTINGS', CURRENT_TIMESTAMP),
-    ('PRODUCT_TYPES_CREATE', 'Mahsulot turi yaratish', 'Yangi mahsulot turi yaratish ruxsati', 'SETTINGS', CURRENT_TIMESTAMP),
-    ('PRODUCT_TYPES_UPDATE', 'Mahsulot turini tahrirlash', 'Mahsulot turini tahrirlash ruxsati', 'SETTINGS', CURRENT_TIMESTAMP),
-    ('PRODUCT_TYPES_DELETE', 'Mahsulot turini o''chirish', 'Mahsulot turini o''chirish ruxsati', 'SETTINGS', CURRENT_TIMESTAMP)
+    ('PRODUCT_TYPES_VIEW', 'SETTINGS', 'VIEW', 'Mahsulot turlarini ko''rish ruxsati'),
+    ('PRODUCT_TYPES_CREATE', 'SETTINGS', 'CREATE', 'Yangi mahsulot turi yaratish ruxsati'),
+    ('PRODUCT_TYPES_UPDATE', 'SETTINGS', 'UPDATE', 'Mahsulot turini tahrirlash ruxsati'),
+    ('PRODUCT_TYPES_DELETE', 'SETTINGS', 'DELETE', 'Mahsulot turini o''chirish ruxsati')
 ON CONFLICT (code) DO NOTHING;
 
 -- Admin roliga yangi permissionlarni berish
 INSERT INTO role_permissions (role_id, permission_id)
 SELECT r.id, p.id
 FROM roles r, permissions p
-WHERE r.name = 'ADMIN'
+WHERE r.code = 'ADMIN'
   AND p.code IN ('PRODUCT_TYPES_VIEW', 'PRODUCT_TYPES_CREATE', 'PRODUCT_TYPES_UPDATE', 'PRODUCT_TYPES_DELETE')
 ON CONFLICT DO NOTHING;
