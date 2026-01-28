@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, Package, BadgeCheck, AlertTriangle, X, Blinds, Layers, Wrench, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
+import { productTypesApi } from '../../api/product-types.api';
 import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES, PRODUCT_TYPES, UNIT_TYPES } from '../../config/constants';
 import { NumberInput } from '../../components/ui/NumberInput';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
@@ -10,11 +11,12 @@ import { SearchInput } from '../../components/ui/SearchInput';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ModalPortal } from '../../components/common/Modal';
 import { ExportButtons } from '../../components/common/ExportButtons';
+import { DynamicProductForm } from '../../components/products/DynamicProductForm';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { useHighlight } from '../../hooks/useHighlight';
-import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductType, UnitType, ProductRequest } from '../../types';
+import type { Product, Brand, Category, BlindType, BlindMaterial, ControlType, ProductType, UnitType, ProductRequest, ProductTypeEntity } from '../../types';
 import type { LucideIcon } from 'lucide-react';
 
 // Mahsulot turi kartalari konfiguratsiyasi
@@ -68,6 +70,7 @@ export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [productTypes, setProductTypes] = useState<ProductTypeEntity[]>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
@@ -85,10 +88,24 @@ export function ProductsPage() {
   const [showNewProductModal, setShowNewProductModal] = useState(false);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [formData, setFormData] = useState<ProductRequest>(emptyFormData);
+  const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
 
   const { notifications } = useNotificationsStore();
   const { highlightId, clearHighlight } = useHighlight();
+
+  // Tanlangan mahsulot turi (schema bilan)
+  const selectedProductType = useMemo(() => {
+    // Yangi tizim bo'yicha productTypeId orqali topish
+    if (formData.productTypeId) {
+      return productTypes.find((pt) => pt.id === formData.productTypeId);
+    }
+    // Eski enum bo'yicha mos turni topish
+    if (formData.productType) {
+      return productTypes.find((pt) => pt.code === formData.productType);
+    }
+    return undefined;
+  }, [formData.productTypeId, formData.productType, productTypes]);
 
   const activeFilters = useMemo(() => {
     let count = 0;
@@ -192,12 +209,14 @@ export function ProductsPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const [brandsData, categoriesData] = await Promise.all([
+      const [brandsData, categoriesData, productTypesData] = await Promise.all([
         brandsApi.getAll(),
         categoriesApi.getAll(),
+        productTypesApi.getAll(),
       ]);
       setBrands(brandsData);
       setCategories(categoriesData);
+      setProductTypes(productTypesData);
     } catch (error) {
       console.error('Failed to load data:', error);
     }
@@ -266,6 +285,7 @@ export function ProductsPage() {
 
   const handleOpenNewProductModal = () => {
     setFormData(emptyFormData);
+    setCustomAttributes({});
     setShowNewProductModal(true);
   };
 
@@ -273,6 +293,7 @@ export function ProductsPage() {
     setShowNewProductModal(false);
     setEditingProductId(null);
     setFormData(emptyFormData);
+    setCustomAttributes({});
   };
 
   const handleEditProduct = (product: Product) => {
@@ -284,6 +305,7 @@ export function ProductsPage() {
       categoryId: product.categoryId,
       productType: product.productType || 'FINISHED_PRODUCT',
       unitType: product.unitType || 'PIECE',
+      productTypeId: product.productTypeId,
       blindType: product.blindType,
       material: product.material,
       color: product.color,
@@ -306,6 +328,7 @@ export function ProductsPage() {
       description: product.description,
       imageUrl: product.imageUrl,
     });
+    setCustomAttributes(product.customAttributes || {});
     setShowNewProductModal(true);
   };
 
@@ -332,10 +355,14 @@ export function ProductsPage() {
     }
     setSaving(true);
     try {
+      const dataToSave: ProductRequest = {
+        ...formData,
+        customAttributes: Object.keys(customAttributes).length > 0 ? customAttributes : undefined,
+      };
       if (editingProductId) {
-        await productsApi.update(editingProductId, formData);
+        await productsApi.update(editingProductId, dataToSave);
       } else {
-        await productsApi.create(formData);
+        await productsApi.create(dataToSave);
       }
       handleCloseNewProductModal();
       void loadProducts();
@@ -827,6 +854,23 @@ export function ProductsPage() {
                   )}
                 </div>
               </div>
+
+              {/* Dinamik atributlar (ProductType schema'sidan) */}
+              {selectedProductType?.attributeSchema?.attributes && selectedProductType.attributeSchema.attributes.length > 0 && (
+                <div className="surface-soft rounded-xl p-4 space-y-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                    Qo'shimcha xususiyatlar ({selectedProductType.name})
+                  </p>
+                  <DynamicProductForm
+                    schema={selectedProductType.attributeSchema}
+                    values={customAttributes}
+                    onChange={setCustomAttributes}
+                    disabled={saving}
+                    showGroupHeaders={true}
+                    columns={2}
+                  />
+                </div>
+              )}
 
               {/* Narxlar va Zaxira */}
               <div className="surface-soft rounded-xl p-4 space-y-4">
