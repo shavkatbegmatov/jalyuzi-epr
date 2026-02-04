@@ -104,6 +104,7 @@ public class ExportFormatter {
         }
         if (value instanceof SaleStatus status) {
             return switch (status) {
+                case PENDING -> "Kutilmoqda";
                 case COMPLETED -> "Yakunlangan";
                 case CANCELLED -> "Bekor qilingan";
                 case REFUNDED -> "Qaytarilgan";

@@ -76,7 +76,7 @@ public class ShopService {
                 blindType,
                 material,
                 controlType,
-                ProductType.FINISHED_PRODUCT, // Faqat tayyor mahsulotlar
+                uz.jalyuziepr.api.enums.ProductType.FINISHED_PRODUCT, // Faqat tayyor mahsulotlar
                 filter.getSearch(),
                 sortedPageable
         );
@@ -406,8 +406,8 @@ public class ShopService {
                     .customWidth(itemRequest.getWidth())
                     .customHeight(itemRequest.getHeight())
                     .calculatedSqm(squareMeters)
-                    .installationPrice(installationPrice)
-                    .notes(itemRequest.getNotes())
+                    .calculatedPrice(unitPrice)
+                    .installationIncluded(request.isWithInstallation())
                     .build();
 
             items.add(item);
@@ -478,10 +478,11 @@ public class ShopService {
                         .height(item.getCustomHeight())
                         .squareMeters(item.getCalculatedSqm())
                         .unitPrice(item.getUnitPrice())
-                        .installationPrice(item.getInstallationPrice())
+                        .installationPrice(item.getInstallationIncluded() != null && item.getInstallationIncluded()
+                                ? item.getProduct().getInstallationPrice() : null)
                         .quantity(item.getQuantity())
                         .totalPrice(item.getTotalPrice())
-                        .notes(item.getNotes())
+                        .notes(null)
                         .imageUrl(item.getProduct().getImageUrl())
                         .build())
                 .collect(Collectors.toList());
@@ -537,7 +538,7 @@ public class ShopService {
             case CASH -> "Naqd";
             case CARD -> "Karta";
             case TRANSFER -> "O'tkazma";
-            case DEBT -> "Qarzga";
+            case MIXED -> "Aralash";
         };
     }
 }

@@ -124,7 +124,7 @@ public class ShopController {
             @Valid @RequestBody ShopVerifyCodeRequest request) {
         boolean verified = shopService.verifyCode(request.getPhone(), request.getCode());
         if (verified) {
-            return ResponseEntity.ok(ApiResponse.success(true, "Telefon tasdiqlandi"));
+            return ResponseEntity.ok(ApiResponse.success("Telefon tasdiqlandi", true));
         } else {
             return ResponseEntity.ok(ApiResponse.error("Noto'g'ri kod"));
         }
@@ -135,7 +135,7 @@ public class ShopController {
     public ResponseEntity<ApiResponse<ShopAuthResponse>> register(
             @Valid @RequestBody ShopRegisterRequest request) {
         ShopAuthResponse response = shopService.register(request);
-        return ResponseEntity.ok(ApiResponse.success(response, "Ro'yxatdan o'tdingiz"));
+        return ResponseEntity.ok(ApiResponse.success("Ro'yxatdan o'tdingiz", response));
     }
 
     @PostMapping("/auth/login")
@@ -143,7 +143,7 @@ public class ShopController {
     public ResponseEntity<ApiResponse<ShopAuthResponse>> login(
             @Valid @RequestBody ShopVerifyCodeRequest request) {
         ShopAuthResponse response = shopService.login(request.getPhone(), request.getCode());
-        return ResponseEntity.ok(ApiResponse.success(response, "Muvaffaqiyatli kirdingiz"));
+        return ResponseEntity.ok(ApiResponse.success("Muvaffaqiyatli kirdingiz", response));
     }
 
     // ==================== BUYURTMALAR (AUTHENTICATED) ====================
@@ -160,7 +160,7 @@ public class ShopController {
         }
 
         ShopOrderResponse response = shopService.createOrder(request, customer);
-        return ResponseEntity.ok(ApiResponse.success(response, "Buyurtma qabul qilindi"));
+        return ResponseEntity.ok(ApiResponse.success("Buyurtma qabul qilindi", response));
     }
 
     @GetMapping("/orders")

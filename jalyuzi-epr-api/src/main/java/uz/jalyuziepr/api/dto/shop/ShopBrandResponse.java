@@ -16,7 +16,7 @@ import uz.jalyuziepr.api.entity.Brand;
 public class ShopBrandResponse {
     private Long id;
     private String name;
-    private String description;
+    private String country;
     private String logoUrl;
     private Long productCount;
 
@@ -24,7 +24,8 @@ public class ShopBrandResponse {
         return ShopBrandResponse.builder()
                 .id(brand.getId())
                 .name(brand.getName())
-                .description(brand.getDescription())
+                .country(brand.getCountry())
+                .logoUrl(brand.getLogoUrl())
                 .build();
     }
 
@@ -32,7 +33,8 @@ public class ShopBrandResponse {
         return ShopBrandResponse.builder()
                 .id(brand.getId())
                 .name(brand.getName())
-                .description(brand.getDescription())
+                .country(brand.getCountry())
+                .logoUrl(brand.getLogoUrl())
                 .productCount(productCount)
                 .build();
     }
