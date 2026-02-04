@@ -47,6 +47,17 @@ const PortalDebtsPage = lazy(() => import('../portal/pages/DebtsPage'));
 const PortalProfilePage = lazy(() => import('../portal/pages/ProfilePage'));
 const PortalNotificationsPage = lazy(() => import('../portal/pages/NotificationsPage'));
 
+// Lazy-loaded shop pages
+const ShopLayout = lazy(() => import('../components/shop/ShopLayout').then(m => ({ default: m.ShopLayout })));
+const ShopHomePage = lazy(() => import('../pages/shop/HomePage').then(m => ({ default: m.ShopHomePage })));
+const ShopCatalogPage = lazy(() => import('../pages/shop/CatalogPage').then(m => ({ default: m.ShopCatalogPage })));
+const ShopProductPage = lazy(() => import('../pages/shop/ProductPage').then(m => ({ default: m.ShopProductPage })));
+const ShopConfiguratorPage = lazy(() => import('../pages/shop/ConfiguratorPage').then(m => ({ default: m.ShopConfiguratorPage })));
+const ShopCheckoutPage = lazy(() => import('../pages/shop/CheckoutPage').then(m => ({ default: m.ShopCheckoutPage })));
+const ShopLoginPage = lazy(() => import('../pages/shop/LoginPage').then(m => ({ default: m.ShopLoginPage })));
+const ShopRegisterPage = lazy(() => import('../pages/shop/RegisterPage').then(m => ({ default: m.ShopRegisterPage })));
+const ShopOrdersPage = lazy(() => import('../pages/shop/OrdersPage').then(m => ({ default: m.ShopOrdersPage })));
+
 // Helper component for lazy routes with Suspense
 function LazyRoute({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -351,6 +362,98 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: 'Profil' },
+      },
+    ],
+  },
+  // Internet Shop Routes
+  {
+    path: '/shop',
+    element: (
+      <LazyRoute>
+        <ShopLayout />
+      </LazyRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyRoute>
+            <ShopHomePage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Jalyuzi Do\'koni' },
+      },
+      {
+        path: 'catalog',
+        element: (
+          <LazyRoute>
+            <ShopCatalogPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Katalog' },
+      },
+      {
+        path: 'product/:id',
+        element: (
+          <LazyRoute>
+            <ShopProductPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Mahsulot' },
+      },
+      {
+        path: 'configurator',
+        element: (
+          <LazyRoute>
+            <ShopConfiguratorPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Jalyuzi Konfiguratori' },
+      },
+      {
+        path: 'checkout',
+        element: (
+          <LazyRoute>
+            <ShopCheckoutPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Buyurtma berish' },
+      },
+      {
+        path: 'login',
+        element: (
+          <LazyRoute>
+            <ShopLoginPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Kirish' },
+      },
+      {
+        path: 'register',
+        element: (
+          <LazyRoute>
+            <ShopRegisterPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Ro\'yxatdan o\'tish' },
+      },
+      {
+        path: 'orders',
+        element: (
+          <LazyRoute>
+            <ShopOrdersPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Mening buyurtmalarim' },
+      },
+      {
+        path: 'orders/:id',
+        element: (
+          <LazyRoute>
+            <ShopOrdersPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Buyurtma tafsiloti' },
       },
     ],
   },

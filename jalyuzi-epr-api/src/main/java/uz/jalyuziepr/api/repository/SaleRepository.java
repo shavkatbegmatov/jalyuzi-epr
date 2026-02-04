@@ -23,6 +23,8 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     Page<Sale> findByCustomerId(Long customerId, Pageable pageable);
 
+    Page<Sale> findByCustomerIdOrderBySaleDateDesc(Long customerId, Pageable pageable);
+
     @Query("SELECT s FROM Sale s WHERE s.saleDate BETWEEN :start AND :end")
     List<Sale> findBySaleDateBetween(
             @Param("start") LocalDateTime start,

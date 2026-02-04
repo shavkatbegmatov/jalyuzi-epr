@@ -153,6 +153,20 @@ public class JwtTokenProvider {
         return generateRefreshToken(phone, "CUSTOMER", customerId);
     }
 
+    // Customer entity bilan token generatsiya
+    public String generateCustomerToken(uz.jalyuziepr.api.entity.Customer customer) {
+        return generateToken(customer.getPhone(), "CUSTOMER", customer.getId());
+    }
+
+    public String generateCustomerRefreshToken(uz.jalyuziepr.api.entity.Customer customer) {
+        return generateRefreshToken(customer.getPhone(), "CUSTOMER", customer.getId());
+    }
+
+    // Token muddatini sekundlarda olish
+    public long getExpirationInSeconds() {
+        return jwtExpiration / 1000;
+    }
+
     // Staff uchun token generatsiya (userId bilan)
     public String generateStaffToken(String username, Long userId) {
         return generateToken(username, "STAFF", userId);

@@ -51,6 +51,19 @@ public class SecurityConfig {
                         // WebSocket endpoint (JWT token interceptor'da tekshiriladi)
                         .requestMatchers("/v1/ws/**").permitAll()
 
+                        // Internet-do'kon Public API
+                        .requestMatchers("/v1/shop/products/**").permitAll()
+                        .requestMatchers("/v1/shop/categories").permitAll()
+                        .requestMatchers("/v1/shop/brands").permitAll()
+                        .requestMatchers("/v1/shop/blind-types").permitAll()
+                        .requestMatchers("/v1/shop/materials").permitAll()
+                        .requestMatchers("/v1/shop/calculate-price").permitAll()
+                        .requestMatchers("/v1/shop/auth/**").permitAll()
+
+                        // Internet-do'kon autentifikatsiya talab qilinadigan endpointlar
+                        .requestMatchers("/v1/shop/orders/**").hasRole("CUSTOMER")
+                        .requestMatchers("/v1/shop/profile").hasRole("CUSTOMER")
+
                         // Customer Portal - faqat CUSTOMER roli uchun (saqlanadi)
                         .requestMatchers("/v1/portal/**").hasRole("CUSTOMER")
 

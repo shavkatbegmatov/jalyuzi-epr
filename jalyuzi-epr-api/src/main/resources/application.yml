@@ -45,6 +45,19 @@ springdoc:
     path: /swagger-ui.html
     operationsSorter: method
 
+# SMS Configuration (Eskiz.uz)
+sms:
+  eskiz:
+    base-url: https://notify.eskiz.uz/api
+    email: ${ESKIZ_EMAIL:}
+    password: ${ESKIZ_PASSWORD:}
+    enabled: ${SMS_ENABLED:false}
+  verification:
+    code-length: 6
+    expiration-minutes: 5
+    max-attempts: 3
+    resend-delay-seconds: 60
+
 # Logging
 logging:
   level:
