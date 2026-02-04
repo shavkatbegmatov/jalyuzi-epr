@@ -63,6 +63,10 @@ export const BLIND_TYPES = {
   ROMAN: { label: 'Rim pardasi', value: 'ROMAN' },
   CELLULAR: { label: 'Uyali', value: 'CELLULAR' },
   MOTORIZED: { label: 'Motorli', value: 'MOTORIZED' },
+  ZEBRA: { label: 'Zebra (Kecha-kunduz)', value: 'ZEBRA' },
+  DAY_NIGHT: { label: 'Day-Night', value: 'DAY_NIGHT' },
+  PLEATED: { label: 'Plisse', value: 'PLEATED' },
+  SHUTTERS: { label: 'Shtutterlar', value: 'SHUTTERS' },
 } as const;
 
 // Jalyuzi materiallari
@@ -72,6 +76,19 @@ export const BLIND_MATERIALS = {
   FABRIC: { label: 'Mato', value: 'FABRIC' },
   PVC: { label: 'PVC', value: 'PVC' },
   BAMBOO: { label: 'Bambuk', value: 'BAMBOO' },
+  POLYESTER: { label: 'Polyester', value: 'POLYESTER' },
+  BLACKOUT: { label: 'Blackout', value: 'BLACKOUT' },
+  SCREEN: { label: 'Skrin', value: 'SCREEN' },
+  DIMOUT: { label: 'Dimout', value: 'DIMOUT' },
+} as const;
+
+// Kolleksiyalar
+export const COLLECTIONS = {
+  COLLECTION_1: { label: '1-kolleksiya', value: 'COLLECTION_1' },
+  COLLECTION_2: { label: '2-kolleksiya', value: 'COLLECTION_2' },
+  COLLECTION_3: { label: '3-kolleksiya', value: 'COLLECTION_3' },
+  COLLECTION_4: { label: '4-kolleksiya', value: 'COLLECTION_4' },
+  PREMIUM: { label: 'Premium', value: 'PREMIUM' },
 } as const;
 
 // Boshqaruv turlari

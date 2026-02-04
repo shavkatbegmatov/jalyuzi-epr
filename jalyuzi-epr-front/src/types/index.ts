@@ -137,8 +137,9 @@ export interface PagedResponse<T> {
 }
 
 // Jalyuzi Enum Types
-export type BlindType = 'ROLLER' | 'VERTICAL' | 'HORIZONTAL' | 'ROMAN' | 'CELLULAR' | 'MOTORIZED';
-export type BlindMaterial = 'ALUMINUM' | 'WOOD' | 'FABRIC' | 'PVC' | 'BAMBOO';
+export type BlindType = 'ROLLER' | 'VERTICAL' | 'HORIZONTAL' | 'ROMAN' | 'CELLULAR' | 'MOTORIZED' | 'ZEBRA' | 'DAY_NIGHT' | 'PLEATED' | 'SHUTTERS';
+export type BlindMaterial = 'ALUMINUM' | 'WOOD' | 'FABRIC' | 'PVC' | 'BAMBOO' | 'POLYESTER' | 'BLACKOUT' | 'SCREEN' | 'DIMOUT';
+export type Collection = 'COLLECTION_1' | 'COLLECTION_2' | 'COLLECTION_3' | 'COLLECTION_4' | 'PREMIUM';
 export type ControlType = 'CHAIN' | 'CORD' | 'MOTORIZED' | 'REMOTE' | 'SMART';
 export type OrderType = 'PRODUCT_SALE' | 'INSTALLATION' | 'MEASUREMENT' | 'CONSULTATION';
 export type InstallationStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
