@@ -39,6 +39,5 @@ public interface SmsVerificationRepository extends JpaRepository<SmsVerification
     /**
      * Telefon raqami uchun barcha tasdiqlanmagan kodlarni o'chirish
      */
-    @Modifying
     void deleteByPhoneAndVerifiedFalse(String phone);
 }
