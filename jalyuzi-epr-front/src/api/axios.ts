@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config/constants';
+import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,6 +12,7 @@ const api = axios.create({
 
 // Refresh Queue pattern — parallel 401 larda faqat bitta refresh so'rov yuboriladi
 let isRefreshing = false;
+let isLoggingOut = false;
 let failedQueue: Array<{
   resolve: (token: string) => void;
   reject: (error: unknown) => void;
@@ -28,16 +30,22 @@ function processQueue(error: unknown, token: string | null) {
 }
 
 function clearAuthAndRedirect() {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('refreshToken');
-  localStorage.removeItem('user');
+  // Takroriy chaqiruvlarni oldini olish
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+
+  // Zustand store'ni tozalash — isAuthenticated: false bo'ladi
+  // Bu auth-storage localStorage kalitini ham yangilaydi
+  useAuthStore.getState().logout();
 
   if (!window.location.pathname.includes('/login')) {
     toast.error('Sessioningiz tugadi. Qayta kiring.');
-    setTimeout(() => {
-      window.location.href = '/login';
-    }, 1000);
   }
+
+  // Flag'ni reset qilish (keyingi login uchun)
+  setTimeout(() => {
+    isLoggingOut = false;
+  }, 2000);
 }
 
 // Request interceptor - add auth token
