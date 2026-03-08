@@ -128,22 +128,22 @@ CREATE INDEX idx_order_payments_order_id ON order_payments(order_id);
 CREATE INDEX idx_order_status_history_order_id ON order_status_history(order_id);
 
 -- 6. Yangi permissionlar
-INSERT INTO permissions (code, name, description, module, action) VALUES
-    ('ORDERS_VIEW', 'Buyurtmalarni ko''rish', 'Buyurtmalar ro''yxatini ko''rish', 'ORDERS', 'VIEW'),
-    ('ORDERS_CREATE', 'Buyurtma yaratish', 'Yangi buyurtma yaratish', 'ORDERS', 'CREATE'),
-    ('ORDERS_UPDATE', 'Buyurtma yangilash', 'Buyurtma ma''lumotlarini yangilash', 'ORDERS', 'UPDATE'),
-    ('ORDERS_DELETE', 'Buyurtma o''chirish', 'Buyurtmani o''chirish', 'ORDERS', 'DELETE'),
-    ('ORDERS_ASSIGN', 'Buyurtma tayinlash', 'Buyurtmani xodimga tayinlash', 'ORDERS', 'ASSIGN'),
-    ('ORDERS_MEASURE', 'O''lchov bajarish', 'Buyurtma o''lchovlarini kiritish', 'ORDERS', 'MEASURE'),
-    ('ORDERS_PRODUCE', 'Ishlab chiqarish', 'Ishlab chiqarish statusini boshqarish', 'ORDERS', 'PRODUCE'),
-    ('ORDERS_INSTALL', 'O''rnatish bajarish', 'Buyurtma o''rnatishini bajarish', 'ORDERS', 'INSTALL'),
-    ('ORDERS_COLLECT_PAYMENT', 'To''lov yig''ish', 'Mijozdan to''lov qabul qilish', 'ORDERS', 'COLLECT_PAYMENT'),
-    ('ORDERS_CONFIRM_PAYMENT', 'To''lovni tasdiqlash', 'Yig''ilgan to''lovni tasdiqlash', 'ORDERS', 'CONFIRM_PAYMENT')
+INSERT INTO permissions (code, description, module, action) VALUES
+    ('ORDERS_VIEW', 'Buyurtmalar ro''yxatini ko''rish', 'ORDERS', 'VIEW'),
+    ('ORDERS_CREATE', 'Yangi buyurtma yaratish', 'ORDERS', 'CREATE'),
+    ('ORDERS_UPDATE', 'Buyurtma ma''lumotlarini yangilash', 'ORDERS', 'UPDATE'),
+    ('ORDERS_DELETE', 'Buyurtmani o''chirish', 'ORDERS', 'DELETE'),
+    ('ORDERS_ASSIGN', 'Buyurtmani xodimga tayinlash', 'ORDERS', 'ASSIGN'),
+    ('ORDERS_MEASURE', 'Buyurtma o''lchovlarini kiritish', 'ORDERS', 'MEASURE'),
+    ('ORDERS_PRODUCE', 'Ishlab chiqarish statusini boshqarish', 'ORDERS', 'PRODUCE'),
+    ('ORDERS_INSTALL', 'Buyurtma o''rnatishini bajarish', 'ORDERS', 'INSTALL'),
+    ('ORDERS_COLLECT_PAYMENT', 'Mijozdan to''lov qabul qilish', 'ORDERS', 'COLLECT_PAYMENT'),
+    ('ORDERS_CONFIRM_PAYMENT', 'Yig''ilgan to''lovni tasdiqlash', 'ORDERS', 'CONFIRM_PAYMENT')
 ON CONFLICT (code) DO NOTHING;
 
 -- 7. INSTALLER roli yaratish
-INSERT INTO roles (name, description, is_system, created_at)
-VALUES ('INSTALLER', 'O''rnatuvchi - buyurtmalarni o''rnatish va to''lov yig''ish', TRUE, NOW())
+INSERT INTO roles (name, code, description, is_system, created_at)
+VALUES ('INSTALLER', 'INSTALLER', 'O''rnatuvchi - buyurtmalarni o''rnatish va to''lov yig''ish', TRUE, NOW())
 ON CONFLICT (name) DO NOTHING;
 
 -- 8. INSTALLER roliga permissionlar tayinlash

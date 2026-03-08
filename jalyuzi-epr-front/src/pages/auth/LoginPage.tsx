@@ -56,8 +56,14 @@ export function LoginPage() {
       );
 
       toast.success('Muvaffaqiyatli kirish!');
-      // Navigate to main app - modal will show automatically if mustChangePassword is true
-      navigate(redirectTo, { replace: true });
+
+      // INSTALLER role should go to installer panel
+      if (response.roles?.includes('INSTALLER')) {
+        navigate('/installer/', { replace: true });
+      } else {
+        // Navigate to main app - modal will show automatically if mustChangePassword is true
+        navigate(redirectTo, { replace: true });
+      }
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Kirish xatosi');

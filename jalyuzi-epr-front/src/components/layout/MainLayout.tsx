@@ -39,6 +39,11 @@ export function MainLayout() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  // INSTALLER role should use the installer panel, not the main layout
+  if (user?.role === 'INSTALLER' && !location.pathname.startsWith('/installer')) {
+    return <Navigate to="/installer/" replace />;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden text-base-content">
       <Sidebar />

@@ -14,6 +14,7 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
+  ClipboardList,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
@@ -33,9 +34,11 @@ import {
   Legend,
 } from 'recharts';
 import { dashboardApi } from '../../api/dashboard.api';
+import { ordersApi } from '../../api/orders.api';
 import { formatCurrency, formatNumber } from '../../config/constants';
-import type { DashboardStats, ChartData } from '../../types';
+import type { DashboardStats, ChartData, OrderStatsResponse } from '../../types';
 import { useNotificationsStore } from '../../store/notificationsStore';
+import { useAuthStore } from '../../store/authStore';
 
 // Professional rang palitrasi
 const COLORS = {
@@ -202,28 +205,37 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 export function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
+  const [orderStats, setOrderStats] = useState<OrderStatsResponse | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [period, setPeriod] = useState<7 | 30>(30);
   const { notifications } = useNotificationsStore();
+  const hasOrdersPermission = useAuthStore((state) => state.permissions.has('ORDERS_VIEW'));
   const loadData = useCallback(async (isInitial = false) => {
     try {
       if (!isInitial) {
         setRefreshing(true);
       }
-      const [statsData, chartsData] = await Promise.all([
+      const promises: [Promise<DashboardStats>, Promise<ChartData>, ...Promise<OrderStatsResponse>[]] = [
         dashboardApi.getStats(),
         dashboardApi.getChartData(period),
-      ]);
-      setStats(statsData);
-      setChartData(chartsData);
+      ];
+      if (hasOrdersPermission) {
+        promises.push(ordersApi.getStats());
+      }
+      const results = await Promise.all(promises);
+      setStats(results[0] as DashboardStats);
+      setChartData(results[1] as ChartData);
+      if (hasOrdersPermission && results[2]) {
+        setOrderStats(results[2] as OrderStatsResponse);
+      }
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setInitialLoading(false);
       setRefreshing(false);
     }
-  }, [period]);
+  }, [period, hasOrdersPermission]);
 
   useEffect(() => {
     loadData(true);
@@ -343,6 +355,56 @@ export function DashboardPage() {
           style={{ '--i': 3 } as CSSProperties}
         />
       </div>
+
+      {/* Order Stats Card */}
+      {orderStats && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Link to="/orders" className="surface-soft rounded-xl p-4 transition hover:shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <ClipboardList className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-base-content/60">Faol buyurtmalar</p>
+                <p className="font-bold">{formatNumber(orderStats.activeOrders)}</p>
+              </div>
+            </div>
+          </Link>
+          <Link to="/orders" className="surface-soft rounded-xl p-4 transition hover:shadow-md">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-success/10 p-2">
+                <ClipboardList className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-base-content/60">Yakunlangan</p>
+                <p className="font-bold">{formatNumber(orderStats.completedOrders)}</p>
+              </div>
+            </div>
+          </Link>
+          <div className="surface-soft rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-info/10 p-2">
+                <ClipboardList className="h-5 w-5 text-info" />
+              </div>
+              <div>
+                <p className="text-xs text-base-content/60">Jami buyurtmalar</p>
+                <p className="font-bold">{formatNumber(orderStats.totalOrders)}</p>
+              </div>
+            </div>
+          </div>
+          <div className="surface-soft rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-warning/10 p-2">
+                <DollarSign className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-xs text-base-content/60">Qoldiq to'lov</p>
+                <p className="font-bold">{formatCompactCurrency(orderStats.totalRemaining)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

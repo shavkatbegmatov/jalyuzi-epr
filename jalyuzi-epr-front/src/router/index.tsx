@@ -47,6 +47,7 @@ const MeasurementFormPage = lazy(() => import('../pages/orders/MeasurementFormPa
 const InstallerLayout = lazy(() => import('../pages/installer/InstallerLayout'));
 const InstallerDashboardPage = lazy(() => import('../pages/installer/InstallerDashboardPage').then(m => ({ default: m.InstallerDashboardPage })));
 const InstallerOrderDetailPage = lazy(() => import('../pages/installer/InstallerOrderDetailPage').then(m => ({ default: m.InstallerOrderDetailPage })));
+const InstallerProfilePage = lazy(() => import('../pages/installer/InstallerProfilePage').then(m => ({ default: m.InstallerProfilePage })));
 
 // Lazy-loaded portal pages
 const PortalLayout = lazy(() => import('../portal/components/layout/PortalLayout'));
@@ -439,6 +440,15 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: "O'rnatuvchi - Buyurtmalar" },
+      },
+      {
+        path: 'profile',
+        element: (
+          <LazyRoute>
+            <InstallerProfilePage />
+          </LazyRoute>
+        ),
+        handle: { title: "O'rnatuvchi - Profil" },
       },
       {
         path: ':id',
