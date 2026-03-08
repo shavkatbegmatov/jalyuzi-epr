@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Users, Phone, X } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -41,6 +42,7 @@ export function CustomersPage() {
   const [formData, setFormData] = useState<CustomerRequest>(emptyFormData);
   const [saving, setSaving] = useState(false);
 
+  const navigate = useNavigate();
   const { notifications } = useNotificationsStore();
   const { highlightId, clearHighlight } = useHighlight();
   const { hasPermission } = usePermission();
@@ -294,6 +296,7 @@ export function CustomersPage() {
           loading={initialLoading && !refreshing}
           highlightId={highlightId}
           onHighlightComplete={clearHighlight}
+          onRowClick={(customer) => navigate(`/customers/${customer.id}`)}
           emptyIcon={<Users className="h-12 w-12" />}
           emptyTitle="Mijozlar topilmadi"
           emptyDescription="Qidiruv so'zini o'zgartiring"
