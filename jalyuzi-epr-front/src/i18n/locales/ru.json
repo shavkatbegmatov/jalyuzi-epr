@@ -26,6 +26,7 @@
   },
   "nav": {
     "home": "Главная",
+    "orders": "Заказы",
     "purchases": "Покупки",
     "debts": "Долги",
     "notifications": "Уведомления",

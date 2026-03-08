@@ -107,6 +107,40 @@ public class NotificationService {
     }
 
     /**
+     * Buyurtma narxi tasdiqlandi xabari
+     */
+    @Transactional
+    public void sendOrderUpdate(Long customerId, String orderNumber, String totalAmount, String metadata) {
+        createNotification(
+                customerId,
+                "Buyurtma yangilandi",
+                "Заказ обновлён",
+                String.format("Buyurtma %s narxi tasdiqlandi. Jami: %s so'm", orderNumber, totalAmount),
+                String.format("Цена заказа %s подтверждена. Итого: %s сум", orderNumber, totalAmount),
+                NotificationType.SYSTEM,
+                null,
+                metadata
+        );
+    }
+
+    /**
+     * Buyurtma yakunlandi xabari
+     */
+    @Transactional
+    public void sendOrderCompleted(Long customerId, String orderNumber, String metadata) {
+        createNotification(
+                customerId,
+                "Buyurtma yakunlandi",
+                "Заказ завершён",
+                String.format("Buyurtma %s muvaffaqiyatli yakunlandi. Rahmat!", orderNumber),
+                String.format("Заказ %s успешно завершён. Спасибо!", orderNumber),
+                NotificationType.SYSTEM,
+                null,
+                metadata
+        );
+    }
+
+    /**
      * Aksiya/chegirma xabari
      */
     @Transactional

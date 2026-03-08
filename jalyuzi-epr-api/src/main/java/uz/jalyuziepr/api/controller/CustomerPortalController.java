@@ -13,6 +13,7 @@ import uz.jalyuziepr.api.dto.response.*;
 import uz.jalyuziepr.api.security.CustomerUserDetails;
 import uz.jalyuziepr.api.service.CustomerPortalService;
 import uz.jalyuziepr.api.service.NotificationService;
+import uz.jalyuziepr.api.service.OrderService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -26,6 +27,7 @@ public class CustomerPortalController {
 
     private final CustomerPortalService portalService;
     private final NotificationService notificationService;
+    private final OrderService orderService;
 
     // ==================== PROFILE ====================
 
@@ -74,6 +76,26 @@ public class CustomerPortalController {
             @PathVariable Long id) {
         SaleResponse purchase = portalService.getPurchaseDetails(customerDetails.getId(), id);
         return ResponseEntity.ok(ApiResponse.success(purchase));
+    }
+
+    // ==================== ORDERS ====================
+
+    @GetMapping("/orders")
+    @Operation(summary = "Buyurtmalar ro'yxati", description = "Mijozning buyurtmalari")
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> getOrders(
+            @AuthenticationPrincipal CustomerUserDetails customerDetails,
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable) {
+        Page<OrderResponse> orders = orderService.getCustomerOrders(customerDetails.getId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(orders));
+    }
+
+    @GetMapping("/orders/{id}")
+    @Operation(summary = "Buyurtma tafsilotlari", description = "Bitta buyurtmaning to'liq ma'lumotlari")
+    public ResponseEntity<ApiResponse<OrderResponse>> getOrderDetails(
+            @AuthenticationPrincipal CustomerUserDetails customerDetails,
+            @PathVariable Long id) {
+        OrderResponse order = orderService.getOrderById(id);
+        return ResponseEntity.ok(ApiResponse.success(order));
     }
 
     // ==================== DEBTS ====================

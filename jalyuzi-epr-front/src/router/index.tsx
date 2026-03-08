@@ -37,6 +37,17 @@ const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => 
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
 const InstallationsPage = lazy(() => import('../pages/installations/InstallationsPage').then(m => ({ default: m.InstallationsPage })));
 
+// Lazy-loaded order management pages
+const OrdersPage = lazy(() => import('../pages/orders/OrdersPage').then(m => ({ default: m.OrdersPage })));
+const CreateOrderPage = lazy(() => import('../pages/orders/CreateOrderPage').then(m => ({ default: m.CreateOrderPage })));
+const OrderDetailPage = lazy(() => import('../pages/orders/OrderDetailPage').then(m => ({ default: m.OrderDetailPage })));
+const MeasurementFormPage = lazy(() => import('../pages/orders/MeasurementFormPage').then(m => ({ default: m.MeasurementFormPage })));
+
+// Lazy-loaded installer pages
+const InstallerLayout = lazy(() => import('../pages/installer/InstallerLayout'));
+const InstallerDashboardPage = lazy(() => import('../pages/installer/InstallerDashboardPage').then(m => ({ default: m.InstallerDashboardPage })));
+const InstallerOrderDetailPage = lazy(() => import('../pages/installer/InstallerOrderDetailPage').then(m => ({ default: m.InstallerOrderDetailPage })));
+
 // Lazy-loaded portal pages
 const PortalLayout = lazy(() => import('../portal/components/layout/PortalLayout'));
 const PortalLoginPage = lazy(() => import('../portal/pages/LoginPage'));
@@ -46,6 +57,8 @@ const PortalPurchaseDetailPage = lazy(() => import('../portal/pages/PurchaseDeta
 const PortalDebtsPage = lazy(() => import('../portal/pages/DebtsPage'));
 const PortalProfilePage = lazy(() => import('../portal/pages/ProfilePage'));
 const PortalNotificationsPage = lazy(() => import('../portal/pages/NotificationsPage'));
+const PortalOrdersPage = lazy(() => import('../portal/pages/OrdersPage'));
+const PortalOrderDetailPage = lazy(() => import('../portal/pages/OrderDetailPage'));
 
 // Lazy-loaded shop pages
 const ShopLayout = lazy(() => import('../components/shop/ShopLayout').then(m => ({ default: m.ShopLayout })));
@@ -126,6 +139,50 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Mahsulot tafsiloti' },
+      },
+      {
+        path: 'orders',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ORDERS_VIEW}>
+            <LazyRoute>
+              <OrdersPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Buyurtmalar' },
+      },
+      {
+        path: 'orders/new',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ORDERS_CREATE}>
+            <LazyRoute>
+              <CreateOrderPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Yangi buyurtma' },
+      },
+      {
+        path: 'orders/:id',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ORDERS_VIEW}>
+            <LazyRoute>
+              <OrderDetailPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Buyurtma tafsiloti' },
+      },
+      {
+        path: 'orders/:id/measure',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ORDERS_MEASURE}>
+            <LazyRoute>
+              <MeasurementFormPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: "O'lchov kiritish" },
       },
       {
         path: 'pos',
@@ -365,6 +422,35 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  // Installer Routes
+  {
+    path: '/installer',
+    element: (
+      <LazyRoute>
+        <InstallerLayout />
+      </LazyRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyRoute>
+            <InstallerDashboardPage />
+          </LazyRoute>
+        ),
+        handle: { title: "O'rnatuvchi - Buyurtmalar" },
+      },
+      {
+        path: ':id',
+        element: (
+          <LazyRoute>
+            <InstallerOrderDetailPage />
+          </LazyRoute>
+        ),
+        handle: { title: "O'rnatuvchi - Buyurtma" },
+      },
+    ],
+  },
   // Internet Shop Routes
   {
     path: '/shop',
@@ -501,6 +587,24 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: 'Xarid tafsilotlari' },
+      },
+      {
+        path: 'buyurtmalar',
+        element: (
+          <LazyRoute>
+            <PortalOrdersPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Buyurtmalar' },
+      },
+      {
+        path: 'buyurtmalar/:id',
+        element: (
+          <LazyRoute>
+            <PortalOrderDetailPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Buyurtma tafsilotlari' },
       },
       {
         path: 'qarzlar',

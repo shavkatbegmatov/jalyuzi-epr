@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router-dom';
-import { Home, ShoppingBag, CreditCard, Bell, User } from 'lucide-react';
+import { Home, ShoppingBag, CreditCard, Bell, User, ClipboardList } from 'lucide-react';
 import clsx from 'clsx';
 
 interface NavItem {
@@ -11,6 +11,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/kabinet', icon: <Home size={22} />, labelKey: 'nav.home' },
+  { path: '/kabinet/buyurtmalar', icon: <ClipboardList size={22} />, labelKey: 'nav.orders' },
   { path: '/kabinet/xaridlar', icon: <ShoppingBag size={22} />, labelKey: 'nav.purchases' },
   { path: '/kabinet/qarzlar', icon: <CreditCard size={22} />, labelKey: 'nav.debts' },
   { path: '/kabinet/bildirishnomalar', icon: <Bell size={22} />, labelKey: 'nav.notifications' },

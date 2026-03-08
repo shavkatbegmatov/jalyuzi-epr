@@ -107,6 +107,18 @@ export const PermissionCode = {
   PRODUCT_TYPES_CREATE: 'PRODUCT_TYPES_CREATE',
   PRODUCT_TYPES_UPDATE: 'PRODUCT_TYPES_UPDATE',
   PRODUCT_TYPES_DELETE: 'PRODUCT_TYPES_DELETE',
+
+  // ORDERS
+  ORDERS_VIEW: 'ORDERS_VIEW',
+  ORDERS_CREATE: 'ORDERS_CREATE',
+  ORDERS_UPDATE: 'ORDERS_UPDATE',
+  ORDERS_DELETE: 'ORDERS_DELETE',
+  ORDERS_ASSIGN: 'ORDERS_ASSIGN',
+  ORDERS_MEASURE: 'ORDERS_MEASURE',
+  ORDERS_PRODUCE: 'ORDERS_PRODUCE',
+  ORDERS_INSTALL: 'ORDERS_INSTALL',
+  ORDERS_COLLECT_PAYMENT: 'ORDERS_COLLECT_PAYMENT',
+  ORDERS_CONFIRM_PAYMENT: 'ORDERS_CONFIRM_PAYMENT',
 } as const;
 
 export type PermissionCodeType = (typeof PermissionCode)[keyof typeof PermissionCode];
@@ -510,6 +522,57 @@ export function usePermission() {
     [permissions]
   );
 
+  // Orders
+  const canViewOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_VIEW),
+    [permissions]
+  );
+
+  const canCreateOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_CREATE),
+    [permissions]
+  );
+
+  const canUpdateOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_UPDATE),
+    [permissions]
+  );
+
+  const canDeleteOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_DELETE),
+    [permissions]
+  );
+
+  const canAssignOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_ASSIGN),
+    [permissions]
+  );
+
+  const canMeasureOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_MEASURE),
+    [permissions]
+  );
+
+  const canProduceOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_PRODUCE),
+    [permissions]
+  );
+
+  const canInstallOrders = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_INSTALL),
+    [permissions]
+  );
+
+  const canCollectOrderPayment = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_COLLECT_PAYMENT),
+    [permissions]
+  );
+
+  const canConfirmOrderPayment = useMemo(
+    () => permissions.has(PermissionCode.ORDERS_CONFIRM_PAYMENT),
+    [permissions]
+  );
+
   return {
     // Core permission checks
     hasPermission,
@@ -624,5 +687,17 @@ export function usePermission() {
     canCreateProductTypes,
     canUpdateProductTypes,
     canDeleteProductTypes,
+
+    // Orders
+    canViewOrders,
+    canCreateOrders,
+    canUpdateOrders,
+    canDeleteOrders,
+    canAssignOrders,
+    canMeasureOrders,
+    canProduceOrders,
+    canInstallOrders,
+    canCollectOrderPayment,
+    canConfirmOrderPayment,
   };
 }

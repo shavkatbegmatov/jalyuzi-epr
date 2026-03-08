@@ -1030,5 +1030,166 @@ export interface PriceCalculationResponse {
   validationMessage?: string;
 }
 
+// ==================== ORDER MANAGEMENT ====================
+
+export type OrderStatus =
+  | 'YANGI'
+  | 'OLCHOV_KUTILMOQDA'
+  | 'OLCHOV_BAJARILDI'
+  | 'NARX_TASDIQLANDI'
+  | 'ZAKLAD_QABUL_QILINDI'
+  | 'ISHLAB_CHIQARISHDA'
+  | 'TAYYOR'
+  | 'ORNATISHGA_TAYINLANDI'
+  | 'ORNATISH_JARAYONIDA'
+  | 'ORNATISH_BAJARILDI'
+  | 'TOLOV_KUTILMOQDA'
+  | 'YAKUNLANDI'
+  | 'QARZGA_OTKAZILDI'
+  | 'BEKOR_QILINDI';
+
+export type OrderPaymentType = 'DEPOSIT' | 'FINAL_PAYMENT' | 'PARTIAL_PAYMENT';
+
+export interface Order {
+  id: number;
+  orderNumber: string;
+  status: OrderStatus;
+  statusDisplayName: string;
+  customerId: number;
+  customerName: string;
+  customerPhone: string;
+  installationAddress: string;
+  managerId?: number;
+  managerName?: string;
+  measurerId?: number;
+  measurerName?: string;
+  installerId?: number;
+  installerName?: string;
+  subtotal: number;
+  discountAmount: number;
+  discountPercent: number;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  costTotal: number;
+  saleId?: number;
+  debtId?: number;
+  measurementDate?: string;
+  productionStartDate?: string;
+  productionEndDate?: string;
+  installationDate?: string;
+  completedDate?: string;
+  createdAt: string;
+  notes?: string;
+  createdByName: string;
+  items?: OrderItemType[];
+  payments?: OrderPaymentItem[];
+  statusHistory?: OrderStatusHistoryItem[];
+}
+
+export interface OrderItemType {
+  id: number;
+  productId: number;
+  productName: string;
+  productSku: string;
+  roomName?: string;
+  widthMm?: number;
+  heightMm?: number;
+  depthMm?: number;
+  calculatedSqm?: number;
+  quantity: number;
+  unitPrice: number;
+  installationPrice: number;
+  discount: number;
+  totalPrice: number;
+  costPrice?: number;
+  installationIncluded: boolean;
+}
+
+export interface OrderPaymentItem {
+  id: number;
+  paymentType: OrderPaymentType;
+  amount: number;
+  paymentMethod: string;
+  collectedByName?: string;
+  confirmedByName?: string;
+  isConfirmed: boolean;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface OrderStatusHistoryItem {
+  id: number;
+  fromStatus?: OrderStatus;
+  fromStatusDisplayName?: string;
+  toStatus: OrderStatus;
+  toStatusDisplayName: string;
+  changedByName: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface OrderCreateRequest {
+  customerId: number;
+  installationAddress?: string;
+  notes?: string;
+  discountAmount?: number;
+  discountPercent?: number;
+  items: OrderCreateItemRequest[];
+}
+
+export interface OrderCreateItemRequest {
+  productId: number;
+  roomName?: string;
+  widthMm?: number;
+  heightMm?: number;
+  depthMm?: number;
+  quantity?: number;
+  customPrice?: number;
+  discount?: number;
+  installationIncluded?: boolean;
+}
+
+export interface OrderMeasurementRequest {
+  items: OrderMeasurementItem[];
+  notes?: string;
+}
+
+export interface OrderMeasurementItem {
+  itemId?: number;
+  productId: number;
+  roomName?: string;
+  widthMm?: number;
+  heightMm?: number;
+  depthMm?: number;
+  quantity?: number;
+  customPrice?: number;
+  installationIncluded?: boolean;
+}
+
+export interface OrderAssignRequest {
+  assigneeId: number;
+  scheduledDate?: string;
+  notes?: string;
+}
+
+export interface OrderPaymentRequest {
+  paymentType: OrderPaymentType;
+  amount: number;
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export interface OrderStatsResponse {
+  totalOrders: number;
+  activeOrders: number;
+  completedOrders: number;
+  cancelledOrders: number;
+  totalRevenue: number;
+  totalPaid: number;
+  totalRemaining: number;
+  statusCounts: Record<string, number>;
+}
+
 // Audit Log Detail Types
 export * from './audit-log.types';
