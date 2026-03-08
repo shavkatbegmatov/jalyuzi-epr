@@ -9,10 +9,15 @@ import {
   Wallet,
   FileText,
   AlertCircle,
+  Shield,
+  Key,
 } from 'lucide-react';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
 import { customersApi } from '../../api/customers.api';
 import { formatCurrency } from '../../config/constants';
+import { PermissionGate } from '../../components/common/PermissionGate';
+import { PermissionCode } from '../../hooks/usePermission';
 import type { Customer } from '../../types';
 
 export function CustomerDetailPage() {
@@ -21,6 +26,13 @@ export function CustomerDetailPage() {
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Portal boshqaruv state
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [savingPin, setSavingPin] = useState(false);
+  const [togglingPortal, setTogglingPortal] = useState(false);
 
   const loadCustomer = useCallback(async () => {
     if (!id) return;
@@ -37,6 +49,40 @@ export function CustomerDetailPage() {
   useEffect(() => {
     void loadCustomer();
   }, [loadCustomer]);
+
+  const handleSetPin = async () => {
+    if (!id || pin.length < 4 || pin !== confirmPin) return;
+    setSavingPin(true);
+    try {
+      await customersApi.setPin(Number(id), pin, confirmPin);
+      toast.success('PIN kod o\'rnatildi. Portal yoqildi.');
+      setShowPinModal(false);
+      setPin('');
+      setConfirmPin('');
+      void loadCustomer();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'PIN o\'rnatishda xatolik');
+    } finally {
+      setSavingPin(false);
+    }
+  };
+
+  const handleTogglePortal = async () => {
+    if (!customer) return;
+    const newState = !customer.portalEnabled;
+    setTogglingPortal(true);
+    try {
+      await customersApi.togglePortal(customer.id, newState);
+      toast.success(newState ? 'Portal yoqildi' : 'Portal o\'chirildi');
+      void loadCustomer();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || 'Xatolik yuz berdi');
+    } finally {
+      setTogglingPortal(false);
+    }
+  };
 
   // Customer type label helper
   const getCustomerTypeLabel = (type?: string) => {
@@ -291,6 +337,112 @@ export function CustomerDetailPage() {
             Izoh
           </h3>
           <p className="text-base-content/80 whitespace-pre-wrap">{customer.notes}</p>
+        </div>
+      )}
+
+      {/* Portal boshqaruvi */}
+      <PermissionGate permission={PermissionCode.CUSTOMERS_UPDATE}>
+        <div className="surface-card p-4">
+          <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-base-content/60 mb-4 flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Portal boshqaruvi
+          </h3>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-base-content/80">
+                Portal holati:{' '}
+                <span className={clsx(
+                  'badge',
+                  customer.portalEnabled ? 'badge-success' : 'badge-ghost'
+                )}>
+                  {customer.portalEnabled ? 'Yoqilgan' : 'O\'chirilgan'}
+                </span>
+              </p>
+              <p className="text-xs text-base-content/50 mt-1">
+                Portal yoqilganda mijoz telefon va PIN kod orqali shaxsiy kabinetiga kira oladi
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => setShowPinModal(true)}
+              >
+                <Key className="h-4 w-4" />
+                PIN o'rnatish
+              </button>
+              {customer.portalEnabled && (
+                <button
+                  className="btn btn-error btn-outline btn-sm"
+                  onClick={handleTogglePortal}
+                  disabled={togglingPortal}
+                >
+                  {togglingPortal && <span className="loading loading-spinner loading-xs" />}
+                  Portalni o'chirish
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </PermissionGate>
+
+      {/* Set PIN Modal */}
+      {showPinModal && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-sm">
+            <h3 className="font-bold text-lg">PIN kod o'rnatish</h3>
+            <p className="text-sm text-base-content/60 mt-1">
+              {customer.fullName} uchun portal PIN kodi
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                  PIN kod (4-6 raqam)
+                </span>
+                <input
+                  type="password"
+                  className="input input-bordered w-full"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="****"
+                  maxLength={6}
+                />
+              </label>
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                  PIN kodni tasdiqlang
+                </span>
+                <input
+                  type="password"
+                  className="input input-bordered w-full"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="****"
+                  maxLength={6}
+                />
+              </label>
+              {pin && confirmPin && pin !== confirmPin && (
+                <p className="text-error text-sm">PIN kodlar mos kelmadi</p>
+              )}
+            </div>
+            <div className="modal-action">
+              <button
+                className="btn btn-ghost"
+                onClick={() => { setShowPinModal(false); setPin(''); setConfirmPin(''); }}
+                disabled={savingPin}
+              >
+                Bekor qilish
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSetPin}
+                disabled={savingPin || pin.length < 4 || pin !== confirmPin}
+              >
+                {savingPin && <span className="loading loading-spinner loading-sm" />}
+                O'rnatish
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => { if (!savingPin) { setShowPinModal(false); setPin(''); setConfirmPin(''); } }} />
         </div>
       )}
 

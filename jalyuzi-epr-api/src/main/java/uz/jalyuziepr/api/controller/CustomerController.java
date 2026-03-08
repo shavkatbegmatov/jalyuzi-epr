@@ -16,11 +16,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.request.CustomerRequest;
+import uz.jalyuziepr.api.dto.request.CustomerSetPinRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.CustomerResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
 import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.security.RequiresPermission;
+import uz.jalyuziepr.api.service.CustomerAuthService;
 import uz.jalyuziepr.api.service.CustomerService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
 
@@ -35,6 +37,7 @@ import java.util.List;
 public class CustomerController {
 
     private final CustomerService customerService;
+    private final CustomerAuthService customerAuthService;
     private final GenericExportService genericExportService;
 
     @GetMapping
@@ -101,6 +104,27 @@ public class CustomerController {
     public ResponseEntity<ApiResponse<Void>> deleteCustomer(@PathVariable Long id) {
         customerService.deleteCustomer(id);
         return ResponseEntity.ok(ApiResponse.success("Mijoz o'chirildi"));
+    }
+
+    @PostMapping("/{id}/set-pin")
+    @RequiresPermission(PermissionCode.CUSTOMERS_UPDATE)
+    @Operation(summary = "Set customer PIN", description = "Mijozga portal uchun PIN kod o'rnatish")
+    public ResponseEntity<ApiResponse<Void>> setCustomerPin(
+            @PathVariable Long id,
+            @Valid @RequestBody CustomerSetPinRequest request) {
+        customerAuthService.setCustomerPin(id, request);
+        return ResponseEntity.ok(ApiResponse.success("PIN kod o'rnatildi"));
+    }
+
+    @PatchMapping("/{id}/toggle-portal")
+    @RequiresPermission(PermissionCode.CUSTOMERS_UPDATE)
+    @Operation(summary = "Toggle portal access", description = "Mijoz portal kirishini yoqish/o'chirish")
+    public ResponseEntity<ApiResponse<Void>> togglePortalAccess(
+            @PathVariable Long id,
+            @RequestParam boolean enabled) {
+        customerAuthService.togglePortalAccess(id, enabled);
+        String message = enabled ? "Portal kirish yoqildi" : "Portal kirish o'chirildi";
+        return ResponseEntity.ok(ApiResponse.success(message));
     }
 
     @GetMapping("/export")

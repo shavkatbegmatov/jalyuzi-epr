@@ -41,4 +41,12 @@ export const customersApi = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`/v1/customers/${id}`);
   },
+
+  setPin: async (id: number, pin: string, confirmPin: string): Promise<void> => {
+    await api.post(`/v1/customers/${id}/set-pin`, { pin, confirmPin });
+  },
+
+  togglePortal: async (id: number, enabled: boolean): Promise<void> => {
+    await api.patch(`/v1/customers/${id}/toggle-portal`, null, { params: { enabled } });
+  },
 };

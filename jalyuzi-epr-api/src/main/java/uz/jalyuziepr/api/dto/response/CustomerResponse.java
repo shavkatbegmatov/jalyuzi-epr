@@ -58,6 +58,8 @@ public class CustomerResponse {
     @ExportColumn(header = "O'rnatish manzili", order = 12)
     private String installationAddress;
 
+    private Boolean portalEnabled;
+
     private String accessInstructions;
     private Boolean preferredTimeMorning;
     private Boolean preferredTimeAfternoon;
@@ -76,6 +78,7 @@ public class CustomerResponse {
                 .hasDebt(customer.getBalance().compareTo(BigDecimal.ZERO) < 0)
                 .notes(customer.getNotes())
                 .active(customer.getActive())
+                .portalEnabled(customer.getPortalEnabled())
                 .installationAddress(customer.getInstallationAddress())
                 .accessInstructions(customer.getAccessInstructions())
                 .preferredTimeMorning(customer.getPreferredTimeMorning())

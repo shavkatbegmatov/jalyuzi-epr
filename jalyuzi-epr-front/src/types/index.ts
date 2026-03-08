@@ -372,6 +372,7 @@ export interface Customer {
   hasDebt: boolean;
   notes?: string;
   active: boolean;
+  portalEnabled?: boolean;
   // O'rnatish xizmati maydonlari
   installationAddress?: string;
   accessInstructions?: string;
