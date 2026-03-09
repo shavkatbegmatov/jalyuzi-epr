@@ -75,15 +75,20 @@ export function ManagerOrdersPage() {
     if (!isInitial) setRefreshing(true);
     try {
       const statuses = STATUS_GROUPS[activeGroup] || [];
-      const status = statuses.length === 1 ? statuses[0] : statuses.join(',');
+      // Backend faqat bitta status qabul qiladi — bir nechta bo'lsa frontendda filter qilamiz
       const data = await ordersApi.getAll({
-        status: status || undefined,
+        status: statuses.length === 1 ? statuses[0] : undefined,
         search: searchQuery || undefined,
-        size: 50,
+        size: 100,
         sort: 'createdAt,desc',
       });
-      setOrders(data.content);
-      setTotalElements(data.totalElements);
+      let filtered = data.content;
+      if (statuses.length > 1) {
+        const statusSet = new Set(statuses);
+        filtered = data.content.filter((o) => statusSet.has(o.status));
+      }
+      setOrders(filtered);
+      setTotalElements(statuses.length > 1 ? filtered.length : data.totalElements);
     } catch (error) {
       console.error('Failed to load orders:', error);
       toast.error('Buyurtmalarni yuklashda xatolik');
