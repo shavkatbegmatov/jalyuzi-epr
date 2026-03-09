@@ -69,15 +69,17 @@ export function useCrossTabSync() {
       // Case 4: New login in another tab (token changed)
       if (event.key === 'accessToken' && event.oldValue && event.newValue &&
           event.oldValue !== event.newValue) {
-        console.log('[Cross-Tab Sync] New login detected in another tab');
+        console.log('[Cross-Tab Sync] New login detected in another tab - reloading');
 
-        toast('Boshqa tabda yangi session boshlandi', {
-          duration: 3000,
+        toast('Boshqa tabda yangi session boshlandi. Sahifa yangilanmoqda...', {
+          duration: 2000,
           icon: '🔄',
         });
 
-        // Optionally reload to sync new session data
-        // window.location.reload();
+        // Reload to sync new session data and redirect based on new role
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
       }
     };
 

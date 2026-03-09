@@ -1,9 +1,11 @@
 import { Outlet, NavLink, Navigate } from 'react-router-dom';
 import { ClipboardList, User, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { useCrossTabSync } from '../../hooks/useCrossTabSync';
 
 export default function InstallerLayout() {
   const { user, isAuthenticated, logout } = useAuthStore();
+  useCrossTabSync();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
