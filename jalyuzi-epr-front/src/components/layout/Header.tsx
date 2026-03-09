@@ -102,15 +102,19 @@ export function Header() {
 
   const isDark = themeMode === 'dark' || (themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
+  const userPermissions = useAuthStore((state) => state.permissions);
+
   // WebSocket ulanishini boshlash va dastlabki ma'lumotlarni yuklash
   useEffect(() => {
     const fetchData = async () => {
-      // Fetch roles
-      try {
-        const rolesData = await rolesApi.getAll();
-        setRoles(rolesData);
-      } catch (error) {
-        console.error('Failed to fetch roles:', error);
+      // Fetch roles — faqat ROLES_VIEW ruxsati bo'lganda
+      if (userPermissions.has('ROLES_VIEW')) {
+        try {
+          const rolesData = await rolesApi.getAll();
+          setRoles(rolesData);
+        } catch (error) {
+          console.error('Failed to fetch roles:', error);
+        }
       }
 
       // Dastlabki bildirishnomalarni yuklash
