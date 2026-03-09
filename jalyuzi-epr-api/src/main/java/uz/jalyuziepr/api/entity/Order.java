@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -118,15 +120,15 @@ public class Order extends BaseEntity implements Auditable {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<OrderItem> items = new ArrayList<>();
+    private Set<OrderItem> items = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<OrderPayment> payments = new ArrayList<>();
+    private Set<OrderPayment> payments = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+    private Set<OrderStatusHistory> statusHistory = new LinkedHashSet<>();
 
     // Helpers
     public void addItem(OrderItem item) {

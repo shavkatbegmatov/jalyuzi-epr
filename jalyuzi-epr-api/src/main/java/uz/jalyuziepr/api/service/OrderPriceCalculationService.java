@@ -6,7 +6,7 @@ import uz.jalyuziepr.api.entity.Product;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
+import java.util.Collection;
 
 @Service
 public class OrderPriceCalculationService {
@@ -61,7 +61,7 @@ public class OrderPriceCalculationService {
     /**
      * Buyurtma jami narxlarini hisoblash
      */
-    public OrderTotals calculateOrderTotals(List<OrderItem> items, BigDecimal discountAmount, BigDecimal discountPercent) {
+    public OrderTotals calculateOrderTotals(Collection<OrderItem> items, BigDecimal discountAmount, BigDecimal discountPercent) {
         BigDecimal subtotal = items.stream()
                 .map(OrderItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
