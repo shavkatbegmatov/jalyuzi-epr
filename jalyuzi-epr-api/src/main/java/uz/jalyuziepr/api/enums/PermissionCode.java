@@ -124,7 +124,8 @@ public enum PermissionCode {
     ORDERS_PRODUCE("ORDERS", "PRODUCE"),
     ORDERS_INSTALL("ORDERS", "INSTALL"),
     ORDERS_COLLECT_PAYMENT("ORDERS", "COLLECT_PAYMENT"),
-    ORDERS_CONFIRM_PAYMENT("ORDERS", "CONFIRM_PAYMENT");
+    ORDERS_CONFIRM_PAYMENT("ORDERS", "CONFIRM_PAYMENT"),
+    ORDERS_REVERT("ORDERS", "REVERT");
 
     private final String module;
     private final String action;

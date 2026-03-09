@@ -3,6 +3,9 @@ package uz.jalyuziepr.api.enums;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+import java.util.Map;
+
 @Getter
 @RequiredArgsConstructor
 public enum OrderStatus {
@@ -23,6 +26,20 @@ public enum OrderStatus {
 
     private final String displayName;
     private final int order;
+
+    /**
+     * Ruxsat etilgan orqaga o'tishlar
+     */
+    private static final Map<OrderStatus, List<OrderStatus>> ALLOWED_BACKWARD = Map.of(
+            OLCHOV_KUTILMOQDA, List.of(YANGI),
+            OLCHOV_BAJARILDI, List.of(OLCHOV_KUTILMOQDA),
+            NARX_TASDIQLANDI, List.of(OLCHOV_BAJARILDI, OLCHOV_KUTILMOQDA),
+            ZAKLAD_QABUL_QILINDI, List.of(NARX_TASDIQLANDI, OLCHOV_BAJARILDI),
+            ORNATISHGA_TAYINLANDI, List.of(TAYYOR),
+            ORNATISH_JARAYONIDA, List.of(ORNATISHGA_TAYINLANDI),
+            ORNATISH_BAJARILDI, List.of(ORNATISH_JARAYONIDA),
+            TOLOV_KUTILMOQDA, List.of(ORNATISH_BAJARILDI)
+    );
 
     /**
      * Berilgan statusdan keyingi ruxsat etilgan statuslarni tekshirish
@@ -46,5 +63,20 @@ public enum OrderStatus {
             case TOLOV_KUTILMOQDA -> target == YAKUNLANDI || target == QARZGA_OTKAZILDI;
             default -> false;
         };
+    }
+
+    /**
+     * Berilgan statusga orqaga qaytish mumkinligini tekshirish
+     */
+    public boolean canRevertTo(OrderStatus target) {
+        List<OrderStatus> allowed = ALLOWED_BACKWARD.get(this);
+        return allowed != null && allowed.contains(target);
+    }
+
+    /**
+     * Orqaga qaytish mumkin bo'lgan statuslar ro'yxati
+     */
+    public List<OrderStatus> getAllowedRevertTargets() {
+        return ALLOWED_BACKWARD.getOrDefault(this, List.of());
     }
 }

@@ -513,6 +513,97 @@ public class OrderService {
     }
 
     @Transactional
+    public OrderResponse addPayment(Long orderId, OrderPaymentRequest request) {
+        Order order = getOrderEntity(orderId);
+
+        // Terminal statuslarda bloklash
+        if (order.getStatus() == OrderStatus.YAKUNLANDI ||
+                order.getStatus() == OrderStatus.QARZGA_OTKAZILDI ||
+                order.getStatus() == OrderStatus.BEKOR_QILINDI) {
+            throw new BadRequestException("Yakunlangan buyurtmaga to'lov qo'shib bo'lmaydi");
+        }
+
+        if (request.getAmount().compareTo(order.getRemainingAmount()) > 0) {
+            throw new BadRequestException("Summa qoldiq summadan oshib ketdi");
+        }
+
+        User currentUser = getCurrentUser();
+        OrderPayment payment = createPayment(order, request, currentUser);
+        order.addPayment(payment);
+        updatePaidAmount(order);
+
+        // Status O'ZGARMAYDI
+
+        Order saved = orderRepository.save(order);
+
+        staffNotificationService.createGlobalNotification(
+                "To'lov qabul qilindi",
+                String.format("Buyurtma %s uchun %,.0f so'm to'lov qabul qilindi",
+                        order.getOrderNumber(), request.getAmount()),
+                StaffNotificationType.PAYMENT, "ORDER", saved.getId());
+
+        log.info("Payment added to order {}: {} UZS", order.getOrderNumber(), request.getAmount());
+        return OrderResponse.from(saved);
+    }
+
+    @Transactional
+    public OrderResponse revertStatus(Long orderId, OrderRevertRequest request) {
+        Order order = getOrderEntity(orderId);
+        OrderStatus targetStatus = request.getTargetStatus();
+
+        if (!order.getStatus().canRevertTo(targetStatus)) {
+            throw new BadRequestException(
+                    String.format("'%s' holatidan '%s' holatiga qaytarib bo'lmaydi",
+                            order.getStatus().getDisplayName(), targetStatus.getDisplayName()));
+        }
+
+        User currentUser = getCurrentUser();
+
+        // Side effects
+        handleRevertSideEffects(order, targetStatus);
+
+        // Status o'zgartirish
+        OrderStatus oldStatus = order.getStatus();
+        order.setStatus(targetStatus);
+        addStatusHistory(order, oldStatus, targetStatus, currentUser,
+                "[ORQAGA] " + request.getReason());
+
+        Order saved = orderRepository.save(order);
+
+        staffNotificationService.createGlobalNotification(
+                "Status orqaga qaytarildi",
+                String.format("Buyurtma %s: %s → %s. Sabab: %s",
+                        order.getOrderNumber(),
+                        oldStatus.getDisplayName(),
+                        targetStatus.getDisplayName(),
+                        request.getReason()),
+                StaffNotificationType.ORDER, "ORDER", saved.getId());
+
+        log.info("Order {} reverted: {} -> {}. Reason: {}",
+                order.getOrderNumber(), oldStatus, targetStatus, request.getReason());
+        return OrderResponse.from(saved);
+    }
+
+    private void handleRevertSideEffects(Order order, OrderStatus targetStatus) {
+        // YANGI ga qaytsa → measurer va measurementDate tozalanadi
+        if (targetStatus == OrderStatus.YANGI) {
+            order.setMeasurer(null);
+            order.setMeasurementDate(null);
+        }
+
+        // TAYYOR ga qaytsa → installer va installationDate tozalanadi
+        if (targetStatus == OrderStatus.TAYYOR) {
+            order.setInstaller(null);
+            order.setInstallationDate(null);
+        }
+
+        // OLCHOV_KUTILMOQDA ga qaytsa (OLCHOV_BAJARILDI dan) — o'lchov natijalari saqlanadi, faqat qayta o'lchov imkoniyati
+        // NARX_TASDIQLANDI yoki OLCHOV_BAJARILDI ga qaytsa — hech narsa tozalanmaydi
+
+        // To'lovlar O'CHIRILMAYDI — pul allaqachon olingan
+    }
+
+    @Transactional
     public OrderResponse cancelOrder(Long orderId, String notes) {
         Order order = getOrderEntity(orderId);
         if (order.getStatus() == OrderStatus.YAKUNLANDI || order.getStatus() == OrderStatus.QARZGA_OTKAZILDI ||

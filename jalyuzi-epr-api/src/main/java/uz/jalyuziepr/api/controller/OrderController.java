@@ -195,6 +195,24 @@ public class OrderController {
                 orderService.transferToDebt(id, notes)));
     }
 
+    @PostMapping("/{id}/add-payment")
+    @RequiresPermission(PermissionCode.ORDERS_COLLECT_PAYMENT)
+    @Operation(summary = "To'lov qo'shish", description = "Har qanday faol statusda to'lov qabul qilish")
+    public ResponseEntity<ApiResponse<OrderResponse>> addPayment(
+            @PathVariable Long id, @Valid @RequestBody OrderPaymentRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("To'lov qabul qilindi",
+                orderService.addPayment(id, request)));
+    }
+
+    @PostMapping("/{id}/revert")
+    @RequiresPermission(PermissionCode.ORDERS_REVERT)
+    @Operation(summary = "Statusni orqaga qaytarish", description = "Buyurtma statusini oldingi bosqichga qaytarish")
+    public ResponseEntity<ApiResponse<OrderResponse>> revertStatus(
+            @PathVariable Long id, @Valid @RequestBody OrderRevertRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Status orqaga qaytarildi",
+                orderService.revertStatus(id, request)));
+    }
+
     @PostMapping("/{id}/cancel")
     @RequiresPermission(PermissionCode.ORDERS_UPDATE)
     @Operation(summary = "Buyurtmani bekor qilish", description = "Buyurtmani bekor qilish")

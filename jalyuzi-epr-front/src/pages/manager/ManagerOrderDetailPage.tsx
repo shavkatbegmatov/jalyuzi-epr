@@ -15,6 +15,7 @@ import {
   FileCheck,
   CreditCard,
   AlertTriangle,
+  Undo2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
@@ -62,6 +63,19 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
   TRANSFER: "O'tkazma",
 };
 
+const ALLOWED_BACKWARD: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  OLCHOV_KUTILMOQDA: ['YANGI'],
+  OLCHOV_BAJARILDI: ['OLCHOV_KUTILMOQDA'],
+  NARX_TASDIQLANDI: ['OLCHOV_BAJARILDI', 'OLCHOV_KUTILMOQDA'],
+  ZAKLAD_QABUL_QILINDI: ['NARX_TASDIQLANDI', 'OLCHOV_BAJARILDI'],
+  ORNATISHGA_TAYINLANDI: ['TAYYOR'],
+  ORNATISH_JARAYONIDA: ['ORNATISHGA_TAYINLANDI'],
+  ORNATISH_BAJARILDI: ['ORNATISH_JARAYONIDA'],
+  TOLOV_KUTILMOQDA: ['ORNATISH_BAJARILDI'],
+};
+
+const TERMINAL_STATUSES: OrderStatus[] = ['YAKUNLANDI', 'QARZGA_OTKAZILDI', 'BEKOR_QILINDI'];
+
 export function ManagerOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -79,7 +93,7 @@ export function ManagerOrderDetailPage() {
   const [assignSubmitting, setAssignSubmitting] = useState(false);
 
   // Payment modal state
-  const [showPaymentModal, setShowPaymentModal] = useState<'deposit' | 'payment' | null>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState<'deposit' | 'payment' | 'universal' | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [paymentNotes, setPaymentNotes] = useState('');
@@ -89,6 +103,12 @@ export function ManagerOrderDetailPage() {
   const [showConfirmModal, setShowConfirmModal] = useState<'cancel' | 'finalize' | 'debt' | null>(null);
   const [confirmNotes, setConfirmNotes] = useState('');
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
+
+  // Revert modal state
+  const [showRevertModal, setShowRevertModal] = useState(false);
+  const [revertTarget, setRevertTarget] = useState<OrderStatus | ''>('');
+  const [revertReason, setRevertReason] = useState('');
+  const [revertSubmitting, setRevertSubmitting] = useState(false);
 
   const loadOrder = useCallback(async () => {
     if (!id) return;
@@ -168,7 +188,7 @@ export function ManagerOrderDetailPage() {
   };
 
   // --- Payment handlers ---
-  const openPaymentModal = (type: 'deposit' | 'payment') => {
+  const openPaymentModal = (type: 'deposit' | 'payment' | 'universal') => {
     if (order) {
       setPaymentAmount(String(order.remainingAmount));
     }
@@ -261,6 +281,61 @@ export function ManagerOrderDetailPage() {
     }
   };
 
+  // --- Universal payment handler ---
+  const handleUniversalPayment = async () => {
+    if (!order) return;
+    const amount = Number(paymentAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Summani kiriting");
+      return;
+    }
+    if (amount > order.remainingAmount) {
+      toast.error("Summa qoldiq summadan oshib ketdi");
+      return;
+    }
+    setPaymentSubmitting(true);
+    try {
+      const paymentType: OrderPaymentType =
+        amount >= order.remainingAmount ? 'FINAL_PAYMENT' : 'PARTIAL_PAYMENT';
+      const updated = await ordersApi.addPayment(order.id, {
+        paymentType,
+        amount,
+        paymentMethod,
+        notes: paymentNotes || undefined,
+      });
+      toast.success("To'lov qabul qilindi");
+      setOrder(updated);
+      setShowPaymentModal(null);
+    } catch (error) {
+      console.error('Payment failed:', error);
+      toast.error("To'lov qabul qilishda xatolik");
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
+
+  // --- Revert handler ---
+  const handleRevert = async () => {
+    if (!order || !revertTarget || !revertReason.trim()) return;
+    setRevertSubmitting(true);
+    try {
+      const updated = await ordersApi.revertStatus(order.id, {
+        targetStatus: revertTarget,
+        reason: revertReason,
+      });
+      setOrder(updated);
+      toast.success("Status orqaga qaytarildi");
+      setShowRevertModal(false);
+    } catch (error) {
+      console.error('Revert failed:', error);
+      toast.error("Statusni qaytarishda xatolik");
+    } finally {
+      setRevertSubmitting(false);
+    }
+  };
+
+  const revertTargets = order ? (ALLOWED_BACKWARD[order.status] || []) : [];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -277,7 +352,7 @@ export function ManagerOrderDetailPage() {
     );
   }
 
-  const isFinal = ['YAKUNLANDI', 'QARZGA_OTKAZILDI', 'BEKOR_QILINDI'].includes(order.status);
+  const isFinal = TERMINAL_STATUSES.includes(order.status);
 
   return (
     <div className="space-y-4">
@@ -470,6 +545,18 @@ export function ManagerOrderDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Universal to'lov tugmasi */}
+          {!isFinal && order.remainingAmount > 0 && (
+            <button
+              className="btn btn-success btn-block btn-sm mt-3"
+              onClick={() => openPaymentModal('universal')}
+              disabled={actionLoading}
+            >
+              <Banknote className="h-4 w-4" />
+              To'lov qabul qilish
+            </button>
+          )}
         </div>
       </div>
 
@@ -635,6 +722,22 @@ export function ManagerOrderDetailPage() {
             </>
           )}
 
+          {/* Orqaga qaytarish */}
+          {revertTargets.length > 0 && (
+            <button
+              className="btn btn-outline btn-warning btn-block btn-sm"
+              onClick={() => {
+                setRevertTarget(revertTargets[0]);
+                setRevertReason('');
+                setShowRevertModal(true);
+              }}
+              disabled={actionLoading}
+            >
+              <Undo2 className="h-4 w-4" />
+              Orqaga qaytarish
+            </button>
+          )}
+
           {/* Cancel — har doim */}
           <button
             className="btn btn-outline btn-error btn-block btn-sm"
@@ -737,6 +840,9 @@ export function ManagerOrderDetailPage() {
               <h3 className="font-bold text-lg">
                 {showPaymentModal === 'deposit' ? 'Zaklad qabul qilish' : "To'lov qabul qilish"}
               </h3>
+              {showPaymentModal === 'universal' && (
+                <p className="text-xs text-base-content/50 mt-1">Status o'zgarmaydi</p>
+              )}
               <button className="btn btn-ghost btn-sm btn-circle" onClick={() => setShowPaymentModal(null)}>
                 <X className="h-5 w-5" />
               </button>
@@ -794,7 +900,7 @@ export function ManagerOrderDetailPage() {
               <button className="btn btn-ghost" onClick={() => setShowPaymentModal(null)} disabled={paymentSubmitting}>
                 Bekor qilish
               </button>
-              <button className="btn btn-warning" onClick={handlePayment} disabled={paymentSubmitting}>
+              <button className="btn btn-warning" onClick={showPaymentModal === 'universal' ? handleUniversalPayment : handlePayment} disabled={paymentSubmitting}>
                 {paymentSubmitting ? <span className="loading loading-spinner loading-sm" /> : <Banknote className="h-4 w-4" />}
                 Qabul qilish
               </button>
@@ -855,6 +961,80 @@ export function ManagerOrderDetailPage() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setShowConfirmModal(null)} />
+        </div>
+      )}
+
+      {/* Revert Modal */}
+      {showRevertModal && (
+        <div className="modal modal-open modal-bottom sm:modal-middle">
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">Statusni orqaga qaytarish</h3>
+              <button className="btn btn-ghost btn-sm btn-circle" onClick={() => setShowRevertModal(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="alert alert-warning mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-sm">
+                Bu amal buyurtma statusini oldingi bosqichga qaytaradi. To'lovlar o'chirilmaydi.
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Maqsad status</span>
+                </label>
+                {revertTargets.length === 1 ? (
+                  <div className="input input-bordered flex items-center bg-base-200">
+                    {ORDER_STATUS_LABELS[revertTargets[0]]}
+                  </div>
+                ) : (
+                  <select
+                    className="select select-bordered w-full"
+                    value={revertTarget}
+                    onChange={(e) => setRevertTarget(e.target.value as OrderStatus)}
+                  >
+                    {revertTargets.map((status) => (
+                      <option key={status} value={status}>
+                        {ORDER_STATUS_LABELS[status]}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="form-control">
+                <label className="label">
+                  <span className="label-text font-medium">Sabab *</span>
+                </label>
+                <textarea
+                  className="textarea textarea-bordered w-full"
+                  placeholder="Orqaga qaytarish sababini yozing..."
+                  rows={3}
+                  value={revertReason}
+                  onChange={(e) => setRevertReason(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="modal-action">
+              <button className="btn btn-ghost" onClick={() => setShowRevertModal(false)} disabled={revertSubmitting}>
+                Bekor qilish
+              </button>
+              <button
+                className="btn btn-warning"
+                onClick={handleRevert}
+                disabled={revertSubmitting || !revertTarget || !revertReason.trim()}
+              >
+                {revertSubmitting ? <span className="loading loading-spinner loading-sm" /> : <Undo2 className="h-4 w-4" />}
+                Qaytarish
+              </button>
+            </div>
+          </div>
+          <div className="modal-backdrop" onClick={() => setShowRevertModal(false)} />
         </div>
       )}
     </div>

@@ -144,4 +144,14 @@ export const ordersApi = {
     const { data } = await api.post<ApiResponse<Order>>(`/v1/orders/${id}/cancel${params}`);
     return data.data;
   },
+
+  addPayment: async (id: number, request: OrderPaymentRequest): Promise<Order> => {
+    const { data } = await api.post<ApiResponse<Order>>(`/v1/orders/${id}/add-payment`, request);
+    return data.data;
+  },
+
+  revertStatus: async (id: number, request: { targetStatus: string; reason: string }): Promise<Order> => {
+    const { data } = await api.post<ApiResponse<Order>>(`/v1/orders/${id}/revert`, request);
+    return data.data;
+  },
 };
