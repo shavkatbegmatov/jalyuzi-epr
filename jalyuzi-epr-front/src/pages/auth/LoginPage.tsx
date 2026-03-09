@@ -57,9 +57,11 @@ export function LoginPage() {
 
       toast.success('Muvaffaqiyatli kirish!');
 
-      // INSTALLER role should go to installer panel
+      // Role-based redirects to mobile panels
       if (response.roles?.includes('INSTALLER')) {
         navigate('/installer/', { replace: true });
+      } else if (response.roles?.includes('MANAGER')) {
+        navigate('/manager/', { replace: true });
       } else {
         // Navigate to main app - modal will show automatically if mustChangePassword is true
         navigate(redirectTo, { replace: true });

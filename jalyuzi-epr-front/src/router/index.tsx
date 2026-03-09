@@ -49,6 +49,13 @@ const InstallerDashboardPage = lazy(() => import('../pages/installer/InstallerDa
 const InstallerOrderDetailPage = lazy(() => import('../pages/installer/InstallerOrderDetailPage').then(m => ({ default: m.InstallerOrderDetailPage })));
 const InstallerProfilePage = lazy(() => import('../pages/installer/InstallerProfilePage').then(m => ({ default: m.InstallerProfilePage })));
 
+// Lazy-loaded manager pages
+const ManagerLayout = lazy(() => import('../pages/manager/ManagerLayout'));
+const ManagerDashboardPage = lazy(() => import('../pages/manager/ManagerDashboardPage').then(m => ({ default: m.ManagerDashboardPage })));
+const ManagerOrdersPage = lazy(() => import('../pages/manager/ManagerOrdersPage').then(m => ({ default: m.ManagerOrdersPage })));
+const ManagerOrderDetailPage = lazy(() => import('../pages/manager/ManagerOrderDetailPage').then(m => ({ default: m.ManagerOrderDetailPage })));
+const ManagerProfilePage = lazy(() => import('../pages/manager/ManagerProfilePage').then(m => ({ default: m.ManagerProfilePage })));
+
 // Lazy-loaded portal pages
 const PortalLayout = lazy(() => import('../portal/components/layout/PortalLayout'));
 const PortalLoginPage = lazy(() => import('../portal/pages/LoginPage'));
@@ -458,6 +465,53 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: "O'rnatuvchi - Buyurtma" },
+      },
+    ],
+  },
+  // Manager Routes
+  {
+    path: '/manager',
+    element: (
+      <LazyRoute>
+        <ManagerLayout />
+      </LazyRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: (
+          <LazyRoute>
+            <ManagerDashboardPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Dashboard' },
+      },
+      {
+        path: 'orders',
+        element: (
+          <LazyRoute>
+            <ManagerOrdersPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Buyurtmalar' },
+      },
+      {
+        path: 'orders/:id',
+        element: (
+          <LazyRoute>
+            <ManagerOrderDetailPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Buyurtma' },
+      },
+      {
+        path: 'profile',
+        element: (
+          <LazyRoute>
+            <ManagerProfilePage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Profil' },
       },
     ],
   },

@@ -44,6 +44,11 @@ export function MainLayout() {
     return <Navigate to="/installer/" replace />;
   }
 
+  // MANAGER role should use the manager panel, not the main layout
+  if (user?.role === 'MANAGER' && !location.pathname.startsWith('/manager')) {
+    return <Navigate to="/manager/" replace />;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden text-base-content">
       <Sidebar />
