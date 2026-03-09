@@ -11,6 +11,12 @@ export default function InstallerLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  // Agar boshqa tabda boshqa profilga kirilgan bo'lsa, to'g'ri panelga yo'naltirish
+  if (user?.role && user.role !== 'INSTALLER') {
+    if (user.role === 'MANAGER') return <Navigate to="/manager/" replace />;
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-base-200 flex flex-col">
       {/* Top Header */}
