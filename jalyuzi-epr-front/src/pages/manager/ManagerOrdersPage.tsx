@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Ban,
   LayoutGrid,
+  Plus,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
@@ -197,13 +198,22 @@ export function ManagerOrdersPage() {
             {totalElements} ta buyurtma
           </p>
         </div>
-        <button
-          className={`btn btn-ghost btn-sm btn-circle ${refreshing ? 'animate-spin' : ''}`}
-          onClick={() => void loadOrders()}
-          disabled={refreshing}
-        >
-          <RefreshCw className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            className="btn btn-warning btn-sm"
+            onClick={() => navigate('/manager/orders/new')}
+          >
+            <Plus className="h-4 w-4" />
+            Yangi
+          </button>
+          <button
+            className={`btn btn-ghost btn-sm btn-circle ${refreshing ? 'animate-spin' : ''}`}
+            onClick={() => void loadOrders()}
+            disabled={refreshing}
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Search */}

@@ -496,6 +496,15 @@ export const router = createBrowserRouter([
         handle: { title: 'Menejer - Buyurtmalar' },
       },
       {
+        path: 'orders/new',
+        element: (
+          <LazyRoute>
+            <CreateOrderPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Yangi buyurtma' },
+      },
+      {
         path: 'orders/:id',
         element: (
           <LazyRoute>

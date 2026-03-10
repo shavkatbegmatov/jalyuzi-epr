@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
   ArrowLeft,
@@ -75,6 +75,8 @@ function calcItemPrice(item: OrderItem) {
 
 export function CreateOrderPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isManagerRoute = location.pathname.startsWith('/manager');
 
   // Wizard step
   const [step, setStep] = useState(0);
@@ -252,7 +254,7 @@ export function CreateOrderPage() {
 
       const order = await ordersApi.create(request);
       toast.success('Buyurtma muvaffaqiyatli yaratildi!');
-      navigate(`/orders/${order.id}`);
+      navigate(isManagerRoute ? `/manager/orders/${order.id}` : `/orders/${order.id}`);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Buyurtma yaratishda xatolik yuz berdi');
