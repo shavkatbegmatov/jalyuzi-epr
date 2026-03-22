@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:jalyuzi_epr_db}
+    username: ${DB_USERNAME:jalyuzi_epr_user}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+
+  # Vault va Cloud tekshiruvlarini o'chirish (Coolify ishlatilmoqda)
+  cloud:
+    vault:
+      enabled: false
+    compatibility-verifier:
+      enabled: false
+
+# Production logging - faqat muhim loglar
+logging:
+  level:
+    root: WARN
+    uz.jalyuziepr: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
