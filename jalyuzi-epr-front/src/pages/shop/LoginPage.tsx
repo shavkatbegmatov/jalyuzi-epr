@@ -36,9 +36,10 @@ export function ShopLoginPage() {
       await shopAuthApi.sendCode(phone);
       toast.success(t('shop.auth.codeSent'));
       setStep('code');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Send code error:', error);
-      toast.error(error.response?.data?.message || t('common.error'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -57,9 +58,10 @@ export function ShopLoginPage() {
       setAuth(response.customer, response.accessToken, response.refreshToken);
       toast.success(t('auth.welcome'));
       navigate(from, { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
-      toast.error(error.response?.data?.message || t('shop.auth.codeError'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('shop.auth.codeError'));
     } finally {
       setLoading(false);
     }

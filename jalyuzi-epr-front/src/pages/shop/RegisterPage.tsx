@@ -34,9 +34,10 @@ export function ShopRegisterPage() {
       await shopAuthApi.sendCode(phone);
       toast.success(t('shop.auth.codeSent'));
       setStep('code');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Send code error:', error);
-      toast.error(error.response?.data?.message || t('common.error'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
@@ -57,9 +58,10 @@ export function ShopRegisterPage() {
       } else {
         toast.error(t('shop.auth.codeError'));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Verify code error:', error);
-      toast.error(error.response?.data?.message || t('shop.auth.codeError'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('shop.auth.codeError'));
     } finally {
       setLoading(false);
     }
@@ -78,9 +80,10 @@ export function ShopRegisterPage() {
       setAuth(response.customer, response.accessToken, response.refreshToken);
       toast.success(t('shop.auth.registerSuccess'));
       navigate('/shop', { replace: true });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Register error:', error);
-      toast.error(error.response?.data?.message || t('common.error'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }

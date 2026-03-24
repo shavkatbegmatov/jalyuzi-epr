@@ -166,7 +166,7 @@ export function DynamicField({
         />
       );
 
-    case 'multiselect':
+    case 'multiselect': {
       // Multi-select as checkbox group
       const selectedValues = Array.isArray(value) ? value : [];
       return (
@@ -208,6 +208,7 @@ export function DynamicField({
           {errorElement}
         </div>
       );
+    }
 
     default:
       // Fallback to text input for unknown types

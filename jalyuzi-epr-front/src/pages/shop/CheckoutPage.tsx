@@ -66,9 +66,10 @@ export function ShopCheckoutPage() {
       clearCart();
       toast.success(t('shop.checkout.orderSuccess'));
       navigate(`/shop/orders/${order.id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Order error:', error);
-      toast.error(error.response?.data?.message || t('common.error'));
+      const axiosErr = error as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || t('common.error'));
     } finally {
       setLoading(false);
     }
