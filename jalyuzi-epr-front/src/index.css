@@ -65,6 +65,15 @@
     outline: 2px solid hsl(var(--p));
     outline-offset: 2px;
   }
+
+  /* PWA safe area for notched devices (iPhone X+) */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 @layer components {
