@@ -32,6 +32,8 @@ const NotificationsPage = lazy(() => import('../pages/notifications/Notification
 const ReportsPage = lazy(() => import('../pages/reports/ReportsPage').then(m => ({ default: m.ReportsPage })));
 const EmployeesPage = lazy(() => import('../pages/employees/EmployeesPage').then(m => ({ default: m.EmployeesPage })));
 const EmployeeDetailPage = lazy(() => import('../pages/employees/EmployeeDetailPage').then(m => ({ default: m.EmployeeDetailPage })));
+const InstallersPage = lazy(() => import('../pages/installers/InstallersPage').then(m => ({ default: m.InstallersPage })));
+const InstallerDetailPage = lazy(() => import('../pages/installers/InstallerDetailPage').then(m => ({ default: m.InstallerDetailPage })));
 const RolesPage = lazy(() => import('../pages/roles/RolesPage').then(m => ({ default: m.RolesPage })));
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
@@ -373,6 +375,28 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Xodim tafsiloti' },
+      },
+      {
+        path: 'installers',
+        element: (
+          <ProtectedRoute permission={PermissionCode.INSTALLERS_VIEW}>
+            <LazyRoute>
+              <InstallersPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: "O'rnatuvchilar" },
+      },
+      {
+        path: 'installers/:id',
+        element: (
+          <ProtectedRoute permission={PermissionCode.INSTALLERS_VIEW}>
+            <LazyRoute>
+              <InstallerDetailPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: "O'rnatuvchi tafsiloti" },
       },
       {
         path: 'roles',

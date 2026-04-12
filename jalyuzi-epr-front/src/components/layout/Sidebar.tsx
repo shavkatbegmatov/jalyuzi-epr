@@ -19,6 +19,7 @@ import {
   Wrench,
   Layers,
   ClipboardList,
+  HardHat,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -41,6 +42,7 @@ const menuItems = [
   { path: '/reports', icon: BarChart3, label: 'Hisobotlar', permission: PermissionCode.REPORTS_VIEW_SALES },
   { path: '/notifications', icon: Bell, label: 'Bildirishnomalar', permission: PermissionCode.NOTIFICATIONS_VIEW },
   { path: '/employees', icon: UserCog, label: 'Xodimlar', permission: PermissionCode.EMPLOYEES_VIEW },
+  { path: '/installers', icon: HardHat, label: "O'rnatuvchilar", permission: PermissionCode.INSTALLERS_VIEW },
   { path: '/roles', icon: Shield, label: 'Rollar', permission: PermissionCode.ROLES_VIEW },
   { path: '/audit-logs', icon: FileText, label: 'Audit Loglar', permission: PermissionCode.SETTINGS_VIEW },
   { path: '/product-types', icon: Layers, label: 'Mahsulot Turlari', permission: PermissionCode.PRODUCT_TYPES_VIEW },

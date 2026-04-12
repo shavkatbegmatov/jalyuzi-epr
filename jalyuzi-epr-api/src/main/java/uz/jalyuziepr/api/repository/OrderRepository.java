@@ -72,4 +72,43 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("SELECT COALESCE(SUM(o.remainingAmount), 0) FROM Order o WHERE o.status NOT IN ('BEKOR_QILINDI', 'YAKUNLANDI')")
     java.math.BigDecimal sumTotalRemaining();
+
+    // ── Installer stats queries ──
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.installer.id = :installerId AND o.status IN :statuses")
+    long countByInstallerIdAndStatusIn(@Param("installerId") Long installerId,
+                                       @Param("statuses") List<OrderStatus> statuses);
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.installer.id = :installerId AND o.status IN :statuses AND o.completedDate BETWEEN :start AND :end")
+    long countByInstallerIdAndStatusInAndCompletedDateBetween(
+            @Param("installerId") Long installerId,
+            @Param("statuses") List<OrderStatus> statuses,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
+
+    @Query("""
+        SELECT COUNT(o) FROM Order o
+        WHERE o.status IN ('ORNATISHGA_TAYINLANDI', 'ORNATISH_JARAYONIDA')
+        AND o.installer IS NOT NULL
+        """)
+    long countBusyInstallers();
+
+    @Query("""
+        SELECT COUNT(DISTINCT o.installer.id) FROM Order o
+        WHERE o.status IN ('ORNATISHGA_TAYINLANDI', 'ORNATISH_JARAYONIDA')
+        AND o.installer IS NOT NULL
+        """)
+    long countDistinctBusyInstallers();
+
+    @Query("""
+        SELECT COUNT(o) FROM Order o
+        WHERE o.status IN ('ORNATISH_BAJARILDI', 'TOLOV_KUTILMOQDA', 'YAKUNLANDI', 'QARZGA_OTKAZILDI')
+        AND o.installer IS NOT NULL
+        AND o.completedDate BETWEEN :start AND :end
+        """)
+    long countCompletedInstallationsBetween(@Param("start") LocalDateTime start,
+                                             @Param("end") LocalDateTime end);
+
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer WHERE o.installer.id = :installerId ORDER BY o.createdAt DESC")
+    Page<Order> findByInstallerIdWithCustomer(@Param("installerId") Long installerId, Pageable pageable);
 }

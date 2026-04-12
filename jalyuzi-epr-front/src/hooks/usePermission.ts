@@ -119,6 +119,12 @@ export const PermissionCode = {
   ORDERS_INSTALL: 'ORDERS_INSTALL',
   ORDERS_COLLECT_PAYMENT: 'ORDERS_COLLECT_PAYMENT',
   ORDERS_CONFIRM_PAYMENT: 'ORDERS_CONFIRM_PAYMENT',
+
+  // INSTALLERS
+  INSTALLERS_VIEW: 'INSTALLERS_VIEW',
+  INSTALLERS_CREATE: 'INSTALLERS_CREATE',
+  INSTALLERS_UPDATE: 'INSTALLERS_UPDATE',
+  INSTALLERS_TOGGLE: 'INSTALLERS_TOGGLE',
 } as const;
 
 export type PermissionCodeType = (typeof PermissionCode)[keyof typeof PermissionCode];
@@ -573,6 +579,12 @@ export function usePermission() {
     [permissions]
   );
 
+  // Installers
+  const canViewInstallers = useMemo(() => permissions.has(PermissionCode.INSTALLERS_VIEW), [permissions]);
+  const canCreateInstallers = useMemo(() => permissions.has(PermissionCode.INSTALLERS_CREATE), [permissions]);
+  const canUpdateInstallers = useMemo(() => permissions.has(PermissionCode.INSTALLERS_UPDATE), [permissions]);
+  const canToggleInstallers = useMemo(() => permissions.has(PermissionCode.INSTALLERS_TOGGLE), [permissions]);
+
   return {
     // Core permission checks
     hasPermission,
@@ -699,5 +711,11 @@ export function usePermission() {
     canInstallOrders,
     canCollectOrderPayment,
     canConfirmOrderPayment,
+
+    // Installers
+    canViewInstallers,
+    canCreateInstallers,
+    canUpdateInstallers,
+    canToggleInstallers,
   };
 }

@@ -1191,5 +1191,49 @@ export interface OrderStatsResponse {
   statusCounts: Record<string, number>;
 }
 
+// ── Installer types ──
+export interface Installer {
+  id: number;
+  fullName: string;
+  phone: string;
+  email?: string;
+  username: string;
+  active: boolean;
+  activeOrdersCount: number;
+  completedOrdersCount: number;
+  totalCollectedAmount: number;
+  currentOrderNumber?: string;
+}
+
+export interface InstallerDetail extends Installer {
+  createdAt: string;
+  completedThisMonth: number;
+  completedLastMonth: number;
+  avgCompletionHours?: number;
+}
+
+export interface InstallerStats {
+  totalInstallers: number;
+  activeInstallers: number;
+  busyNow: number;
+  completedToday: number;
+  completedThisMonth: number;
+  totalCollectedAmount: number;
+}
+
+export interface InstallerCreateRequest {
+  fullName: string;
+  phone: string;
+  email?: string;
+  username: string;
+  password: string;
+}
+
+export interface InstallerUpdateRequest {
+  fullName: string;
+  phone: string;
+  email?: string;
+}
+
 // Audit Log Detail Types
 export * from './audit-log.types';
