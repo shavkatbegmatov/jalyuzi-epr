@@ -79,9 +79,10 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/15 via-base-100 to-secondary/15 p-4">
-      <div className="mx-auto flex min-h-screen max-w-5xl items-center">
-        <div className="grid w-full overflow-hidden rounded-3xl border border-base-200 bg-base-100/85 shadow-[var(--shadow-strong)] backdrop-blur lg:grid-cols-[1.1fr_1fr]">
+    <div className="flex min-h-[100dvh] bg-gradient-to-br from-primary/15 via-base-100 to-secondary/15 lg:items-center lg:p-4">
+      <div className="mx-auto w-full max-w-5xl">
+        <div className="grid min-h-[100dvh] w-full lg:min-h-0 lg:grid-cols-[1.1fr_1fr] lg:overflow-hidden lg:rounded-3xl lg:border lg:border-base-200 lg:bg-base-100/85 lg:shadow-[var(--shadow-strong)] lg:backdrop-blur">
+          {/* Left promo panel — desktop only */}
           <div className="relative hidden flex-col justify-between bg-gradient-to-br from-primary/15 via-transparent to-secondary/10 p-10 lg:flex">
             <div>
               <div className="pill w-fit">ERP Platforma</div>
@@ -118,10 +119,22 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="p-8 sm:p-10">
-            <div className="mb-6">
+          {/* Login form — full-screen on mobile, card panel on desktop */}
+          <div className="flex flex-col justify-center px-6 py-10 sm:px-10 lg:py-10">
+            {/* Mobile brand header */}
+            <div className="mb-8 text-center lg:hidden">
+              <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-primary/15">
+                <ShieldCheck className="h-7 w-7 text-primary" />
+              </div>
+              <h1 className="text-xl font-bold tracking-tight">Jalyuzi ERP</h1>
+              <p className="mt-1 text-xs text-base-content/50">
+                Savdo va zaxira nazorati
+              </p>
+            </div>
+
+            <div className="mb-6 max-lg:text-center">
               <h2 className="text-2xl font-semibold">Kirish</h2>
-              <p className="text-sm text-base-content/60">
+              <p className="mt-1 text-sm text-base-content/60">
                 ERP tizimiga kirish uchun ma'lumotlaringizni kiriting
               </p>
             </div>
@@ -133,7 +146,7 @@ export function LoginPage() {
                   type="text"
                   placeholder="admin"
                   autoComplete="username"
-                  className={`input input-bordered w-full ${errors.username ? 'input-error' : ''}`}
+                  className={`input input-bordered h-12 w-full text-base ${errors.username ? 'input-error' : ''}`}
                   {...register('username', {
                     required: 'Foydalanuvchi nomi kiritilishi shart',
                   })}
@@ -152,7 +165,7 @@ export function LoginPage() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className={`input input-bordered w-full pr-10 ${errors.password ? 'input-error' : ''}`}
+                    className={`input input-bordered h-12 w-full pr-12 text-base ${errors.password ? 'input-error' : ''}`}
                     {...register('password', {
                       required: 'Parol kiritilishi shart',
                     })}
@@ -161,7 +174,7 @@ export function LoginPage() {
                     type="button"
                     aria-label={showPassword ? 'Parolni yashirish' : "Parolni ko'rsatish"}
                     aria-pressed={showPassword}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-base-content/50 active:scale-90"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
@@ -185,7 +198,7 @@ export function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm min-h-[44px]"
+                  className="btn btn-ghost btn-sm"
                   onClick={() =>
                     toast('Parolni tiklash uchun administratorga murojaat qiling.')
                   }
@@ -196,7 +209,7 @@ export function LoginPage() {
 
               <button
                 type="submit"
-                className="btn btn-primary w-full"
+                className="btn btn-primary h-12 w-full text-base"
                 disabled={loading}
               >
                 {loading ? (
@@ -210,26 +223,28 @@ export function LoginPage() {
               </button>
             </form>
 
-            <div className="mt-6 surface-soft rounded-xl p-4 text-sm text-base-content/70">
+            <div className="mt-6 rounded-xl bg-base-200/50 p-4 text-sm text-base-content/70">
               <p className="font-medium text-base-content">Demo kirish</p>
-              <p className="mt-2">
-                Admin:{' '}
-                <code className="rounded bg-base-200 px-2 py-1">admin</code> /{' '}
-                <code className="rounded bg-base-200 px-2 py-1">admin123</code>
-              </p>
-              <p className="mt-2">
-                Sotuvchi:{' '}
-                <code className="rounded bg-base-200 px-2 py-1">seller</code> /{' '}
-                <code className="rounded bg-base-200 px-2 py-1">seller123</code>
-              </p>
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span>Admin:</span>
+                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">admin</code>
+                <span>/</span>
+                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">admin123</code>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span>Sotuvchi:</span>
+                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">seller</code>
+                <span>/</span>
+                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">seller123</code>
+              </div>
             </div>
 
-            <div className="mt-4 text-center text-xs text-base-content/60">
+            <p className="mt-5 text-center text-xs text-base-content/50">
               Hisob kerakmi?{' '}
               <Link to="/register" className="link link-primary">
                 Ro'yxatdan o'tish
               </Link>
-            </div>
+            </p>
           </div>
         </div>
       </div>
