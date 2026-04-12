@@ -1,12 +1,12 @@
 -- V31: O'rnatuvchilar boshqaruvi uchun permissionlar
 
 -- 1. Yangi permissionlar yaratish
-INSERT INTO permissions (code, name, description, module, action, created_at)
+INSERT INTO permissions (code, module, action, description, created_at)
 VALUES
-    ('INSTALLERS_VIEW', 'INSTALLERS_VIEW', 'O''rnatuvchilar ro''yxatini ko''rish', 'INSTALLERS', 'VIEW', NOW()),
-    ('INSTALLERS_CREATE', 'INSTALLERS_CREATE', 'Yangi o''rnatuvchi yaratish', 'INSTALLERS', 'CREATE', NOW()),
-    ('INSTALLERS_UPDATE', 'INSTALLERS_UPDATE', 'O''rnatuvchi ma''lumotlarini tahrirlash', 'INSTALLERS', 'UPDATE', NOW()),
-    ('INSTALLERS_TOGGLE', 'INSTALLERS_TOGGLE', 'O''rnatuvchini faollashtirish/o''chirish', 'INSTALLERS', 'TOGGLE', NOW())
+    ('INSTALLERS_VIEW', 'INSTALLERS', 'VIEW', 'O''rnatuvchilar ro''yxatini ko''rish', NOW()),
+    ('INSTALLERS_CREATE', 'INSTALLERS', 'CREATE', 'Yangi o''rnatuvchi yaratish', NOW()),
+    ('INSTALLERS_UPDATE', 'INSTALLERS', 'UPDATE', 'O''rnatuvchi ma''lumotlarini tahrirlash', NOW()),
+    ('INSTALLERS_TOGGLE', 'INSTALLERS', 'TOGGLE', 'O''rnatuvchini faollashtirish/o''chirish', NOW())
 ON CONFLICT (code) DO NOTHING;
 
 -- 2. ADMIN roliga barcha installer permissionlarni tayinlash
