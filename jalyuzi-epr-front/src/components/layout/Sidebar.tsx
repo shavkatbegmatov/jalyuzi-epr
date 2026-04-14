@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Package,
@@ -80,7 +80,7 @@ export function Sidebar() {
       >
         <div className="relative flex h-16 items-center justify-between overflow-hidden border-b border-base-200 px-4">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/15 via-transparent to-secondary/10" />
-          <div className="relative flex items-center gap-3">
+          <Link to="/" className="relative flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary/15 text-primary shadow-sm">
               <span className="text-base font-bold">J</span>
             </div>
@@ -90,7 +90,7 @@ export function Sidebar() {
                 ERP boshqaruv paneli
               </p>
             </div>
-          </div>
+          </Link>
           <button
             className="btn btn-ghost btn-sm relative lg:hidden"
             onClick={() => setSidebarOpen(false)}
