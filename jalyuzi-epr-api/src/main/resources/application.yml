@@ -58,6 +58,16 @@ sms:
     max-attempts: 3
     resend-delay-seconds: 60
 
+# Telegram Bot Configuration
+telegram:
+  bot:
+    token: ${TELEGRAM_BOT_TOKEN:}
+    username: ${TELEGRAM_BOT_USERNAME:}
+    enabled: ${TELEGRAM_BOT_ENABLED:false}
+    api-url: https://api.telegram.org
+    webhook-url: ${TELEGRAM_WEBHOOK_URL:}
+    webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+
 # Logging
 logging:
   level:

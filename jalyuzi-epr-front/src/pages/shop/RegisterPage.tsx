@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { shopAuthApi } from '../../api/shop.api';
+import { shopAuthApi, TelegramInfo } from '../../api/shop.api';
 import { useShopStore } from '../../store/shopStore';
 
 export function ShopRegisterPage() {
@@ -16,6 +16,7 @@ export function ShopRegisterPage() {
   const [fullName, setFullName] = useState('');
   const [address, setAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const [telegramInfo, setTelegramInfo] = useState<TelegramInfo | null>(null);
 
   if (isAuthenticated) {
     navigate('/shop', { replace: true });
@@ -31,9 +32,21 @@ export function ShopRegisterPage() {
 
     setLoading(true);
     try {
-      await shopAuthApi.sendCode(phone);
-      toast.success(t('shop.auth.codeSent'));
-      setStep('code');
+      const info = await shopAuthApi.telegramInfo(phone);
+      setTelegramInfo(info);
+
+      if (info.enabled && info.phoneLinked) {
+        await shopAuthApi.sendCode(phone);
+        toast.success('📱 Tasdiqlash kodi Telegram\'ga yuborildi');
+        setStep('code');
+      } else if (info.enabled && !info.phoneLinked) {
+        setStep('code');
+        toast('Kodni olish uchun Telegram botga o\'ting', { icon: '📱' });
+      } else {
+        await shopAuthApi.sendCode(phone);
+        toast.success(t('shop.auth.codeSent'));
+        setStep('code');
+      }
     } catch (error: unknown) {
       console.error('Send code error:', error);
       const axiosErr = error as { response?: { data?: { message?: string } } };
@@ -142,11 +155,37 @@ export function ShopRegisterPage() {
                 <button
                   type="button"
                   className="link link-primary text-sm"
-                  onClick={() => setStep('phone')}
+                  onClick={() => {
+                    setStep('phone');
+                    setTelegramInfo(null);
+                    setCode('');
+                  }}
                 >
                   O'zgartirish
                 </button>
               </div>
+
+              {telegramInfo?.enabled && !telegramInfo.phoneLinked && telegramInfo.deepLink && (
+                <div className="alert alert-info">
+                  <div className="flex flex-col items-start gap-2 w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📱</span>
+                      <span className="text-sm font-semibold">Telegram orqali kod oling</span>
+                    </div>
+                    <p className="text-xs">
+                      Botni oching va "📱 Telefon raqamni ulashish" tugmasini bosing — bot sizga kodni yuboradi.
+                    </p>
+                    <a
+                      href={telegramInfo.deepLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-info w-full"
+                    >
+                      Telegram botni ochish
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div className="form-control">
                 <label className="label">

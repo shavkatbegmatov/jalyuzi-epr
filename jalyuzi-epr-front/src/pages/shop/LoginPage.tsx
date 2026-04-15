@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { shopAuthApi } from '../../api/shop.api';
+import { shopAuthApi, TelegramInfo } from '../../api/shop.api';
 import { useShopStore } from '../../store/shopStore';
 
 export function ShopLoginPage() {
@@ -15,6 +15,7 @@ export function ShopLoginPage() {
   const [phone, setPhone] = useState('+998');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [telegramInfo, setTelegramInfo] = useState<TelegramInfo | null>(null);
 
   const from = (location.state as { from?: string })?.from || '/shop';
 
@@ -33,9 +34,26 @@ export function ShopLoginPage() {
 
     setLoading(true);
     try {
-      await shopAuthApi.sendCode(phone);
-      toast.success(t('shop.auth.codeSent'));
-      setStep('code');
+      // Avval Telegram bot holati va mijoz bog'langanligini tekshirish
+      const info = await shopAuthApi.telegramInfo(phone);
+      setTelegramInfo(info);
+
+      if (info.enabled && info.phoneLinked) {
+        // Foydalanuvchi botga allaqachon ulangan — kod darhol Telegram'ga yuboriladi
+        await shopAuthApi.sendCode(phone);
+        toast.success('📱 Tasdiqlash kodi Telegram\'ga yuborildi');
+        setStep('code');
+      } else if (info.enabled && !info.phoneLinked) {
+        // Telegram bot mavjud, lekin foydalanuvchi hali bog'lanmagan
+        // Bot ochilgach, kontakt ulashgach — kod bot tomonidan yuboriladi
+        setStep('code');
+        toast('Kodni olish uchun Telegram botga o\'ting', { icon: '📱' });
+      } else {
+        // Telegram o'chirilgan — odatdagi SMS
+        await shopAuthApi.sendCode(phone);
+        toast.success(t('shop.auth.codeSent'));
+        setStep('code');
+      }
     } catch (error: unknown) {
       console.error('Send code error:', error);
       const axiosErr = error as { response?: { data?: { message?: string } } };
@@ -66,6 +84,9 @@ export function ShopLoginPage() {
       setLoading(false);
     }
   };
+
+  const showTelegramLink = telegramInfo?.enabled && telegramInfo?.deepLink;
+  const needsBotSetup = telegramInfo?.enabled && !telegramInfo.phoneLinked;
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
@@ -105,11 +126,37 @@ export function ShopLoginPage() {
                 <button
                   type="button"
                   className="link link-primary text-sm"
-                  onClick={() => setStep('phone')}
+                  onClick={() => {
+                    setStep('phone');
+                    setTelegramInfo(null);
+                    setCode('');
+                  }}
                 >
                   O'zgartirish
                 </button>
               </div>
+
+              {needsBotSetup && showTelegramLink && (
+                <div className="alert alert-info">
+                  <div className="flex flex-col items-start gap-2 w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📱</span>
+                      <span className="text-sm font-semibold">Telegram orqali kod oling</span>
+                    </div>
+                    <p className="text-xs">
+                      Tasdiqlash kodi Telegram orqali yuboriladi. Tugmani bosib, botni oching va telefon raqamingizni ulashing.
+                    </p>
+                    <a
+                      href={telegramInfo!.deepLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-info w-full"
+                    >
+                      Telegram botni ochish
+                    </a>
+                  </div>
+                </div>
+              )}
 
               <div className="form-control">
                 <label className="label">

@@ -82,6 +82,10 @@ public class Customer extends BaseEntity implements Auditable {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    // Telegram integratsiyasi
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+
     // O'rnatish xizmati maydonlari
     @Column(name = "installation_address", length = 500)
     private String installationAddress;

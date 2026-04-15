@@ -303,7 +303,20 @@ export const shopAuthApi = {
     const response = await shopApi.post<ApiResponse<ShopAuthResponse>>('/v1/shop/auth/login', { phone, code });
     return response.data.data;
   },
+
+  telegramInfo: async (phone?: string): Promise<TelegramInfo> => {
+    const params = phone ? `?phone=${encodeURIComponent(phone)}` : '';
+    const response = await shopApi.get<ApiResponse<TelegramInfo>>(`/v1/shop/auth/telegram-info${params}`);
+    return response.data.data;
+  },
 };
+
+export interface TelegramInfo {
+  enabled: boolean;
+  botUsername?: string;
+  deepLink?: string;
+  phoneLinked?: boolean;
+}
 
 // ==================== ORDER API ====================
 

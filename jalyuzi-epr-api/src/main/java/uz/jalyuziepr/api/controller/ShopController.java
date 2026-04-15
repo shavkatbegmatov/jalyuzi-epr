@@ -18,10 +18,14 @@ import uz.jalyuziepr.api.enums.BlindMaterial;
 import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
 import uz.jalyuziepr.api.repository.CustomerRepository;
+import uz.jalyuziepr.api.repository.TelegramPhoneLinkRepository;
 import uz.jalyuziepr.api.security.CustomerUserDetails;
 import uz.jalyuziepr.api.service.ShopService;
+import uz.jalyuziepr.api.service.TelegramService;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Internet-do'kon uchun Public API
@@ -34,6 +38,8 @@ public class ShopController {
 
     private final ShopService shopService;
     private final CustomerRepository customerRepository;
+    private final TelegramService telegramService;
+    private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
 
     // ==================== KATALOG (PUBLIC) ====================
 
@@ -116,6 +122,25 @@ public class ShopController {
             @Valid @RequestBody ShopSendCodeRequest request) {
         shopService.sendVerificationCode(request.getPhone());
         return ResponseEntity.ok(ApiResponse.success("Tasdiqlash kodi yuborildi"));
+    }
+
+    @GetMapping("/auth/telegram-info")
+    @Operation(summary = "Telegram bot ma'lumoti",
+            description = "Telegram bot yoqilganligi va deep link'ni qaytaradi")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> telegramInfo(
+            @RequestParam(required = false) String phone) {
+        Map<String, Object> info = new HashMap<>();
+        info.put("enabled", telegramService.isEnabled());
+        info.put("botUsername", telegramService.getBotUsername());
+        if (telegramService.isEnabled()) {
+            info.put("deepLink", telegramService.buildDeepLink("start"));
+        }
+        // Agar telefon berilgan va allaqachon bog'langan bo'lsa — bot orqali yuborish mumkin
+        if (phone != null && !phone.isBlank()) {
+            boolean linked = telegramPhoneLinkRepository.existsByPhone(phone);
+            info.put("phoneLinked", linked);
+        }
+        return ResponseEntity.ok(ApiResponse.success(info));
     }
 
     @PostMapping("/auth/verify-code")

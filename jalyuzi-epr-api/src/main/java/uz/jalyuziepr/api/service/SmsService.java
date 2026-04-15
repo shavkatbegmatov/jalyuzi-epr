@@ -13,13 +13,17 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import uz.jalyuziepr.api.config.SmsConfig;
 import uz.jalyuziepr.api.entity.SmsVerification;
+import uz.jalyuziepr.api.entity.TelegramPhoneLink;
 import uz.jalyuziepr.api.repository.SmsVerificationRepository;
+import uz.jalyuziepr.api.repository.TelegramPhoneLinkRepository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Random;
 
 /**
  * SMS xizmati (Eskiz.uz integratsiyasi)
+ * Agar Telegram chat_id ma'lum bo'lsa, SMS o'rniga Telegram orqali yuboradi.
  */
 @Slf4j
 @Service
@@ -28,6 +32,8 @@ public class SmsService {
 
     private final SmsConfig smsConfig;
     private final SmsVerificationRepository smsVerificationRepository;
+    private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
+    private final TelegramService telegramService;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -47,14 +53,45 @@ public class SmsService {
             throw new IllegalStateException("Iltimos, " + smsConfig.getVerification().getResendDelaySeconds() + " soniya kutib turing");
         }
 
+        String code = generateAndStoreCode(phone);
+
+        // Agar foydalanuvchi Telegram orqali bog'langan bo'lsa — Telegram'ga yuborish
+        Optional<TelegramPhoneLink> link = telegramPhoneLinkRepository.findByPhone(phone);
+        if (link.isPresent() && telegramService.isEnabled()) {
+            String tgMessage = """
+                    🔐 Tasdiqlash kodingiz: <b><code>%s</code></b>
+
+                    Kod %d daqiqa amal qiladi.
+                    """.formatted(code, smsConfig.getVerification().getExpirationMinutes());
+            boolean sent = telegramService.sendMessage(link.get().getChatId(), tgMessage);
+            if (sent) {
+                log.info("Tasdiqlash kodi Telegram orqali yuborildi: {}", phone);
+                return;
+            }
+            log.warn("Telegram xatolik, SMS'ga fallback: {}", phone);
+        }
+
+        // SMS yuborish (fallback)
+        String message = "Jalyuzi do'konida tasdiqlash kodingiz: " + code + ". Kod "
+                + smsConfig.getVerification().getExpirationMinutes() + " daqiqa amal qiladi.";
+
+        sendSms(phone, message);
+
+        log.info("Tasdiqlash kodi yuborildi: {} -> {}", phone, smsConfig.getEskiz().isEnabled() ? "SMS" : "LOG");
+    }
+
+    /**
+     * Kodni yaratish va bazaga saqlash (haqiqiy yuborishsiz).
+     * Bot ishlatadi — foydalanuvchi telefonini tasdiqlagach, kodni bot tarqatadi.
+     */
+    @Transactional
+    public String generateAndStoreCode(String phone) {
         // Eski tasdiqlanmagan kodlarni o'chirish
         smsVerificationRepository.deleteByPhoneAndVerifiedFalse(phone);
 
-        // Yangi kod yaratish
         String code = generateCode();
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(smsConfig.getVerification().getExpirationMinutes());
 
-        // Bazaga saqlash
         SmsVerification verification = SmsVerification.builder()
                 .phone(phone)
                 .code(code)
@@ -62,13 +99,7 @@ public class SmsService {
                 .build();
         smsVerificationRepository.save(verification);
 
-        // SMS yuborish
-        String message = "Jalyuzi do'konida tasdiqlash kodingiz: " + code + ". Kod "
-                + smsConfig.getVerification().getExpirationMinutes() + " daqiqa amal qiladi.";
-
-        sendSms(phone, message);
-
-        log.info("Tasdiqlash kodi yuborildi: {} -> {}", phone, smsConfig.getEskiz().isEnabled() ? "SMS" : "LOG");
+        return code;
     }
 
     /**
