@@ -1,6 +1,7 @@
 package uz.jalyuziepr.api.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -16,6 +17,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtChannelInterceptor jwtChannelInterceptor;
 
+    @Value("${app.cors.allowed-origins:http://localhost:5175,http://localhost:3000,http://127.0.0.1:5175,http://192.168.1.33:5175,https://kanjaltib.uz,https://www.kanjaltib.uz}")
+    private String[] allowedOrigins;
+
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // Server -> Client uchun prefix'lar
@@ -30,12 +34,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket endpoint
         registry.addEndpoint("/v1/ws")
-                .setAllowedOrigins(
-                        "http://localhost:5175",
-                        "http://localhost:3000",
-                        "http://127.0.0.1:5175",
-                        "http://192.168.1.33:5175"
-                )
+                .setAllowedOrigins(allowedOrigins)
                 .withSockJS();
     }
 
