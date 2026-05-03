@@ -12,5 +12,15 @@ jalyuzi-epr-api/target/
 jalyuzi-epr-front/node_modules/
 jalyuzi-epr-front/dist/
 jalyuzi-epr-front/.vite/
+jalyuzi-epr-front/.env.local
+jalyuzi-epr-front/.env.*.local
 *.tsbuildinfo
+
+# Capacitor (Android build artifacts)
+jalyuzi-epr-front/android/.gradle/
+jalyuzi-epr-front/android/build/
+jalyuzi-epr-front/android/app/build/
+jalyuzi-epr-front/android/local.properties
+jalyuzi-epr-front/android/.idea/
+jalyuzi-epr-front/android/captures/
 /2026-02-05-this-session-is-being-continued-from-a-previous-co.txt
