@@ -245,6 +245,12 @@ export function LoginPage() {
                 Ro'yxatdan o'tish
               </Link>
             </p>
+
+            <p className="mt-3 text-center text-xs text-base-content/40">
+              <Link to="/privacy" className="link link-hover">
+                Maxfiylik siyosati
+              </Link>
+            </p>
           </div>
         </div>
       </div>

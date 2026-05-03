@@ -10,6 +10,9 @@ import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { ChangePasswordPage } from '../pages/auth/ChangePasswordPage';
 
+// Public legal pages (lazy)
+const PrivacyPolicyPage = lazy(() => import('../pages/legal/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+
 // Lazy-loaded main app pages
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProductsPage = lazy(() => import('../pages/products/ProductsPage').then(m => ({ default: m.ProductsPage })));
@@ -101,6 +104,11 @@ export const router = createBrowserRouter([
     path: '/change-password',
     element: <ChangePasswordPage />,
     handle: { title: "Parolni o'zgartirish" },
+  },
+  {
+    path: '/privacy',
+    element: <LazyRoute><PrivacyPolicyPage /></LazyRoute>,
+    handle: { title: 'Maxfiylik siyosati' },
   },
   {
     path: '/',
