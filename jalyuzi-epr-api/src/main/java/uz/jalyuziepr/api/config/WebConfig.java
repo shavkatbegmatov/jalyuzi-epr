@@ -11,6 +11,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import uz.jalyuziepr.api.audit.AuditCorrelationInterceptor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,10 +31,22 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/v1/auth/**");  // Exclude auth endpoints
     }
 
+    private static final List<String> CAPACITOR_ORIGINS = List.of(
+            "https://localhost",
+            "capacitor://localhost",
+            "http://localhost"
+    );
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(allowedOrigins));
+        List<String> mergedOrigins = new ArrayList<>(Arrays.asList(allowedOrigins));
+        for (String origin : CAPACITOR_ORIGINS) {
+            if (!mergedOrigins.contains(origin)) {
+                mergedOrigins.add(origin);
+            }
+        }
+        configuration.setAllowedOrigins(mergedOrigins);
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
