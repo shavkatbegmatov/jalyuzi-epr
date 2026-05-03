@@ -1,5 +1,6 @@
+/* eslint-env node */
 import sharp from 'sharp';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
