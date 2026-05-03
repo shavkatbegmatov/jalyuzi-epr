@@ -1,4 +1,3 @@
-/* eslint-env node */
 import sharp from 'sharp';
 import { mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
