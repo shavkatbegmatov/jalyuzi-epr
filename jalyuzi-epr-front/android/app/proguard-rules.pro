@@ -12,10 +12,26 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Crash report'larida raqamli stack trace saqlanishi uchun
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# ===== Capacitor =====
+# Capacitor WebView orqali JavaScript interface'larni chaqiradi, shuning
+# uchun ushbu klasslar nomlari obfuscate qilinmasligi kerak.
+-keep class com.getcapacitor.** { *; }
+-keep class com.getcapacitor.plugin.** { *; }
+-keepclassmembers class * extends com.getcapacitor.Plugin {
+    @com.getcapacitor.PluginMethod public *;
+}
+
+# Cordova plugin support
+-keep class org.apache.cordova.** { *; }
+
+# WebView JS interfeyslar uchun
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# AndroidX core
+-keep class androidx.core.app.** { *; }

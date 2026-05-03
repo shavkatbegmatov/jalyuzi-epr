@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "android:sync": "npm run build && npx cap sync android",
     "android:open": "npx cap open android",
-    "android:build": "npm run build && npx cap sync android && npx cap open android"
+    "android:build": "npm run build && npx cap sync android && npx cap open android",
+    "android:store-assets": "node scripts/generate-store-assets.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",

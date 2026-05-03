@@ -23,4 +23,13 @@ jalyuzi-epr-front/android/app/build/
 jalyuzi-epr-front/android/local.properties
 jalyuzi-epr-front/android/.idea/
 jalyuzi-epr-front/android/captures/
+
+# Android signing (NEVER commit these!)
+*.jks
+*.keystore
+jalyuzi-epr-front/android/keystore.properties
+jalyuzi-epr-front/android/app/release/
+
+# Generated Play Store assets (regenerated via npm run android:store-assets)
+jalyuzi-epr-front/store-assets/
 /2026-02-05-this-session-is-being-continued-from-a-previous-co.txt
