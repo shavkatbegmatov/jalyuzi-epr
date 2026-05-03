@@ -64,9 +64,11 @@ class WebSocketService {
       this.client = null;
     }
 
+    const wsUrl = (import.meta.env.VITE_API_URL || '/api') + '/v1/ws';
+
     this.client = new Client({
       // SockJS orqali ulanish (WebSocket fallback bilan)
-      webSocketFactory: () => new SockJS('/api/v1/ws'),
+      webSocketFactory: () => new SockJS(wsUrl),
 
       // Auth header
       connectHeaders: {
