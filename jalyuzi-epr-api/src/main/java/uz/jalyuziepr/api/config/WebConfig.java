@@ -20,7 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final AuditCorrelationInterceptor auditCorrelationInterceptor;
 
-    @Value("${app.cors.allowed-origins:http://localhost:5175,http://localhost:3000,http://127.0.0.1:5175,http://192.168.1.33:5175,https://kanjaltib.uz,https://www.kanjaltib.uz}")
+    @Value("${app.cors.allowed-origins:http://localhost:5175,http://localhost:3000,http://127.0.0.1:5175,http://192.168.1.33:5175,https://kanjaltib.uz,https://www.kanjaltib.uz,https://localhost,capacitor://localhost,http://localhost}")
     private String[] allowedOrigins;
 
     @Override
