@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import uz.jalyuziepr.api.entity.OrderPayment;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -18,4 +19,11 @@ public interface OrderPaymentRepository extends JpaRepository<OrderPayment, Long
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM OrderPayment p WHERE p.collectedBy.id IS NOT NULL")
     BigDecimal sumTotalCollectedByInstallers();
+
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM OrderPayment p " +
+            "WHERE p.createdAt BETWEEN :start AND :end")
+    BigDecimal sumAmountBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(p) FROM OrderPayment p WHERE p.createdAt BETWEEN :start AND :end")
+    long countPaymentsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

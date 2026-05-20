@@ -73,6 +73,20 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT COALESCE(SUM(o.remainingAmount), 0) FROM Order o WHERE o.status NOT IN ('BEKOR_QILINDI', 'YAKUNLANDI')")
     java.math.BigDecimal sumTotalRemaining();
 
+    // ── Today's stats queries ──
+
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.createdAt BETWEEN :start AND :end")
+    long countByCreatedAtBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.status IN ('ORNATISH_BAJARILDI', 'YAKUNLANDI') " +
+            "AND o.installationDate BETWEEN :start AND :end")
+    long countInstallationsCompletedBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT COUNT(o) FROM Order o " +
+            "WHERE o.measurementDate BETWEEN :start AND :end")
+    long countMeasurementsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     // ── Installer stats queries ──
 
     @Query("SELECT COUNT(o) FROM Order o WHERE o.installer.id = :installerId AND o.status IN :statuses")

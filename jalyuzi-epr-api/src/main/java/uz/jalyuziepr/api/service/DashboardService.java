@@ -29,6 +29,8 @@ public class DashboardService {
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final DebtRepository debtRepository;
+    private final OrderRepository orderRepository;
+    private final OrderPaymentRepository orderPaymentRepository;
 
     private static final Map<String, String> PAYMENT_LABELS = Map.of(
             "CASH", "Naqd pul",
@@ -53,6 +55,13 @@ public class DashboardService {
         long totalCustomers = customerRepository.countActiveCustomers();
         BigDecimal totalDebt = debtRepository.getTotalActiveDebt();
 
+        // Bugungi ish kuni (Order tizimi V27)
+        long todayOrdersCount = orderRepository.countByCreatedAtBetween(startOfDay, endOfDay);
+        long todayMeasurementsCount = orderRepository.countMeasurementsBetween(startOfDay, endOfDay);
+        long todayInstallationsCount = orderRepository.countInstallationsCompletedBetween(startOfDay, endOfDay);
+        long todayPaymentsCount = orderPaymentRepository.countPaymentsBetween(startOfDay, endOfDay);
+        BigDecimal todayPaymentsCollected = orderPaymentRepository.sumAmountBetween(startOfDay, endOfDay);
+
         return DashboardStatsResponse.builder()
                 .todaySalesCount(todaySalesCount)
                 .todayRevenue(todayRevenue != null ? todayRevenue : BigDecimal.ZERO)
@@ -62,6 +71,11 @@ public class DashboardService {
                 .lowStockCount(lowStockCount)
                 .totalCustomers(totalCustomers)
                 .totalDebt(totalDebt != null ? totalDebt.abs() : BigDecimal.ZERO)
+                .todayOrdersCount(todayOrdersCount)
+                .todayMeasurementsCount(todayMeasurementsCount)
+                .todayInstallationsCount(todayInstallationsCount)
+                .todayPaymentsCount(todayPaymentsCount)
+                .todayPaymentsCollected(todayPaymentsCollected != null ? todayPaymentsCollected : BigDecimal.ZERO)
                 .build();
     }
 

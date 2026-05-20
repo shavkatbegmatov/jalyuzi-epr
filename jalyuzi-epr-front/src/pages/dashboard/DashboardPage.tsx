@@ -15,6 +15,10 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   ClipboardList,
+  Ruler,
+  Hammer,
+  Banknote,
+  Sun,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
@@ -317,6 +321,68 @@ export function DashboardPage() {
             <ShoppingCart className="h-4 w-4" />
             Yangi sotuv
           </Link>
+        </div>
+      </div>
+
+      {/* Bugungi ish kuni - tezkor ko'rinish */}
+      <div className="surface-card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-base-200 px-5 py-3">
+          <div className="rounded-lg bg-warning/10 p-1.5">
+            <Sun className="h-4 w-4 text-warning" />
+          </div>
+          <h3 className="font-semibold">Bugungi ish kuni</h3>
+          <span className="ml-auto text-xs text-base-content/50">
+            {new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' })}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-4 p-5 lg:grid-cols-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/60">Yangi buyurtmalar</p>
+              <p className="text-xl font-bold">{formatNumber(stats?.todayOrdersCount || 0)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-info/10 p-2">
+              <Ruler className="h-5 w-5 text-info" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/60">O'lchovlar</p>
+              <p className="text-xl font-bold">{formatNumber(stats?.todayMeasurementsCount || 0)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-success/10 p-2">
+              <Hammer className="h-5 w-5 text-success" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/60">O'rnatishlar</p>
+              <p className="text-xl font-bold">{formatNumber(stats?.todayInstallationsCount || 0)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-secondary/10 p-2">
+              <CreditCard className="h-5 w-5 text-secondary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/60">To'lovlar</p>
+              <p className="text-xl font-bold">{formatNumber(stats?.todayPaymentsCount || 0)}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 col-span-2 lg:col-span-1">
+            <div className="rounded-lg bg-success/10 p-2">
+              <Banknote className="h-5 w-5 text-success" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-base-content/60">Yig'ilgan summa</p>
+              <p className="truncate text-xl font-bold text-success">
+                {formatCurrency(stats?.todayPaymentsCollected || 0)}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -20,4 +20,11 @@ public class DashboardStatsResponse {
     private long lowStockCount;
     private long totalCustomers;
     private BigDecimal totalDebt;
+
+    // Bugungi ish kuni statistikasi (Order tizimi V27)
+    private long todayOrdersCount;          // Bugun yaratilgan buyurtmalar
+    private long todayMeasurementsCount;    // Bugun o'lchov o'tkazilgan
+    private long todayInstallationsCount;   // Bugun o'rnatish bajarilgan
+    private long todayPaymentsCount;        // Bugun qabul qilingan to'lovlar soni
+    private BigDecimal todayPaymentsCollected; // Bugun yig'ilgan to'lovlar yig'indisi
 }
