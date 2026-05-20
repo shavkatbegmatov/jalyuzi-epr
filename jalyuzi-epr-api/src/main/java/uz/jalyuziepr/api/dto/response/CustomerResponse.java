@@ -8,6 +8,7 @@ import uz.jalyuziepr.api.annotation.ExportColumn;
 import uz.jalyuziepr.api.annotation.ExportColumn.ColumnType;
 import uz.jalyuziepr.api.annotation.ExportEntity;
 import uz.jalyuziepr.api.entity.Customer;
+import uz.jalyuziepr.api.enums.CustomerSource;
 import uz.jalyuziepr.api.enums.CustomerType;
 
 import java.math.BigDecimal;
@@ -65,6 +66,9 @@ public class CustomerResponse {
     private Boolean preferredTimeAfternoon;
     private Boolean preferredTimeEvening;
 
+    @ExportColumn(header = "Manba", order = 13, type = ColumnType.ENUM)
+    private CustomerSource source;
+
     public static CustomerResponse from(Customer customer) {
         return CustomerResponse.builder()
                 .id(customer.getId())
@@ -84,6 +88,7 @@ public class CustomerResponse {
                 .preferredTimeMorning(customer.getPreferredTimeMorning())
                 .preferredTimeAfternoon(customer.getPreferredTimeAfternoon())
                 .preferredTimeEvening(customer.getPreferredTimeEvening())
+                .source(customer.getSource())
                 .build();
     }
 }

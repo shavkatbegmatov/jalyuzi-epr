@@ -118,6 +118,7 @@ public class CustomerService {
         customer.setCompanyName(request.getCompanyName());
         customer.setCustomerType(request.getCustomerType());
         customer.setNotes(request.getNotes());
+        customer.setSource(request.getSource());
     }
 
     private User getCurrentUser() {

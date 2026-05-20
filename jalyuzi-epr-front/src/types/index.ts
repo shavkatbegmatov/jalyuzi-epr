@@ -360,6 +360,15 @@ export interface ProductTypeRequest {
 // Customer Types
 export type CustomerType = 'INDIVIDUAL' | 'BUSINESS';
 
+export type CustomerSource =
+  | 'INSTAGRAM'
+  | 'TELEGRAM'
+  | 'REFERRAL'
+  | 'ADVERTISEMENT'
+  | 'WEBSITE'
+  | 'WALK_IN'
+  | 'OTHER';
+
 export interface Customer {
   id: number;
   fullName: string;
@@ -379,6 +388,8 @@ export interface Customer {
   preferredTimeMorning?: boolean;
   preferredTimeAfternoon?: boolean;
   preferredTimeEvening?: boolean;
+  // Marketing kanali
+  source?: CustomerSource;
 }
 
 export interface CustomerRequest {
@@ -395,6 +406,8 @@ export interface CustomerRequest {
   preferredTimeMorning?: boolean;
   preferredTimeAfternoon?: boolean;
   preferredTimeEvening?: boolean;
+  // Marketing kanali
+  source?: CustomerSource;
 }
 
 // Sale Types
@@ -529,6 +542,12 @@ export interface DashboardStats {
   lowStockCount: number;
   totalCustomers: number;
   totalDebt: number;
+  // Bugungi ish kuni (Order tizimi)
+  todayOrdersCount: number;
+  todayMeasurementsCount: number;
+  todayInstallationsCount: number;
+  todayPaymentsCount: number;
+  todayPaymentsCollected: number;
 }
 
 // Chart Data Types

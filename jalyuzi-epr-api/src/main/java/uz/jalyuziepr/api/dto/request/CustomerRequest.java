@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import uz.jalyuziepr.api.enums.CustomerSource;
 import uz.jalyuziepr.api.enums.CustomerType;
 
 @Data
@@ -53,4 +54,7 @@ public class CustomerRequest {
 
     @Builder.Default
     private Boolean preferredTimeEvening = false;
+
+    // Marketing kanali (qayerdan kelgan)
+    private CustomerSource source;
 }

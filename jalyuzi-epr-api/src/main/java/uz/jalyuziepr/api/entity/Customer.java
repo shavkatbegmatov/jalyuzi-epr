@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import uz.jalyuziepr.api.audit.Auditable;
 import uz.jalyuziepr.api.audit.AuditEntityListener;
 import uz.jalyuziepr.api.entity.base.BaseEntity;
+import uz.jalyuziepr.api.enums.CustomerSource;
 import uz.jalyuziepr.api.enums.CustomerType;
 
 import java.math.BigDecimal;
@@ -86,6 +87,11 @@ public class Customer extends BaseEntity implements Auditable {
     @Column(name = "telegram_chat_id")
     private Long telegramChatId;
 
+    // Marketing kanali - mijoz qayerdan kelgan
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", length = 30)
+    private CustomerSource source;
+
     // O'rnatish xizmati maydonlari
     @Column(name = "installation_address", length = 500)
     private String installationAddress;
@@ -144,6 +150,7 @@ public class Customer extends BaseEntity implements Auditable {
         map.put("preferredTimeMorning", this.preferredTimeMorning);
         map.put("preferredTimeAfternoon", this.preferredTimeAfternoon);
         map.put("preferredTimeEvening", this.preferredTimeEvening);
+        map.put("source", this.source);
 
         // Avoid lazy loading
         if (this.createdBy != null) {

@@ -4,7 +4,7 @@ import { Plus, Users, Phone, X } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { customersApi } from '../../api/customers.api';
-import { formatCurrency, CUSTOMER_TYPES } from '../../config/constants';
+import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES } from '../../config/constants';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { ModalPortal } from '../../components/common/Modal';
@@ -14,7 +14,7 @@ import { useNotificationsStore } from '../../store/notificationsStore';
 import { useHighlight } from '../../hooks/useHighlight';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { usePermission, PermissionCode } from '../../hooks/usePermission';
-import type { Customer, CustomerRequest, CustomerType } from '../../types';
+import type { Customer, CustomerRequest, CustomerType, CustomerSource } from '../../types';
 
 const emptyFormData: CustomerRequest = {
   fullName: '',
@@ -68,6 +68,7 @@ export function CustomersPage() {
       companyName: customer.companyName,
       customerType: customer.customerType,
       notes: customer.notes,
+      source: customer.source,
     });
     setShowModal(true);
   };
@@ -386,6 +387,19 @@ export function CustomersPage() {
                 <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Manzil</span>
                 <input type="text" className="input input-bordered w-full" value={formData.address || ''} onChange={(e) => handleFormChange('address', e.target.value || undefined)} placeholder="Shahar, tuman, ko'cha..." />
               </label>
+              <Select
+                label="Mijoz manbasi"
+                value={formData.source || ''}
+                onChange={(val) => handleFormChange('source', (val || undefined) as CustomerSource | undefined)}
+                options={[
+                  { value: '', label: 'Tanlanmagan' },
+                  ...Object.entries(CUSTOMER_SOURCES).map(([key, { label }]) => ({
+                    value: key,
+                    label,
+                  })),
+                ]}
+                placeholder="Qayerdan bilib oldi?"
+              />
               <label className="form-control">
                 <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">Izoh</span>
                 <textarea className="textarea textarea-bordered w-full" rows={2} value={formData.notes || ''} onChange={(e) => handleFormChange('notes', e.target.value || undefined)} placeholder="Qo'shimcha ma'lumot..." />

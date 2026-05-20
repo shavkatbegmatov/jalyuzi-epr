@@ -184,6 +184,17 @@ export const CUSTOMER_TYPES = {
   BUSINESS: { label: 'Yuridik shaxs', value: 'BUSINESS' },
 } as const;
 
+// Mijoz manbasi (marketing kanali)
+export const CUSTOMER_SOURCES = {
+  INSTAGRAM: { label: 'Instagram', value: 'INSTAGRAM' },
+  TELEGRAM: { label: 'Telegram', value: 'TELEGRAM' },
+  REFERRAL: { label: 'Tanish tavsiyasi', value: 'REFERRAL' },
+  ADVERTISEMENT: { label: 'Reklama', value: 'ADVERTISEMENT' },
+  WEBSITE: { label: 'Veb sayt', value: 'WEBSITE' },
+  WALK_IN: { label: 'O\'zi keldi', value: 'WALK_IN' },
+  OTHER: { label: 'Boshqa', value: 'OTHER' },
+} as const;
+
 export const ROLES = {
   ADMIN: { label: 'Administrator', value: 'ADMIN' },
   MANAGER: { label: 'Menejer', value: 'MANAGER' },
