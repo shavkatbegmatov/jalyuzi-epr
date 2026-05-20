@@ -14,10 +14,18 @@ npm run preview   # Preview production build
 
 ### Backend (jalyuzi-epr-api/)
 ```bash
-mvn spring-boot:run        # Run on port 8170
-mvn test                   # Run tests
-mvn clean install          # Build project
-./mvnw.cmd clean install   # Maven Wrapper (Windows)
+.\mvnw.cmd spring-boot:run    # Run on port 8170 (Windows)
+.\mvnw.cmd clean compile      # Compile only
+.\mvnw.cmd package -DskipTests # Build .jar (no tests yet)
+```
+
+> Test infrastructure: `src/test/` directory does not exist yet. No JUnit tests are present.
+
+### Mobile (Android via Capacitor)
+```bash
+npm run android:sync          # Build + sync to Android
+npm run android:open          # Open Android Studio
+npm run android:store-assets  # Generate Play Store icons (512x512, 1024x500)
 ```
 
 ### Development URLs
@@ -25,13 +33,24 @@ mvn clean install          # Build project
 - Backend API: http://localhost:8170/api
 - Swagger UI: http://localhost:8170/api/swagger-ui.html
 
+### Production
+- Domain: https://kanjaltib.uz
+- API: https://kanjaltib.uz/api
+- Hosting: Coolify (auto-deploy via GitHub Actions on `main` push)
+- Docker images: `ghcr.io/shavkatbegmatov/jalyuzi-epr-api:latest`
+
 ## Architecture Overview
 
 Full-stack ERP system with Spring Boot backend and React frontend.
 
 ### Tech Stack
 - **Backend**: Spring Boot 3.5.5, Java 17, PostgreSQL, Spring Security + JWT, Flyway migrations
-- **Frontend**: React 18, TypeScript, Vite, Zustand (state), TanStack Query, Tailwind + DaisyUI
+- **Frontend**: React 18, TypeScript, Vite 7, Zustand (state), TanStack Query, Tailwind + DaisyUI 4
+- **Mobile**: Capacitor 8 (Android APK, appId: `uz.jalyuzi.epr`)
+- **Real-time**: WebSocket STOMP (`@stomp/stompjs` + SockJS)
+- **i18n**: i18next (uz-UZ default, ru fallback)
+- **Charts**: Recharts; **Export**: XLSX, jsPDF, Apache POI, OpenPDF
+- **External**: Eskiz.uz SMS, Telegram Bot API
 
 ### Frontend Structure (jalyuzi-epr-front/src/)
 ```
@@ -49,21 +68,23 @@ i18n/         # Internationalization (Uzbek)
 
 ### Backend Structure (jalyuzi-epr-api/src/main/java/uz/jalyuziepr/api/)
 ```
-controller/   # REST endpoints
+controller/   # REST endpoints (~30 controllers, including TelegramBotController, CustomerPortalController)
 service/      # Business logic + export/ subdirectory for PDF/Excel
 repository/   # Spring Data JPA
 entity/       # JPA entities with base/ for common fields
 dto/          # request/, response/, websocket/ DTOs
-security/     # JWT provider, filters, UserDetailsService
-audit/        # Entity change auditing with AuditEntityListener
-config/       # Security, WebSocket, Timezone configs
-annotation/   # @ExportColumn, @ExportEntity for export features
+security/     # JWT provider, filters, UserDetailsService (staff + customer separated)
+audit/        # AuditEntityListener, correlation ID, sensitive data masker
+config/       # Security, WebSocket, CORS (WebConfig), Timezone, SMS, Telegram
+annotation/   # @ExportColumn, @ExportEntity, @RequiresPermission
+exception/    # GlobalExceptionHandler + custom exceptions
+scheduler/    # @Scheduled jobs (DebtReminderScheduler)
 ```
 
 ### Database Migrations
 - Location: `src/main/resources/db/migration/`
 - Format: `V{number}__{description}.sql`
-- Currently at V21
+- Currently at **V32** (telegram_integration); active areas: jalyuzi product transformation (V22-25), order management (V27-30), installer + telegram (V31-32)
 
 ## Key Patterns
 
@@ -74,9 +95,13 @@ annotation/   # @ExportColumn, @ExportEntity for export features
 
 ### Authentication
 - JWT with 24h access + 7d refresh tokens
-- RBAC with granular permissions
-- Frontend: `ProtectedRoute` wrapper + `usePermission()` hook
-- Backend: `SecurityConfig.java` + `JwtTokenProvider`
+- **Two separate auth flows**: staff (`/v1/auth/**`) and customer portal (`/v1/customer-auth/**`, `/v1/shop/auth/**`)
+- RBAC with granular permissions via `@RequiresPermission` aspect
+- Frontend: `ProtectedRoute` wrapper + `usePermission()` hook + `PermissionGate`
+- Backend: `SecurityConfig.java` + `JwtTokenProvider` + `PermissionAspect`
+- Brute-force protection via `LoginAttemptService`
+- SMS verification via Eskiz.uz (6-digit codes, 5min TTL, max 3 attempts)
+- JWT secret: `JWT_SECRET` env var required in production (default in `application.yml` is dev-only)
 
 ### Real-time Updates
 - WebSocket over STOMP protocol
@@ -104,5 +129,24 @@ annotation/   # @ExportColumn, @ExportEntity for export features
 - Theme config in `tailwind.config.js`
 
 ### State Management
-- Zustand for global state (auth, cart, notifications, UI)
+- Zustand for global state (auth, cart, notifications, UI, shop)
 - TanStack Query for server state caching
+
+### Mobile (Capacitor Android)
+- Config: `jalyuzi-epr-front/capacitor.config.ts` (`appId: uz.jalyuzi.epr`, scheme `https`)
+- WebView origin: `https://localhost` and `capacitor://localhost` (CORS allowlist)
+- Production API in APK: `.env.production` → `VITE_API_URL=https://kanjaltib.uz/api`
+- Release signing: `android/keystore.properties` (gitignored), R8 minify + ProGuard rules
+- Play Store listing: see `PLAY_STORE_LISTING.md` and `RELEASE.md`
+
+### Telegram Integration
+- Webhook: `POST /v1/telegram/webhook` (validated via `X-Telegram-Bot-Api-Secret-Token` header)
+- Used for shop customer auth via phone number (`TelegramPhoneLink` entity)
+- Bot config in `application.yml` under `telegram.bot.*` (env vars required)
+
+### Public Endpoints (no auth, see SecurityConfig.java)
+- `/v1/auth/**`, `/v1/customer-auth/**`, `/v1/shop/auth/**`
+- `/v1/shop/products/**`, `/v1/shop/categories`, `/v1/shop/brands`, `/v1/shop/calculate-price`
+- `/v1/telegram/**` (webhook + register-webhook)
+- `/swagger-ui/**`, `/api-docs/**`, `/actuator/**`
+- `/v1/ws/**` (JWT validated by `JwtChannelInterceptor`)
