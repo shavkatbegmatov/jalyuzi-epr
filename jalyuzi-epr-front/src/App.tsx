@@ -2,9 +2,25 @@ import { useEffect, useCallback } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { router } from './router';
 import { useUIStore } from './store/uiStore';
 import { PWAUpdatePrompt } from './components/common/PWAUpdatePrompt';
+
+function useNativeStatusBar() {
+  const { themeMode, getEffectiveTheme } = useUIStore();
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const isDark = getEffectiveTheme() === 'jalyuzi-dark';
+
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
+    StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: isDark ? '#0f172a' : '#0f766e' }).catch(() => {});
+  }, [themeMode, getEffectiveTheme]);
+}
 
 // Global theme hook - applies theme on app load
 function useTheme() {
@@ -42,6 +58,8 @@ const queryClient = new QueryClient({
 function App() {
   // Apply theme globally
   useTheme();
+  // Sync native Android status bar with app theme
+  useNativeStatusBar();
 
   return (
     <QueryClientProvider client={queryClient}>
