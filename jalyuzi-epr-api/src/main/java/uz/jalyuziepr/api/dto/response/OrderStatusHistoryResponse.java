@@ -35,4 +35,21 @@ public class OrderStatusHistoryResponse {
                 .createdAt(history.getCreatedAt())
                 .build();
     }
+
+    /**
+     * Mijoz portali uchun: ichki izohlar (notes) va xodim ismi ko'rsatilmaydi.
+     * Mijoz faqat status va vaqtni ko'radi.
+     */
+    public static OrderStatusHistoryResponse fromForCustomer(OrderStatusHistory history) {
+        return OrderStatusHistoryResponse.builder()
+                .id(history.getId())
+                .fromStatus(history.getFromStatus())
+                .fromStatusDisplayName(history.getFromStatus() != null ? history.getFromStatus().getDisplayName() : null)
+                .toStatus(history.getToStatus())
+                .toStatusDisplayName(history.getToStatus().getDisplayName())
+                .changedByName(null)
+                .notes(null)
+                .createdAt(history.getCreatedAt())
+                .build();
+    }
 }

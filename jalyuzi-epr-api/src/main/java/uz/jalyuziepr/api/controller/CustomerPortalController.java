@@ -94,7 +94,7 @@ public class CustomerPortalController {
     public ResponseEntity<ApiResponse<OrderResponse>> getOrderDetails(
             @AuthenticationPrincipal CustomerUserDetails customerDetails,
             @PathVariable Long id) {
-        OrderResponse order = orderService.getOrderById(id);
+        OrderResponse order = orderService.getOrderByIdForCustomer(id, customerDetails.getId());
         return ResponseEntity.ok(ApiResponse.success(order));
     }
 

@@ -110,6 +110,43 @@ public class OrderResponse {
     }
 
     /**
+     * Mijoz portali uchun versiya: ichki ma'lumotlar (cost, manager izohi, xodim ismlari)
+     * filtrlangan. Mijoz faqat o'ziga tegishli ma'lumotlarni ko'radi.
+     */
+    public static OrderResponse fromForCustomer(Order order) {
+        return OrderResponse.builder()
+                .id(order.getId())
+                .orderNumber(order.getOrderNumber())
+                .status(order.getStatus())
+                .statusDisplayName(order.getStatus().getDisplayName())
+                .customerId(order.getCustomer() != null ? order.getCustomer().getId() : null)
+                .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : null)
+                .customerPhone(order.getCustomer() != null ? order.getCustomer().getPhone() : null)
+                .installationAddress(order.getInstallationAddress())
+                .subtotal(order.getSubtotal())
+                .discountAmount(order.getDiscountAmount())
+                .discountPercent(order.getDiscountPercent())
+                .totalAmount(order.getTotalAmount())
+                .paidAmount(order.getPaidAmount())
+                .remainingAmount(order.getRemainingAmount())
+                .measurementDate(order.getMeasurementDate())
+                .productionStartDate(order.getProductionStartDate())
+                .productionEndDate(order.getProductionEndDate())
+                .installationDate(order.getInstallationDate())
+                .completedDate(order.getCompletedDate())
+                .createdAt(order.getCreatedAt())
+                .items(order.getItems() != null ?
+                        order.getItems().stream().map(OrderItemResponse::from).collect(Collectors.toList()) : null)
+                .payments(order.getPayments() != null ?
+                        order.getPayments().stream().map(OrderPaymentResponse::from).collect(Collectors.toList()) : null)
+                .statusHistory(order.getStatusHistory() != null ?
+                        order.getStatusHistory().stream()
+                                .map(OrderStatusHistoryResponse::fromForCustomer)
+                                .collect(Collectors.toList()) : null)
+                .build();
+    }
+
+    /**
      * Lightweight version for list views
      */
     public static OrderResponse fromList(Order order) {

@@ -69,6 +69,22 @@ public class OrderService {
         return orderRepository.findByCustomerId(customerId, pageable).map(OrderResponse::fromList);
     }
 
+    /**
+     * Mijoz portali uchun: faqat mijozning o'ziga tegishli buyurtmani qaytaradi.
+     * Ownership tekshiruvi bilan. Ichki ma'lumotlar (cost, manager izohi) filtrlanadi.
+     */
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderByIdForCustomer(Long orderId, Long customerId) {
+        Order order = orderRepository.findByIdWithAllDetails(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Buyurtma", "id", orderId));
+
+        if (order.getCustomer() == null || !order.getCustomer().getId().equals(customerId)) {
+            throw new ResourceNotFoundException("Buyurtma", "id", orderId);
+        }
+
+        return OrderResponse.fromForCustomer(order);
+    }
+
     @Transactional(readOnly = true)
     public List<OrderResponse> getInstallerOrders(Long installerId) {
         List<OrderStatus> activeStatuses = List.of(

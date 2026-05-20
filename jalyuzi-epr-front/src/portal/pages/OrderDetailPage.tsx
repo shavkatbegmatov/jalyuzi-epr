@@ -34,8 +34,9 @@ interface OrderStatusHistory {
   fromStatusDisplayName?: string;
   toStatus: string;
   toStatusDisplayName: string;
-  changedByName: string;
-  notes?: string;
+  // Portal javobida xodim ismi va ichki izohlar ko'rsatilmaydi (xavfsizlik uchun)
+  changedByName?: string | null;
+  notes?: string | null;
   createdAt: string;
 }
 
@@ -477,17 +478,9 @@ export default function OrderDetailPage() {
                           {ORDER_STATUS_LABELS[entry.toStatus] || entry.toStatusDisplayName}
                         </span>
                       </div>
-                      <p className="text-xs text-base-content/60 mt-0.5">
-                        {entry.changedByName}
-                      </p>
-                      <p className="text-xs text-base-content/50">
+                      <p className="text-xs text-base-content/50 mt-0.5">
                         {formatDateTime(entry.createdAt)}
                       </p>
-                      {entry.notes && (
-                        <p className="text-xs text-base-content/70 mt-1 italic">
-                          {entry.notes}
-                        </p>
-                      )}
                     </div>
                   </div>
                 ))}
