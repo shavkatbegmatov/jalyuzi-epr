@@ -20,6 +20,7 @@ import {
   Layers,
   ClipboardList,
   HardHat,
+  Factory,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
@@ -31,6 +32,7 @@ const menuItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard', permission: PermissionCode.DASHBOARD_VIEW },
   { path: '/products', icon: Package, label: 'Mahsulotlar', permission: PermissionCode.PRODUCTS_VIEW },
   { path: '/orders', icon: ClipboardList, label: 'Buyurtmalar', permission: PermissionCode.ORDERS_VIEW },
+  { path: '/production', icon: Factory, label: 'Ishlab chiqarish', permission: PermissionCode.PRODUCTION_VIEW },
   { path: '/pos', icon: ShoppingCart, label: 'Kassa (POS)', permission: PermissionCode.SALES_CREATE },
   { path: '/sales', icon: CreditCard, label: 'Sotuvlar', permission: PermissionCode.SALES_VIEW },
   { path: '/installations', icon: Wrench, label: "O'rnatishlar", permission: PermissionCode.SALES_VIEW },

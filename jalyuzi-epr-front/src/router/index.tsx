@@ -41,6 +41,7 @@ const RolesPage = lazy(() => import('../pages/roles/RolesPage').then(m => ({ def
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
 const InstallationsPage = lazy(() => import('../pages/installations/InstallationsPage').then(m => ({ default: m.InstallationsPage })));
+const ProductionPage = lazy(() => import('../pages/production/ProductionPage').then(m => ({ default: m.ProductionPage })));
 
 // Lazy-loaded order management pages
 const OrdersPage = lazy(() => import('../pages/orders/OrdersPage').then(m => ({ default: m.OrdersPage })));
@@ -449,6 +450,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: "O'rnatishlar" },
+      },
+      {
+        path: 'production',
+        element: (
+          <ProtectedRoute permission={PermissionCode.PRODUCTION_VIEW}>
+            <LazyRoute>
+              <ProductionPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Ishlab chiqarish' },
       },
       {
         path: 'profile',

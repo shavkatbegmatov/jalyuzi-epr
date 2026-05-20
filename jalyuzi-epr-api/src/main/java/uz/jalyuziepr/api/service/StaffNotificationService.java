@@ -181,6 +181,20 @@ public class StaffNotificationService {
     }
 
     /**
+     * Yangi production order yaratildi (sex menejeriga)
+     */
+    public void notifyNewProductionOrder(String orderNumber, int itemsCount) {
+        createGlobalNotification(
+                "Sexga yangi buyurtma",
+                String.format("%s buyurtmasi sex uchun yaratildi. %d ta mahsulot ishlanishi kerak.",
+                        orderNumber, itemsCount),
+                StaffNotificationType.ORDER,
+                "PRODUCTION",
+                null
+        );
+    }
+
+    /**
      * To'lov bildirishnomasi
      */
     public void notifyPaymentReceived(String customerName, String amount, Long debtId) {

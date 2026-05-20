@@ -43,6 +43,7 @@ public class OrderService {
     private final NotificationService customerNotificationService;
     private final OrderPriceCalculationService priceService;
     private final SettingsService settingsService;
+    private final ProductionService productionService;
 
     // ==================== QUERY ====================
 
@@ -293,7 +294,17 @@ public class OrderService {
 
         changeStatus(order, OrderStatus.ZAKLAD_QABUL_QILINDI, currentUser, request.getNotes());
 
-        return OrderResponse.from(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+
+        // Zaklad qabul qilingach, sex avtomatik production order ochadi (har OrderItem uchun bittadan).
+        // Bu sex menejerini buyurtmaga e'tibor qaratishga undaydi va order_items hech yo'qotilmaydi.
+        try {
+            productionService.autoCreateForOrder(saved.getId());
+        } catch (Exception e) {
+            log.error("Auto-create ProductionOrder failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
+        }
+
+        return OrderResponse.from(saved);
     }
 
     @Transactional
