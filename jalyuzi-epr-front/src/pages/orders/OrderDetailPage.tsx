@@ -28,6 +28,7 @@ import { ordersApi } from '../../api/orders.api';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
+import { OrderDocumentsBar } from '../../components/orders/OrderDocumentsBar';
 import { formatCurrency, formatDateTime } from '../../config/constants';
 import type {
   Order,
@@ -1415,6 +1416,12 @@ export function OrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ==================== OFFICIAL DOCUMENTS ==================== */}
+      <OrderDocumentsBar
+        orderId={order.id}
+        isCompleted={order.status === 'ORNATISH_BAJARILDI' || order.status === 'YAKUNLANDI'}
+      />
 
       {/* ==================== PHOTOS & SIGNATURE ==================== */}
       <div className="surface-card p-4">
