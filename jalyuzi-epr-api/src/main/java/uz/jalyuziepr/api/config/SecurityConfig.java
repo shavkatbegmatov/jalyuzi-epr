@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/v1/customer-auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
+                        // Static fayllar (yuklangan rasmlar) — public
+                        .requestMatchers("/files/**").permitAll()
                         // WebSocket endpoint (JWT token interceptor'da tekshiriladi)
                         .requestMatchers("/v1/ws/**").permitAll()
 

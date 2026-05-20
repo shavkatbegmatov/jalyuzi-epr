@@ -27,6 +27,7 @@ import {
 import { ordersApi } from '../../api/orders.api';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
+import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { formatCurrency, formatDateTime } from '../../config/constants';
 import type {
   Order,
@@ -1414,6 +1415,14 @@ export function OrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ==================== PHOTOS & SIGNATURE ==================== */}
+      <div className="surface-card p-4">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-base-content/60 mb-4">
+          Fotosurat dalillari va imzo
+        </h3>
+        <OrderPhotoTab orderId={order.id} canEdit={canUpdate || canInstall} />
+      </div>
 
       {/* ==================== STATUS HISTORY ==================== */}
       {order.statusHistory && order.statusHistory.length > 0 && (

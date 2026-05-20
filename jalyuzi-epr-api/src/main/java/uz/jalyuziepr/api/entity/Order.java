@@ -114,6 +114,25 @@ public class Order extends BaseEntity implements Auditable {
     @Column(length = 1000)
     private String notes;
 
+    // Photo evidence — JSONB array of URLs
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "measurement_photos", columnDefinition = "jsonb")
+    @Builder.Default
+    private java.util.List<String> measurementPhotos = new java.util.ArrayList<>();
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "photos_before", columnDefinition = "jsonb")
+    @Builder.Default
+    private java.util.List<String> photosBefore = new java.util.ArrayList<>();
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "photos_after", columnDefinition = "jsonb")
+    @Builder.Default
+    private java.util.List<String> photosAfter = new java.util.ArrayList<>();
+
+    @Column(name = "customer_signature", columnDefinition = "TEXT")
+    private String customerSignature;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;

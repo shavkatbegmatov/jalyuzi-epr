@@ -5,6 +5,12 @@ spring:
   profiles:
     active: dev
 
+  # Multipart fayl yuklash chegaralari (rasm uploadlar uchun)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 30MB
+
   # Timezone - Toshkent vaqti
   jackson:
     time-zone: Asia/Tashkent
@@ -30,6 +36,12 @@ server:
   port: 8170
   servlet:
     context-path: /api
+
+# Application-specific file storage
+app:
+  storage:
+    upload-dir: ${UPLOAD_DIR:./uploads}
+    public-url-prefix: /api/files
 
 # JWT Configuration
 jwt:
