@@ -42,6 +42,8 @@ const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => 
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
 const InstallationsPage = lazy(() => import('../pages/installations/InstallationsPage').then(m => ({ default: m.InstallationsPage })));
 const ProductionPage = lazy(() => import('../pages/production/ProductionPage').then(m => ({ default: m.ProductionPage })));
+const WarrantyPage = lazy(() => import('../pages/warranty/WarrantyPage').then(m => ({ default: m.WarrantyPage })));
+const WarrantyDetailPage = lazy(() => import('../pages/warranty/WarrantyDetailPage').then(m => ({ default: m.WarrantyDetailPage })));
 
 // Lazy-loaded order management pages
 const OrdersPage = lazy(() => import('../pages/orders/OrdersPage').then(m => ({ default: m.OrdersPage })));
@@ -461,6 +463,28 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Ishlab chiqarish' },
+      },
+      {
+        path: 'warranty',
+        element: (
+          <ProtectedRoute permission={PermissionCode.WARRANTY_VIEW}>
+            <LazyRoute>
+              <WarrantyPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Kafolat shikoyatlari' },
+      },
+      {
+        path: 'warranty/:id',
+        element: (
+          <ProtectedRoute permission={PermissionCode.WARRANTY_VIEW}>
+            <LazyRoute>
+              <WarrantyDetailPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Shikoyat tafsiloti' },
       },
       {
         path: 'profile',

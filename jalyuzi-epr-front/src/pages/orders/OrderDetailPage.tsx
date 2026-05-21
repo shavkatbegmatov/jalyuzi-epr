@@ -30,6 +30,7 @@ import { usePermission } from '../../hooks/usePermission';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { OrderDocumentsBar } from '../../components/orders/OrderDocumentsBar';
 import { PaymentScheduleBar } from '../../components/orders/PaymentScheduleBar';
+import { WarrantyClaimButton } from '../../components/orders/WarrantyClaimButton';
 import { formatCurrency, formatDateTime } from '../../config/constants';
 import type {
   Order,
@@ -1425,11 +1426,23 @@ export function OrderDetailPage() {
         canManage={canUpdate || canCollectPayment}
       />
 
-      {/* ==================== OFFICIAL DOCUMENTS ==================== */}
-      <OrderDocumentsBar
-        orderId={order.id}
-        isCompleted={order.status === 'ORNATISH_BAJARILDI' || order.status === 'YAKUNLANDI'}
-      />
+      {/* ==================== OFFICIAL DOCUMENTS + WARRANTY ==================== */}
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex-1 min-w-[300px]">
+          <OrderDocumentsBar
+            orderId={order.id}
+            isCompleted={order.status === 'ORNATISH_BAJARILDI' || order.status === 'YAKUNLANDI'}
+          />
+        </div>
+        {(order.status === 'ORNATISH_BAJARILDI' || order.status === 'YAKUNLANDI') && (
+          <div className="surface-card p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-base-content/60 mb-3">
+              Xizmat
+            </h3>
+            <WarrantyClaimButton orderId={order.id} />
+          </div>
+        )}
+      </div>
 
       {/* ==================== PHOTOS & SIGNATURE ==================== */}
       <div className="surface-card p-4">
