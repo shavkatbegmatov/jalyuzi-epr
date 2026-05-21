@@ -63,10 +63,11 @@ public interface ProductionOrderRepository extends JpaRepository<ProductionOrder
     // STATS QUERIES (Sprint 6.3)
     // ============================================
 
-    @Query("SELECT AVG(EXTRACT(EPOCH FROM (po.completedAt - po.startedAt)) / 86400) " +
-            "FROM ProductionOrder po " +
-            "WHERE po.status = 'COMPLETED' AND po.startedAt IS NOT NULL AND po.completedAt IS NOT NULL " +
-            "AND po.completedAt BETWEEN :start AND :end")
+    @Query(value = "SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at)) / 86400) " +
+            "FROM production_orders " +
+            "WHERE status = 'COMPLETED' AND started_at IS NOT NULL AND completed_at IS NOT NULL " +
+            "AND completed_at BETWEEN :start AND :end",
+            nativeQuery = true)
     Double averageCompletionDays(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT COUNT(po) FROM ProductionOrder po " +
