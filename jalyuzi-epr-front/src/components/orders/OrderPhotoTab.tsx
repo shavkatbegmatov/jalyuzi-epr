@@ -8,6 +8,7 @@ import {
   type OrderPhotos,
   type PhotoType,
 } from '../../api/orderPhotos.api';
+import { isNativeMobile, pickImageNative } from '../../utils/nativeCamera';
 
 interface Props {
   orderId: number;
@@ -60,6 +61,23 @@ function PhotoGrid({
     }
   };
 
+  // Native APK: Capacitor Camera prompt (kamera/galereya); web: HTML file input
+  const handleUploadClick = async () => {
+    if (isNativeMobile()) {
+      setUploading(true);
+      try {
+        const file = await pickImageNative();
+        if (file) await onUpload(file);
+      } catch {
+        toast.error("Kamera ochilmadi yoki ruxsat berilmadi");
+      } finally {
+        setUploading(false);
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
   return (
     <div className="surface-soft rounded-xl p-4">
       <div className="mb-3 flex items-center justify-between">
@@ -83,15 +101,17 @@ function PhotoGrid({
             />
             <button
               className={clsx('btn btn-sm', `btn-${config.color}`)}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleUploadClick}
               disabled={uploading}
             >
               {uploading ? (
                 <span className="loading loading-spinner loading-xs" />
+              ) : isNativeMobile() ? (
+                <Camera className="h-4 w-4" />
               ) : (
                 <Upload className="h-4 w-4" />
               )}
-              Yuklash
+              {isNativeMobile() ? 'Suratga olish' : 'Yuklash'}
             </button>
           </>
         )}

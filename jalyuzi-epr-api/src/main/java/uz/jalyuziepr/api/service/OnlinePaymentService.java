@@ -14,7 +14,10 @@ import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.repository.*;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +42,9 @@ public class OnlinePaymentService {
     @Value("${payment.click.secret-key:}")
     private String clickSecretKey;
 
+    @Value("${payment.click.service-id:}")
+    private String clickServiceId;
+
     @Value("${payment.payme.key:}")
     private String paymeKey;
 
@@ -50,7 +56,14 @@ public class OnlinePaymentService {
         String clickTransId = String.valueOf(payload.get("click_trans_id"));
         String merchantTransId = String.valueOf(payload.get("merchant_trans_id"));
 
-        // TODO: signature validation (md5 of click_trans_id + service_id + secret + ...)
+        // Signature validation: Click MD5 protocol
+        if (!validateClickSignature(payload, action)) {
+            log.warn("Click signature validation failed for trans {}", clickTransId);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", -1);
+            error.put("error_note", "SIGN CHECK FAILED!");
+            return error;
+        }
 
         // Idempotency: agar bu transaction allaqachon qayta ishlanmagan bo'lsa
         boolean exists = onlinePaymentRepository.existsByProviderAndProviderTransactionId(
@@ -98,7 +111,17 @@ public class OnlinePaymentService {
 
     @Transactional
     public Map<String, Object> handlePaymeWebhook(String authHeader, Map<String, Object> payload) {
-        // TODO: Basic auth validation (base64 of "Paycom:" + paymeKey)
+        if (!validatePaymeAuth(authHeader)) {
+            log.warn("Payme auth validation failed");
+            Map<String, Object> errorBody = new HashMap<>();
+            errorBody.put("code", -32504);
+            errorBody.put("message", Map.of("uz", "Auth xato", "ru", "Auth ошибка", "en", "Auth failed"));
+            Map<String, Object> errorResp = new HashMap<>();
+            errorResp.put("jsonrpc", "2.0");
+            errorResp.put("id", payload.get("id"));
+            errorResp.put("error", errorBody);
+            return errorResp;
+        }
         String method = String.valueOf(payload.get("method"));
         @SuppressWarnings("unchecked")
         Map<String, Object> params = (Map<String, Object>) payload.get("params");
@@ -214,6 +237,79 @@ public class OnlinePaymentService {
 
         log.info("{} online payment completed: {} {} for order {}",
                 provider, txId, amount, order.getOrderNumber());
+    }
+
+    // ==================== SECURITY ====================
+
+    /**
+     * Click signature validation.
+     * PREPARE  (action=0): MD5(click_trans_id + service_id + SECRET + merchant_trans_id + amount + action + sign_time)
+     * COMPLETE (action=1): MD5(click_trans_id + service_id + SECRET + merchant_trans_id + merchant_prepare_id + amount + action + sign_time)
+     */
+    private boolean validateClickSignature(Map<String, Object> payload, String action) {
+        if (clickSecretKey == null || clickSecretKey.isBlank()) {
+            log.warn("Click secret key not configured — webhook accepted without signature check");
+            return true;
+        }
+
+        Object received = payload.get("sign_string");
+        if (received == null) {
+            return false;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(payload.get("click_trans_id"));
+        sb.append(payload.getOrDefault("service_id", clickServiceId));
+        sb.append(clickSecretKey);
+        sb.append(payload.get("merchant_trans_id"));
+        if ("1".equals(action)) {
+            sb.append(payload.getOrDefault("merchant_prepare_id", ""));
+        }
+        sb.append(payload.get("amount"));
+        sb.append(action);
+        sb.append(payload.get("sign_time"));
+
+        return md5(sb.toString()).equalsIgnoreCase(String.valueOf(received));
+    }
+
+    /**
+     * Payme Basic Auth: Authorization: Basic base64("Paycom:" + key)
+     * yoki "merchant_id:key" (eski hujjatlar)
+     */
+    private boolean validatePaymeAuth(String authHeader) {
+        if (paymeKey == null || paymeKey.isBlank()) {
+            log.warn("Payme key not configured — webhook accepted without auth check");
+            return true;
+        }
+        if (authHeader == null || !authHeader.startsWith("Basic ")) {
+            return false;
+        }
+        try {
+            String token = authHeader.substring(6).trim();
+            String decoded = new String(Base64.getDecoder().decode(token), StandardCharsets.UTF_8);
+            int colonIdx = decoded.indexOf(':');
+            if (colonIdx < 0) return false;
+            return paymeKey.equals(decoded.substring(colonIdx + 1));
+        } catch (Exception e) {
+            log.warn("Payme auth decode failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String md5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : digest) {
+                String h = Integer.toHexString(0xff & b);
+                if (h.length() == 1) hex.append('0');
+                hex.append(h);
+            }
+            return hex.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("MD5 failed", e);
+        }
     }
 
     private Order parseOrderFromMerchantTransId(String merchantTransId) {
