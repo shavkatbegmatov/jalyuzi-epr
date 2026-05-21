@@ -65,6 +65,9 @@ public class SecurityConfig {
                         // Telegram bot webhook (Telegram server tomonidan chaqiriladi)
                         .requestMatchers("/v1/telegram/**").permitAll()
 
+                        // Click va Payme to'lov webhook'lari (signature/Auth ichkarida tekshiriladi)
+                        .requestMatchers("/v1/webhooks/payment/**").permitAll()
+
                         // Internet-do'kon autentifikatsiya talab qilinadigan endpointlar
                         .requestMatchers("/v1/shop/orders/**").hasRole("CUSTOMER")
                         .requestMatchers("/v1/shop/profile").hasRole("CUSTOMER")

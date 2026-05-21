@@ -44,6 +44,7 @@ public class OrderService {
     private final OrderPriceCalculationService priceService;
     private final SettingsService settingsService;
     private final ProductionService productionService;
+    private final PaymentScheduleService paymentScheduleService;
 
     // ==================== QUERY ====================
 
@@ -304,6 +305,14 @@ public class OrderService {
             log.error("Auto-create ProductionOrder failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
         }
 
+        // Standart 50/30/20 to'lov rejasini yaratish (agar mavjud bo'lmasa) va birinchi bo'lakni to'langan deb belgilash
+        try {
+            paymentScheduleService.createStandardPlan(saved.getId());
+            paymentScheduleService.applyPayment(saved.getId(), payment);
+        } catch (Exception e) {
+            log.error("Auto-create payment schedule failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
+        }
+
         return OrderResponse.from(saved);
     }
 
@@ -448,6 +457,13 @@ public class OrderService {
                 String.format("Buyurtma %s uchun %,.0f so'm to'lov qabul qilindi",
                         order.getOrderNumber(), request.getAmount()),
                 StaffNotificationType.PAYMENT, "ORDER", saved.getId());
+
+        // Schedule yangilash (agar bor bo'lsa)
+        try {
+            paymentScheduleService.applyPayment(saved.getId(), payment);
+        } catch (Exception e) {
+            log.warn("Failed to apply payment to schedule for order {}: {}", saved.getOrderNumber(), e.getMessage());
+        }
 
         return OrderResponse.from(saved);
     }

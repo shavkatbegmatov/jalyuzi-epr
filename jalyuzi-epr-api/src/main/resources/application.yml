@@ -43,6 +43,19 @@ app:
     upload-dir: ${UPLOAD_DIR:./uploads}
     public-url-prefix: /api/files
 
+# Online payment providers (Click, Payme)
+# Enable rejimi faqat env variable kalitlar mavjudligida ishlaydi
+payment:
+  click:
+    enabled: ${CLICK_ENABLED:false}
+    merchant-id: ${CLICK_MERCHANT_ID:}
+    service-id: ${CLICK_SERVICE_ID:}
+    secret-key: ${CLICK_SECRET_KEY:}
+  payme:
+    enabled: ${PAYME_ENABLED:false}
+    merchant-id: ${PAYME_MERCHANT_ID:}
+    key: ${PAYME_KEY:}
+
 # JWT Configuration
 jwt:
   secret: ${JWT_SECRET:wdWwztil8OZlZmcfS71GC6ANxFUPe1WU4kevOsZB4QM=}

@@ -29,6 +29,7 @@ import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { OrderDocumentsBar } from '../../components/orders/OrderDocumentsBar';
+import { PaymentScheduleBar } from '../../components/orders/PaymentScheduleBar';
 import { formatCurrency, formatDateTime } from '../../config/constants';
 import type {
   Order,
@@ -1416,6 +1417,13 @@ export function OrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* ==================== PAYMENT SCHEDULE ==================== */}
+      <PaymentScheduleBar
+        orderId={order.id}
+        totalAmount={order.totalAmount}
+        canManage={canUpdate || canCollectPayment}
+      />
 
       {/* ==================== OFFICIAL DOCUMENTS ==================== */}
       <OrderDocumentsBar
