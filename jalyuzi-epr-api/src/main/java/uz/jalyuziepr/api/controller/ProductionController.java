@@ -16,6 +16,7 @@ import uz.jalyuziepr.api.dto.request.ProductionStageMoveRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.ProductionOrderResponse;
 import uz.jalyuziepr.api.dto.response.ProductionStageResponse;
+import uz.jalyuziepr.api.dto.response.ProductionStatsResponse;
 import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.enums.ProductionStatus;
 import uz.jalyuziepr.api.service.ProductionService;
@@ -47,6 +48,13 @@ public class ProductionController {
     @Operation(summary = "Kanban: barcha faol production orderlar")
     public ResponseEntity<ApiResponse<List<ProductionOrderResponse>>> getBoard() {
         return ResponseEntity.ok(ApiResponse.success(productionService.getKanbanBoard()));
+    }
+
+    @GetMapping("/stats")
+    @RequiresPermission(PermissionCode.PRODUCTION_VIEW)
+    @Operation(summary = "Production KPI statistikasi (oxirgi 30 kun)")
+    public ResponseEntity<ApiResponse<ProductionStatsResponse>> getStats() {
+        return ResponseEntity.ok(ApiResponse.success(productionService.getStats()));
     }
 
     // ==================== PRODUCTION ORDERS ====================

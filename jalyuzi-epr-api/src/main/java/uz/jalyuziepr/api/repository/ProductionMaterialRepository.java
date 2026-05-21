@@ -19,4 +19,10 @@ public interface ProductionMaterialRepository extends JpaRepository<ProductionMa
 
     @Query("SELECT COALESCE(SUM(m.quantityWasted), 0) FROM ProductionMaterial m WHERE m.product.id = :productId")
     BigDecimal sumWastedByProduct(@Param("productId") Long productId);
+
+    @Query("SELECT COALESCE(SUM(m.totalCost), 0) FROM ProductionMaterial m")
+    BigDecimal sumAllTotalCost();
+
+    @Query("SELECT COALESCE(SUM(m.unitCost * m.quantityWasted), 0) FROM ProductionMaterial m WHERE m.unitCost IS NOT NULL")
+    BigDecimal sumWastedCost();
 }

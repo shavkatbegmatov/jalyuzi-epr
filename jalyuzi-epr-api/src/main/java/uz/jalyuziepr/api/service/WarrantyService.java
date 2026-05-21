@@ -63,6 +63,41 @@ public class WarrantyService {
         return claimRepository.findByCustomerId(customerId, pageable).map(WarrantyClaimResponse::from);
     }
 
+    /**
+     * Mijoz portali uchun: faqat o'ziga tegishli claim'ni qaytaradi (ownership tekshiruvi bilan).
+     */
+    @Transactional(readOnly = true)
+    public WarrantyClaimResponse getByIdForCustomer(Long claimId, Long customerId) {
+        WarrantyClaim c = claimRepository.findByIdWithDetails(claimId)
+                .orElseThrow(() -> new ResourceNotFoundException("Warranty claim", "id", claimId));
+        if (c.getCustomer() == null || !c.getCustomer().getId().equals(customerId)) {
+            throw new ResourceNotFoundException("Warranty claim", "id", claimId);
+        }
+        return WarrantyClaimResponse.fromDetailed(c);
+    }
+
+    /**
+     * Mijoz portali uchun: shikoyat yaratish. Faqat o'ziga tegishli buyurtmaga qoldira oladi.
+     */
+    @Transactional
+    public WarrantyClaimResponse createForCustomer(WarrantyClaimRequest req, Long customerId) {
+        Order order = orderRepository.findById(req.getOrderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "id", req.getOrderId()));
+
+        if (order.getCustomer() == null || !order.getCustomer().getId().equals(customerId)) {
+            throw new BadRequestException("Bu buyurtma sizga tegishli emas");
+        }
+
+        // Faqat o'rnatish bajarilgan / yakuniy holatdagi buyurtmalar uchun
+        if (order.getStatus() != uz.jalyuziepr.api.enums.OrderStatus.ORNATISH_BAJARILDI
+                && order.getStatus() != uz.jalyuziepr.api.enums.OrderStatus.YAKUNLANDI
+                && order.getStatus() != uz.jalyuziepr.api.enums.OrderStatus.TOLOV_KUTILMOQDA) {
+            throw new BadRequestException("Faqat o'rnatish bajarilgan buyurtmalar uchun shikoyat qoldira olasiz");
+        }
+
+        return create(req);
+    }
+
     // ==================== CREATE ====================
 
     @Transactional

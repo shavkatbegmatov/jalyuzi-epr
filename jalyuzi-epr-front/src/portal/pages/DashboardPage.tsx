@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useOutletContext } from 'react-router-dom';
-import { Wallet, AlertTriangle, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Wallet, AlertTriangle, ShoppingBag, ChevronRight, Wrench } from 'lucide-react';
 import { usePortalAuthStore } from '../store/portalAuthStore';
 import { portalApiClient } from '../api/portal.api';
 import PortalHeader from '../components/layout/PortalHeader';
@@ -119,6 +119,25 @@ export default function PortalDashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Warranty quick link */}
+        <Link
+          to="/kabinet/shikoyatlar"
+          className="card bg-base-100 shadow-sm hover:shadow-md transition"
+        >
+          <div className="card-body p-4 flex flex-row items-center gap-3">
+            <div className="rounded-xl bg-warning/10 p-2">
+              <Wrench className="h-5 w-5 text-warning" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">Kafolat shikoyati</p>
+              <p className="text-xs text-base-content/60">
+                Mahsulot bilan muammo bo'lsa, shu yerga yozing
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-base-content/40" />
+          </div>
+        </Link>
 
         {/* Recent Purchases */}
         <div className="card bg-base-100 shadow-sm">

@@ -112,6 +112,35 @@ export interface ProductionMaterialRequest {
   notes?: string;
 }
 
+export interface ProductionStats {
+  totalOrdersInProgress: number;
+  totalCompletedLast30Days: number;
+  totalCancelledLast30Days: number;
+  overdueOrders: number;
+  averageCompletionDays?: number;
+  stageDistribution: Array<{
+    stageId: number;
+    stageName: string;
+    stageColor: string;
+    sequence: number;
+    count: number;
+    averageMinutes?: number;
+  }>;
+  workerKpi: Array<{
+    workerId: number;
+    workerName: string;
+    completedOrders: number;
+    activeOrders: number;
+    totalMinutes?: number;
+    averageMinutesPerOrder?: number;
+  }>;
+  defectReasons: Array<{ reason: string; count: number }>;
+  defectRatePercent: number;
+  totalMaterialCost: number;
+  totalMaterialWasted: number;
+  wastePercent: number;
+}
+
 export const productionApi = {
   getStages: async (): Promise<ProductionStage[]> => {
     const res = await api.get<ApiResponse<ProductionStage[]>>('/v1/production/stages');
@@ -120,6 +149,11 @@ export const productionApi = {
 
   getBoard: async (): Promise<ProductionOrder[]> => {
     const res = await api.get<ApiResponse<ProductionOrder[]>>('/v1/production/board');
+    return res.data.data;
+  },
+
+  getStats: async (): Promise<ProductionStats> => {
+    const res = await api.get<ApiResponse<ProductionStats>>('/v1/production/stats');
     return res.data.data;
   },
 

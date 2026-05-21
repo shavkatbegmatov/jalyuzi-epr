@@ -12,6 +12,8 @@ import uz.jalyuziepr.api.dto.request.ProductionOrderCreateRequest;
 import uz.jalyuziepr.api.dto.request.ProductionStageMoveRequest;
 import uz.jalyuziepr.api.dto.response.ProductionOrderResponse;
 import uz.jalyuziepr.api.dto.response.ProductionStageResponse;
+import uz.jalyuziepr.api.dto.response.ProductionStatsResponse;
+import uz.jalyuziepr.api.repository.ProductionStageHistoryRepository;
 import uz.jalyuziepr.api.entity.*;
 import uz.jalyuziepr.api.enums.ProductionStatus;
 import uz.jalyuziepr.api.exception.BadRequestException;
@@ -327,6 +329,85 @@ public class ProductionService {
         return ProductionOrderResponse.fromDetailed(
                 productionOrderRepository.findByIdWithDetails(productionOrderId).orElseThrow()
         );
+    }
+
+    // ==================== STATS (Sprint 6.3) ====================
+
+    @Transactional(readOnly = true)
+    public ProductionStatsResponse getStats() {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime thirtyDaysAgo = now.minusDays(30);
+
+        long inProgress = productionOrderRepository.countActiveByStage(0L) >= 0
+                ? productionOrderRepository.findActiveBoard().size() : 0;
+        long completed = productionOrderRepository.countCompletedBetween(thirtyDaysAgo, now);
+        long cancelled = productionOrderRepository.countCancelledBetween(thirtyDaysAgo, now);
+        long overdue = productionOrderRepository.countOverdue(now);
+        Double avgDays = productionOrderRepository.averageCompletionDays(thirtyDaysAgo, now);
+
+        List<ProductionStatsResponse.StageDistributionItem> stageDist =
+                productionOrderRepository.stageDistribution().stream()
+                        .map(row -> ProductionStatsResponse.StageDistributionItem.builder()
+                                .stageId(((Number) row[0]).longValue())
+                                .stageName((String) row[1])
+                                .stageColor((String) row[2])
+                                .sequence(((Number) row[3]).intValue())
+                                .count(((Number) row[4]).longValue())
+                                .build())
+                        .collect(Collectors.toList());
+
+        List<ProductionStatsResponse.WorkerKpiItem> workerKpi =
+                productionOrderRepository.workerKpiRaw().stream()
+                        .map(row -> ProductionStatsResponse.WorkerKpiItem.builder()
+                                .workerId(((Number) row[0]).longValue())
+                                .workerName((String) row[1])
+                                .completedOrders(((Number) row[2]).longValue())
+                                .activeOrders(((Number) row[3]).longValue())
+                                .build())
+                        .collect(Collectors.toList());
+
+        // Worker totalMinutes va average ni stage history dan to'ldirish
+        for (ProductionStatsResponse.WorkerKpiItem w : workerKpi) {
+            Long mins = stageHistoryRepository.sumWorkerMinutes(w.getWorkerId(), thirtyDaysAgo, now);
+            w.setTotalMinutes(mins);
+            if (w.getCompletedOrders() > 0 && mins != null) {
+                w.setAverageMinutesPerOrder((double) mins / w.getCompletedOrders());
+            }
+        }
+
+        List<ProductionStatsResponse.DefectReasonItem> defects =
+                productionOrderRepository.defectReasons(thirtyDaysAgo, now).stream()
+                        .map(row -> ProductionStatsResponse.DefectReasonItem.builder()
+                                .reason((String) row[0])
+                                .count(((Number) row[1]).longValue())
+                                .build())
+                        .collect(Collectors.toList());
+
+        long totalLast30 = completed + cancelled + productionOrderRepository.findActiveBoard().size();
+        long withDefects = productionOrderRepository.countWithDefects(thirtyDaysAgo, now);
+        double defectRate = totalLast30 > 0 ? (withDefects * 100.0 / totalLast30) : 0.0;
+
+        BigDecimal totalMaterialCost = materialRepository.sumAllTotalCost();
+        BigDecimal totalWasted = materialRepository.sumWastedCost();
+        double wastePercent = totalMaterialCost.compareTo(BigDecimal.ZERO) > 0
+                ? totalWasted.multiply(BigDecimal.valueOf(100))
+                        .divide(totalMaterialCost, 2, java.math.RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+
+        return ProductionStatsResponse.builder()
+                .totalOrdersInProgress(inProgress)
+                .totalCompletedLast30Days(completed)
+                .totalCancelledLast30Days(cancelled)
+                .overdueOrders(overdue)
+                .averageCompletionDays(avgDays)
+                .stageDistribution(stageDist)
+                .workerKpi(workerKpi)
+                .defectReasons(defects)
+                .defectRatePercent(defectRate)
+                .totalMaterialCost(totalMaterialCost)
+                .totalMaterialWasted(totalWasted)
+                .wastePercent(wastePercent)
+                .build();
     }
 
     // ==================== HELPERS ====================

@@ -11,9 +11,14 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.response.*;
 import uz.jalyuziepr.api.security.CustomerUserDetails;
+import uz.jalyuziepr.api.dto.request.WarrantyClaimRequest;
 import uz.jalyuziepr.api.service.CustomerPortalService;
 import uz.jalyuziepr.api.service.NotificationService;
 import uz.jalyuziepr.api.service.OrderService;
+import uz.jalyuziepr.api.service.WarrantyService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,6 +33,7 @@ public class CustomerPortalController {
     private final CustomerPortalService portalService;
     private final NotificationService notificationService;
     private final OrderService orderService;
+    private final WarrantyService warrantyService;
 
     // ==================== PROFILE ====================
 
@@ -96,6 +102,35 @@ public class CustomerPortalController {
             @PathVariable Long id) {
         OrderResponse order = orderService.getOrderByIdForCustomer(id, customerDetails.getId());
         return ResponseEntity.ok(ApiResponse.success(order));
+    }
+
+    // ==================== WARRANTY CLAIMS ====================
+
+    @GetMapping("/warranty/claims")
+    @Operation(summary = "Mening shikoyatlarim ro'yxati")
+    public ResponseEntity<ApiResponse<Page<WarrantyClaimResponse>>> getMyClaims(
+            @AuthenticationPrincipal CustomerUserDetails customerDetails,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<WarrantyClaimResponse> claims = warrantyService.getByCustomerId(customerDetails.getId(), pageable);
+        return ResponseEntity.ok(ApiResponse.success(claims));
+    }
+
+    @GetMapping("/warranty/claims/{id}")
+    @Operation(summary = "Mening shikoyatim (ID bo'yicha)")
+    public ResponseEntity<ApiResponse<WarrantyClaimResponse>> getMyClaim(
+            @AuthenticationPrincipal CustomerUserDetails customerDetails,
+            @PathVariable Long id) {
+        WarrantyClaimResponse claim = warrantyService.getByIdForCustomer(id, customerDetails.getId());
+        return ResponseEntity.ok(ApiResponse.success(claim));
+    }
+
+    @PostMapping("/warranty/claims")
+    @Operation(summary = "Yangi shikoyat yaratish")
+    public ResponseEntity<ApiResponse<WarrantyClaimResponse>> createMyClaim(
+            @AuthenticationPrincipal CustomerUserDetails customerDetails,
+            @Valid @RequestBody WarrantyClaimRequest req) {
+        WarrantyClaimResponse claim = warrantyService.createForCustomer(req, customerDetails.getId());
+        return ResponseEntity.ok(ApiResponse.success(claim));
     }
 
     // ==================== DEBTS ====================

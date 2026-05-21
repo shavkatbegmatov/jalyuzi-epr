@@ -6,11 +6,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.jalyuziepr.api.entity.Customer;
+import uz.jalyuziepr.api.entity.Order;
 import uz.jalyuziepr.api.entity.TelegramPhoneLink;
+import uz.jalyuziepr.api.enums.OrderStatus;
 import uz.jalyuziepr.api.repository.CustomerRepository;
+import uz.jalyuziepr.api.repository.DebtRepository;
+import uz.jalyuziepr.api.repository.OrderRepository;
 import uz.jalyuziepr.api.repository.TelegramPhoneLinkRepository;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -26,6 +35,11 @@ public class TelegramBotService {
     private final SmsService smsService; // Kod generatsiyasi uchun (sms_verifications jadvalidan foydalanamiz)
     private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
     private final CustomerRepository customerRepository;
+    private final OrderRepository orderRepository;
+    private final DebtRepository debtRepository;
+
+    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private static final NumberFormat MONEY = NumberFormat.getInstance(new Locale("uz"));
 
     private static final String VERIFY_PAYLOAD_PREFIX = "verify_";
 
@@ -59,13 +73,127 @@ public class TelegramBotService {
 
         // Matn xabari
         String text = message.path("text").asText("");
+        String lower = text.toLowerCase().trim();
+
         if (text.startsWith("/start")) {
             handleStart(chatId, text);
-        } else if (text.equalsIgnoreCase("/help")) {
+        } else if (lower.equals("/help") || lower.equals("/yordam")) {
             sendHelp(chatId);
+        } else if (lower.equals("/buyurtmalarim") || lower.equals("/orders")) {
+            handleMyOrders(chatId);
+        } else if (lower.equals("/qarzlarim") || lower.equals("/qarz") || lower.equals("/debts")) {
+            handleMyDebts(chatId);
+        } else if (lower.equals("/shikoyat") || lower.equals("/complaint")) {
+            handleComplaintHint(chatId);
+        } else if (lower.equals("/profil") || lower.equals("/profile")) {
+            handleProfile(chatId);
         } else {
             sendDefault(chatId);
         }
+    }
+
+    /**
+     * Berilgan chat_id ga bog'langan mijozni topadi.
+     */
+    private Optional<Customer> findCustomerByChatId(Long chatId) {
+        return customerRepository.findAll().stream()
+                .filter(c -> chatId.equals(c.getTelegramChatId()))
+                .findFirst();
+    }
+
+    private void handleMyOrders(Long chatId) {
+        Optional<Customer> customerOpt = findCustomerByChatId(chatId);
+        if (customerOpt.isEmpty()) {
+            telegramService.sendMessage(chatId,
+                    "Avval telefon raqamingizni ulashing va veb-saytda ro'yxatdan o'ting.");
+            return;
+        }
+
+        Customer customer = customerOpt.get();
+        List<Order> orders = orderRepository.findByCustomerId(
+                customer.getId(),
+                org.springframework.data.domain.PageRequest.of(0, 5,
+                        org.springframework.data.domain.Sort.by("createdAt").descending())
+        ).getContent();
+
+        if (orders.isEmpty()) {
+            telegramService.sendMessage(chatId, "Sizda hozircha buyurtma yo'q.");
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder("<b>Oxirgi buyurtmalaringiz:</b>\n\n");
+        for (Order o : orders) {
+            sb.append("📋 <b>").append(o.getOrderNumber()).append("</b>\n");
+            sb.append("Holat: ").append(o.getStatus().getDisplayName()).append("\n");
+            sb.append("Summa: ").append(money(o.getTotalAmount())).append(" so'm\n");
+            if (o.getRemainingAmount() != null && o.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+                sb.append("Qoldiq: <b>").append(money(o.getRemainingAmount())).append(" so'm</b>\n");
+            }
+            if (o.getInstallationDate() != null) {
+                sb.append("O'rnatish: ").append(DATE.format(o.getInstallationDate())).append("\n");
+            }
+            sb.append("\n");
+        }
+        sb.append("Batafsil: https://kanjaltib.uz/kabinet/buyurtmalar");
+        telegramService.sendMessage(chatId, sb.toString());
+    }
+
+    private void handleMyDebts(Long chatId) {
+        Optional<Customer> customerOpt = findCustomerByChatId(chatId);
+        if (customerOpt.isEmpty()) {
+            telegramService.sendMessage(chatId,
+                    "Avval telefon raqamingizni ulashing va veb-saytda ro'yxatdan o'ting.");
+            return;
+        }
+
+        Customer customer = customerOpt.get();
+        BigDecimal balance = customer.getBalance() != null ? customer.getBalance() : BigDecimal.ZERO;
+
+        String response;
+        if (balance.compareTo(BigDecimal.ZERO) >= 0) {
+            response = "✅ <b>Sizda qarz yo'q</b>\n\n" +
+                    "Hisob: <b>" + money(balance) + " so'm</b>";
+        } else {
+            BigDecimal debt = balance.abs();
+            response = "💰 <b>Qarz miqdori:</b> " + money(debt) + " so'm\n\n" +
+                    "To'lash uchun aloqaga chiqing: +998 ...\n" +
+                    "Batafsil: https://kanjaltib.uz/kabinet/qarzlar";
+        }
+        telegramService.sendMessage(chatId, response);
+    }
+
+    private void handleComplaintHint(Long chatId) {
+        Optional<Customer> customerOpt = findCustomerByChatId(chatId);
+        if (customerOpt.isEmpty()) {
+            telegramService.sendMessage(chatId,
+                    "Avval telefon raqamingizni ulashing va veb-saytda ro'yxatdan o'ting.");
+            return;
+        }
+        telegramService.sendMessage(chatId,
+                "🔧 <b>Kafolat shikoyati</b>\n\n" +
+                "Mahsulot bilan muammo bo'lsa, shaxsiy kabinetingizdan shikoyat qoldiring:\n" +
+                "https://kanjaltib.uz/kabinet/shikoyatlar\n\n" +
+                "Sayt orqali muammoni batafsil yozasiz va biz tez orada usta yuboramiz.");
+    }
+
+    private void handleProfile(Long chatId) {
+        Optional<Customer> customerOpt = findCustomerByChatId(chatId);
+        if (customerOpt.isEmpty()) {
+            telegramService.sendMessage(chatId,
+                    "Avval telefon raqamingizni ulashing va veb-saytda ro'yxatdan o'ting.");
+            return;
+        }
+        Customer c = customerOpt.get();
+        String text = "👤 <b>Sizning profilingiz</b>\n\n" +
+                "Ism: " + c.getFullName() + "\n" +
+                "Telefon: " + c.getPhone() + "\n" +
+                "Hisob: " + money(c.getBalance()) + " so'm";
+        telegramService.sendMessage(chatId, text);
+    }
+
+    private String money(BigDecimal v) {
+        if (v == null) return "0";
+        return MONEY.format(v);
     }
 
     /**
@@ -161,9 +289,12 @@ public class TelegramBotService {
         String help = """
                 <b>Jalyuzi ERP Bot</b>
 
-                Bu bot sizga quyidagilarda yordam beradi:
-                • Veb-saytda ro'yxatdan o'tish va kirish uchun tasdiqlash kodi
-                • Buyurtma statuslari haqida xabarlar (tez orada)
+                Quyidagi komandalardan foydalaning:
+
+                /buyurtmalarim — oxirgi buyurtmalar va holati
+                /qarzlarim — qarz balansingiz
+                /profil — sizning ma'lumotlaringiz
+                /shikoyat — kafolat shikoyati uchun yo'riqnoma
 
                 /start — boshlash
                 /help — yordam""";

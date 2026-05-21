@@ -75,6 +75,7 @@ const PortalProfilePage = lazy(() => import('../portal/pages/ProfilePage'));
 const PortalNotificationsPage = lazy(() => import('../portal/pages/NotificationsPage'));
 const PortalOrdersPage = lazy(() => import('../portal/pages/OrdersPage'));
 const PortalOrderDetailPage = lazy(() => import('../portal/pages/OrderDetailPage'));
+const PortalWarrantyPage = lazy(() => import('../portal/pages/WarrantyPage'));
 
 // Lazy-loaded shop pages
 const ShopLayout = lazy(() => import('../components/shop/ShopLayout').then(m => ({ default: m.ShopLayout })));
@@ -764,6 +765,15 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: 'Bildirishnomalar' },
+      },
+      {
+        path: 'shikoyatlar',
+        element: (
+          <LazyRoute>
+            <PortalWarrantyPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Shikoyatlar' },
       },
       {
         path: 'profil',

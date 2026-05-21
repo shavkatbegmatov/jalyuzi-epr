@@ -7,6 +7,7 @@ import {
   Hammer,
   RefreshCw,
   ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -16,6 +17,7 @@ import {
   type ProductionStage,
 } from '../../api/production.api';
 import { ProductionOrderModal } from './ProductionOrderModal';
+import { ProductionStatsPanel } from './ProductionStatsPanel';
 
 function formatDate(dateStr?: string): string {
   if (!dateStr) return '';
@@ -121,6 +123,7 @@ export function ProductionPage() {
   const [selectedOrder, setSelectedOrder] = useState<ProductionOrder | null>(null);
   const [draggedOrderId, setDraggedOrderId] = useState<number | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<number | null>(null);
+  const [showStats, setShowStats] = useState(false);
 
   const loadData = useCallback(async (initial = false) => {
     if (!initial) setRefreshing(true);
@@ -213,17 +216,28 @@ export function ProductionPage() {
             </p>
           </div>
         </div>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => loadData(false)}
-          disabled={refreshing}
-        >
-          <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
-          Yangilash
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className={clsx('btn btn-sm', showStats ? 'btn-primary' : 'btn-ghost')}
+            onClick={() => setShowStats(!showStats)}
+          >
+            <BarChart3 className="h-4 w-4" />
+            {showStats ? 'Kanban' : 'KPI Statistika'}
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => loadData(false)}
+            disabled={refreshing}
+          >
+            <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
+            Yangilash
+          </button>
+        </div>
       </div>
 
-      {orders.length === 0 ? (
+      {showStats && <ProductionStatsPanel />}
+
+      {showStats ? null : orders.length === 0 ? (
         <div className="surface-card p-12 text-center">
           <Hammer className="mx-auto mb-3 h-12 w-12 text-base-content/30" />
           <p className="font-semibold">Hozircha sexda buyurtma yo'q</p>
