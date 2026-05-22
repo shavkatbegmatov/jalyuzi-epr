@@ -147,9 +147,11 @@ export function ManagerOrderDetailPage() {
     setAssignSubmitting(true);
     try {
       let updated: Order;
+      // Backend LocalDateTime kutadi — sanaga ish vaqtini qo'shamiz (09:00)
+      const fullDateTime = assignDate ? `${assignDate}T09:00:00` : undefined;
       const request = {
         assigneeId: Number(selectedEmployeeId),
-        scheduledDate: assignDate || undefined,
+        scheduledDate: fullDateTime,
         notes: assignNotes || undefined,
       };
       if (showAssignModal === 'measurer') {

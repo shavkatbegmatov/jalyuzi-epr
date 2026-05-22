@@ -164,9 +164,11 @@ function AssignModal({ open, title, onClose, onSubmit, loading, employees, emplo
       toast.error('Xodimni tanlang');
       return;
     }
+    // Backend LocalDateTime kutadi — sanaga ish vaqtini qo'shamiz (09:00)
+    const fullDateTime = scheduledDate ? `${scheduledDate}T09:00:00` : undefined;
     onSubmit({
       assigneeId: Number(assigneeId),
-      scheduledDate: scheduledDate || undefined,
+      scheduledDate: fullDateTime,
       notes: notes || undefined,
     });
   };
