@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>Jalyuzi ERP — Yangi imkoniyatlar</title>
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --navy2: #25395F;
+    --amber: #E0A458;
+    --amber-d: #C9863A;
+    --cream: #FAF6F0;
+    --card: #FFFFFF;
+    --ink: #2E3440;
+    --muted: #6B7280;
+    --teal: #4C9A8C;
+    --line: #E7E0D6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page { size: 13.333in 7.5in; margin: 0; }
+
+  html, body { background: #525252; }
+
+  body {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .slide {
+    position: relative;
+    width: 13.333in;
+    height: 7.5in;
+    overflow: hidden;
+    background: var(--cream);
+    page-break-after: always;
+  }
+  .slide:last-child { page-break-after: auto; }
+
+  h1, h2, .display { font-family: Georgia, "Times New Roman", serif; }
+
+  /* ---------- shared bits ---------- */
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--amber-d);
+  }
+  .kicker-dark { color: var(--amber); }
+
+  .slide-pad { padding: 0.7in 0.85in; height: 100%; }
+
+  .footer {
+    position: absolute;
+    bottom: 0.38in;
+    left: 0.85in;
+    right: 0.85in;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* ---------- title slide ---------- */
+  .title-slide {
+    background: linear-gradient(135deg, #16233E 0%, #25395F 70%, #2E4574 100%);
+    color: #fff;
+  }
+  .title-slide .blob {
+    position: absolute; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(224,164,88,0.55), rgba(224,164,88,0) 70%);
+  }
+  .title-wrap { position: relative; z-index: 2; }
+  .title-slide h1 {
+    font-size: 70px; line-height: 1.05; font-weight: 700; margin: 18px 0 18px;
+  }
+  .title-slide h1 .amber { color: var(--amber); }
+  .title-slide .sub { font-size: 23px; color: #CADCFC; max-width: 8.5in; line-height: 1.5; }
+  .title-slide .brandrow {
+    position: absolute; bottom: 0.7in; left: 0.85in; right: 0.85in;
+    display: flex; align-items: center; justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.18); padding-top: 16px;
+    font-size: 14px; color: #AFC0DE; letter-spacing: 0.05em;
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 12px; font-size: 15px; color:#fff; font-weight:600;
+  }
+  .logo-mark {
+    width: 38px; height: 38px; border-radius: 11px; background: var(--amber);
+    color: var(--navy); display: grid; place-items: center; font-weight: 800; font-size: 20px;
+    font-family: Georgia, serif;
+  }
+
+  /* ---------- section heading ---------- */
+  .sec-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .sec-dot { width: 14px; height: 14px; border-radius: 4px; background: var(--amber); }
+  h2.sec-title { font-size: 40px; font-weight: 700; color: var(--navy); margin-top: 8px; }
+  .sec-tag { font-size: 18px; color: var(--muted); margin-top: 8px; }
+
+  /* ---------- overview cards ---------- */
+  .cards3 { display: flex; gap: 26px; margin-top: 52px; }
+  .ocard {
+    flex: 1; background: var(--card); border-radius: 18px; padding: 34px 28px;
+    box-shadow: 0 10px 28px rgba(27,42,74,0.10); border: 1px solid var(--line);
+    position: relative;
+  }
+  .ocard .num {
+    position: absolute; top: 22px; right: 26px; font-family: Georgia, serif;
+    font-size: 40px; font-weight: 700; color: #EFE7DA;
+  }
+  .ic-circle {
+    width: 64px; height: 64px; border-radius: 16px; display: grid; place-items: center;
+    font-size: 30px; margin-bottom: 22px;
+  }
+  .ic-amber { background: #FBEFDD; }
+  .ic-teal { background: #E0F0EC; }
+  .ic-navy { background: #E2E8F4; }
+  .ocard h3 { font-size: 22px; color: var(--navy); margin-bottom: 10px; }
+  .ocard p { font-size: 15.5px; color: var(--muted); line-height: 1.55; }
+
+  /* ---------- two-column ---------- */
+  .twocol { display: flex; gap: 44px; margin-top: 40px; height: 4.55in; }
+  .col-left { flex: 1.05; }
+  .col-right { flex: 1; display: flex; align-items: center; justify-content: center; }
+
+  .benefit { display: flex; gap: 16px; margin-bottom: 22px; align-items: flex-start; }
+  .benefit .chk {
+    flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--amber);
+    color: #fff; display: grid; place-items: center; font-size: 16px; font-weight: 800; margin-top: 2px;
+  }
+  .benefit .bt { font-size: 18px; font-weight: 700; color: var(--navy); }
+  .benefit .bd { font-size: 15px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
+
+  /* gallery mockup */
+  .gallery {
+    width: 4.3in; background: var(--card); border-radius: 18px; padding: 18px;
+    box-shadow: 0 12px 30px rgba(27,42,74,0.13); border: 1px solid var(--line);
+  }
+  .g-main {
+    height: 2.0in; border-radius: 12px; position: relative;
+    background: linear-gradient(135deg, #C9863A, #E0A458 60%, #EFC487);
+    display: grid; place-items: center; color: #fff; overflow: hidden;
+  }
+  .g-main .blinds {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.0) 0px, rgba(255,255,255,0.0) 14px, rgba(255,255,255,0.16) 14px, rgba(255,255,255,0.16) 18px);
+  }
+  .g-main .cover-badge {
+    position: absolute; top: 12px; left: 12px; background: var(--navy); color: #fff;
+    font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 7px; letter-spacing: 0.03em;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .g-thumbs { display: flex; gap: 10px; margin-top: 12px; }
+  .g-thumbs div {
+    flex: 1; height: 0.85in; border-radius: 9px; border: 2px solid transparent;
+  }
+  .g-thumbs .t1 { background: linear-gradient(135deg,#7FA8C9,#B7D0E3); border-color: var(--amber); }
+  .g-thumbs .t2 { background: linear-gradient(135deg,#9DBE9F,#CADFC9); }
+  .g-thumbs .t3 { background: linear-gradient(135deg,#C9A9C2,#E5D2E0); }
+  .g-thumbs .t4 { background: linear-gradient(135deg,#D9C08B,#EFE0B8); }
+
+  /* help mockup */
+  .help-card {
+    width: 4.0in; background: var(--card); border-radius: 18px; overflow: hidden;
+    box-shadow: 0 12px 30px rgba(27,42,74,0.14); border: 1px solid var(--line);
+  }
+  .help-top {
+    background: linear-gradient(120deg, #FBEFDD, #F4E2C8); padding: 20px 22px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .help-top .star { width: 42px; height: 42px; border-radius: 12px; background: var(--amber); color:#fff; display:grid; place-items:center; font-size: 22px; }
+  .help-top .ht { font-size: 19px; font-weight: 700; color: var(--navy); font-family: Georgia, serif;}
+  .help-top .hs { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .help-row { padding: 14px 22px; border-bottom: 1px solid var(--line); display: flex; gap: 13px; align-items: center; }
+  .help-row:last-child { border-bottom: none; }
+  .help-row .hicon { width: 32px; height: 32px; border-radius: 9px; background: #EAF1FB; display:grid; place-items:center; font-size: 16px; }
+  .help-row .hx { font-size: 15px; font-weight: 600; color: var(--navy); }
+
+  /* ---------- before / after ---------- */
+  .ba-wrap { display: flex; gap: 30px; margin-top: 42px; align-items: stretch; }
+  .ba-col { flex: 1; border-radius: 18px; padding: 28px; border: 1px solid var(--line); }
+  .ba-before { background: #FBEFEF; }
+  .ba-after { background: #ECF6F2; }
+  .ba-col .ba-label { font-size: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+  .ba-before .ba-label { color: #C0584F; }
+  .ba-after .ba-label { color: #2F8A77; }
+  .ba-col .ba-desc { font-size: 14.5px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+  .ba-row { display: flex; align-items: center; gap: 12px; margin-bottom: 13px; }
+  .ba-page { font-size: 14px; color: var(--ink); width: 1.55in; }
+  .badge {
+    font-size: 12.5px; font-weight: 700; color: #fff; padding: 5px 13px; border-radius: 20px; letter-spacing: 0.02em;
+  }
+  .arrow-mid { display: flex; align-items: center; font-size: 30px; color: var(--amber); }
+
+  .ba-note {
+    margin-top: 26px; background: #fff; border-left: 5px solid var(--amber); border-radius: 10px;
+    padding: 16px 20px; font-size: 15px; color: var(--ink); box-shadow: 0 6px 18px rgba(27,42,74,0.07);
+  }
+
+  /* ---------- conclusion ---------- */
+  .end-slide { background: linear-gradient(135deg, #16233E 0%, #25395F 100%); color: #fff; }
+  .end-slide h2 { font-size: 46px; color: #fff; }
+  .result-row { display: flex; gap: 22px; margin-top: 46px; }
+  .rcard {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 16px; padding: 28px 24px;
+  }
+  .rcard .rn { font-family: Georgia, serif; font-size: 30px; color: var(--amber); font-weight: 700; }
+  .rcard .rt { font-size: 17px; font-weight: 700; margin: 12px 0 8px; color: #fff; }
+  .rcard .rd { font-size: 14px; color: #C3D0E6; line-height: 1.5; }
+  .next-bar {
+    position: absolute; bottom: 0.7in; left: 0.85in; right: 0.85in;
+    background: var(--amber); color: var(--navy); border-radius: 14px; padding: 18px 26px;
+    display: flex; align-items: center; gap: 14px; font-size: 17px; font-weight: 600;
+  }
+  .next-bar .np { font-size: 22px; }
+</style>
+</head>
+<body>
+
+<!-- ================= SLIDE 1: TITLE ================= -->
+<section class="slide title-slide">
+  <div class="blob" style="width: 6in; height: 6in; top: -2in; right: -1.6in;"></div>
+  <div class="blob" style="width: 3.2in; height: 3.2in; bottom: -1in; left: 3in; opacity:0.6;"></div>
+  <div class="slide-pad">
+    <div class="title-wrap">
+      <div class="eyebrow kicker-dark">Jalyuzi ERP &nbsp;•&nbsp; Tizim yangilanishi</div>
+      <h1>Yangi <span class="amber">imkoniyatlar</span></h1>
+      <div class="sub">Tizimga qo'shilgan 3 ta muhim yangilik — material katalogini boyitish, ishlatishni soddalashtirish va izchil ko'rinish.</div>
+    </div>
+    <div class="brandrow">
+      <span class="logo-badge"><span class="logo-mark">J</span> Jalyuzi ERP boshqaruv tizimi</span>
+      <span>2026-yil, may &nbsp;|&nbsp; kanjaltib.uz</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SLIDE 2: OVERVIEW ================= -->
+<section class="slide">
+  <div class="slide-pad">
+    <div class="sec-head"><span class="sec-dot"></span><span class="eyebrow">Umumiy ko'rinish</span></div>
+    <h2 class="sec-title">Nimalar yangilandi?</h2>
+    <div class="sec-tag">Bu yangilanishda mijozga ham, xodimga ham foydali 3 ta yo'nalish ustida ishlandi.</div>
+
+    <div class="cards3">
+      <div class="ocard">
+        <span class="num">01</span>
+        <div class="ic-circle ic-amber">🖼️</div>
+        <h3>Material rasm katalogi</h3>
+        <p>Endi har bir mahsulotga bir nechta rasm yuklash mumkin. Mijoz tovarni o'z ko'zi bilan ko'radi.</p>
+      </div>
+      <div class="ocard">
+        <span class="num">02</span>
+        <div class="ic-circle ic-teal">🎓</div>
+        <h3>Sodda ishlatish</h3>
+        <p>Yangi foydalanuvchi uchun qisqa qo'llanma va doimiy ishlaydigan yordam markazi qo'shildi.</p>
+      </div>
+      <div class="ocard">
+        <span class="num">03</span>
+        <div class="ic-circle ic-navy">🏷️</div>
+        <h3>Izchil ko'rinish</h3>
+        <p>Buyurtma holatlari barcha sahifalarda bir xil nom va bir xil rangda ko'rinadi.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>Jalyuzi ERP — Yangi imkoniyatlar</span><span>02 / 06</span></div>
+</section>
+
+<!-- ================= SLIDE 3: PRODUCT GALLERY ================= -->
+<section class="slide">
+  <div class="slide-pad">
+    <div class="sec-head"><span class="sec-dot"></span><span class="eyebrow">01 — Katalog</span></div>
+    <h2 class="sec-title">Material rasm katalogi</h2>
+
+    <div class="twocol">
+      <div class="col-left">
+        <p style="font-size:18px;color:var(--ink);margin-bottom:28px;font-style:italic;">"Mijoz mahsulotni rasmda ko'rsa — sotuv osonlashadi."</p>
+        <div class="benefit"><div class="chk">✓</div><div><div class="bt">Bir nechta rasm</div><div class="bd">Har bir mahsulotga 10 tagacha rasm yuklash imkoni.</div></div></div>
+        <div class="benefit"><div class="chk">✓</div><div><div class="bt">Asosiy rasmni tanlash</div><div class="bd">Katalogda ko'rinadigan muqova rasmni bir bosishda belgilash.</div></div></div>
+        <div class="benefit"><div class="chk">✓</div><div><div class="bt">Do'konda galereya</div><div class="bd">Mijoz mahsulot sahifasida rasmlarni aylantirib ko'radi.</div></div></div>
+      </div>
+      <div class="col-right">
+        <div class="gallery">
+          <div class="g-main">
+            <div class="blinds"></div>
+            <div class="cover-badge">★ Asosiy rasm</div>
+          </div>
+          <div class="g-thumbs"><div class="t1"></div><div class="t2"></div><div class="t3"></div><div class="t4"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>Jalyuzi ERP — Yangi imkoniyatlar</span><span>03 / 06</span></div>
+</section>
+
+<!-- ================= SLIDE 4: EASE OF USE ================= -->
+<section class="slide">
+  <div class="slide-pad">
+    <div class="sec-head"><span class="sec-dot"></span><span class="eyebrow">02 — Qulaylik</span></div>
+    <h2 class="sec-title">Ishlatish endi soddaroq</h2>
+
+    <div class="twocol">
+      <div class="col-left">
+        <p style="font-size:18px;color:var(--ink);margin-bottom:28px;font-style:italic;">"Yangi xodim ham tizimni tez o'rganadi."</p>
+        <div class="benefit"><div class="chk">🎓</div><div><div class="bt">Tanishtiruv (onboarding)</div><div class="bd">Birinchi kirishda qisqa qo'llanma avtomatik ochiladi — qayerdan boshlashni ko'rsatadi.</div></div></div>
+        <div class="benefit"><div class="chk">❓</div><div><div class="bt">Yordam markazi</div><div class="bd">Yuqoridagi "?" tugmasi orqali asosiy amallar bo'yicha qo'llanma har doim qo'l ostida.</div></div></div>
+        <div class="benefit"><div class="chk">📋</div><div><div class="bt">Amaliy maslahatlar</div><div class="bd">Buyurtma, mijoz qo'shish, to'lov — qadamma-qadam tushuntirilgan.</div></div></div>
+      </div>
+      <div class="col-right">
+        <div class="help-card">
+          <div class="help-top">
+            <div class="star">✨</div>
+            <div><div class="ht">Xush kelibsiz! 👋</div><div class="hs">Tizimdan foydalanish bo'yicha qisqa qo'llanma</div></div>
+          </div>
+          <div class="help-row"><div class="hicon">🚀</div><div class="hx">Qanday boshlash kerak?</div></div>
+          <div class="help-row"><div class="hicon">📋</div><div class="hx">Yangi buyurtma yaratish</div></div>
+          <div class="help-row"><div class="hicon">👥</div><div class="hx">Mijoz qo'shish</div></div>
+          <div class="help-row"><div class="hicon">💳</div><div class="hx">To'lov qabul qilish</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><span>Jalyuzi ERP — Yangi imkoniyatlar</span><span>04 / 06</span></div>
+</section>
+
+<!-- ================= SLIDE 5: CONSISTENT STATUS ================= -->
+<section class="slide">
+  <div class="slide-pad">
+    <div class="sec-head"><span class="sec-dot"></span><span class="eyebrow">03 — Izchillik</span></div>
+    <h2 class="sec-title">Izchil status ko'rinishi</h2>
+    <div class="sec-tag">Buyurtma holati ro'yxatda ham, detalda ham, mijoz kabinetida ham — bir xil ko'rinadi.</div>
+
+    <div class="ba-wrap">
+      <div class="ba-col ba-before">
+        <div class="ba-label">⚠ Oldin</div>
+        <div class="ba-desc">Bir holat turli sahifalarda turli rangda — chalkash edi.</div>
+        <div class="ba-row"><span class="ba-page">Buyurtmalar ro'yxati</span><span class="badge" style="background:#3FA45B">Zaklad qabul qilindi</span></div>
+        <div class="ba-row"><span class="ba-page">Buyurtma detali</span><span class="badge" style="background:#3C6DD0">Zaklad qabul qilindi</span></div>
+        <div class="ba-row"><span class="ba-page">Mijoz kabineti</span><span class="badge" style="background:#9B59B6">Zaklad qabul qilindi</span></div>
+      </div>
+      <div class="arrow-mid">→</div>
+      <div class="ba-col ba-after">
+        <div class="ba-label">✓ Keyin</div>
+        <div class="ba-desc">Bir holat — bir nom, bir rang. Hamma joyda bir xil.</div>
+        <div class="ba-row"><span class="ba-page">Buyurtmalar ro'yxati</span><span class="badge" style="background:#3C6DD0">Zaklad qabul qilindi</span></div>
+        <div class="ba-row"><span class="ba-page">Buyurtma detali</span><span class="badge" style="background:#3C6DD0">Zaklad qabul qilindi</span></div>
+        <div class="ba-row"><span class="ba-page">Mijoz kabineti</span><span class="badge" style="background:#3C6DD0">Zaklad qabul qilindi</span></div>
+      </div>
+    </div>
+    <div class="ba-note">Bu o'zgarish tizim ko'rinishini professional va ishonchli qiladi — xodim ham, mijoz ham adashmaydi.</div>
+  </div>
+  <div class="footer"><span>Jalyuzi ERP — Yangi imkoniyatlar</span><span>05 / 06</span></div>
+</section>
+
+<!-- ================= SLIDE 6: CONCLUSION ================= -->
+<section class="slide end-slide">
+  <div class="slide-pad">
+    <div class="sec-head"><span class="sec-dot"></span><span class="eyebrow kicker-dark">Natija</span></div>
+    <h2>Yangilanish nimani beradi?</h2>
+
+    <div class="result-row">
+      <div class="rcard"><div class="rn">01</div><div class="rt">Vizual katalog</div><div class="rd">Rasmli mahsulotlar mijozni ishontiradi va sotuvga yordam beradi.</div></div>
+      <div class="rcard"><div class="rn">02</div><div class="rt">Tez o'rganish</div><div class="rd">Yangi xodim qo'llanma yordamida tizimni mustaqil o'zlashtiradi.</div></div>
+      <div class="rcard"><div class="rn">03</div><div class="rt">Professional ko'rinish</div><div class="rd">Izchil ranglar va nomlar tizimga ishonch qo'shadi.</div></div>
+    </div>
+
+    <div class="next-bar"><span class="np">▶</span> Keyingi qadam: yangiliklarni real ishda sinab ko'rish va fikr bildirish.</div>
+  </div>
+</section>
+
+</body>
+</html>

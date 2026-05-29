@@ -9,6 +9,7 @@ export function ShopProductPage() {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<ShopProduct | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,9 +76,9 @@ export function ShopProductPage() {
         {/* Product Images */}
         <div>
           <div className="bg-base-200 rounded-lg aspect-square flex items-center justify-center">
-            {product.imageUrl ? (
+            {(selectedImage ?? product.imageUrl) ? (
               <img
-                src={product.imageUrl}
+                src={selectedImage ?? product.imageUrl}
                 alt={product.name}
                 className="max-w-full max-h-full object-contain"
               />
@@ -102,18 +103,25 @@ export function ShopProductPage() {
           {/* Gallery thumbnails */}
           {product.galleryImages && product.galleryImages.length > 0 && (
             <div className="flex gap-2 mt-4">
-              {product.galleryImages.map((img, index) => (
-                <div
-                  key={index}
-                  className="w-20 h-20 bg-base-200 rounded cursor-pointer"
-                >
-                  <img
-                    src={img}
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover rounded"
-                  />
-                </div>
-              ))}
+              {product.galleryImages.map((img, index) => {
+                const isActive = (selectedImage ?? product.imageUrl) === img;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setSelectedImage(img)}
+                    className={`w-20 h-20 bg-base-200 rounded cursor-pointer overflow-hidden border-2 transition-colors ${
+                      isActive ? 'border-primary' : 'border-transparent hover:border-base-300'
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

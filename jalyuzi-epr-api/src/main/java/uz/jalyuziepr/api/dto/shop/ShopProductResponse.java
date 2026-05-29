@@ -100,6 +100,7 @@ public class ShopProductResponse {
                 .installationPrice(product.getInstallationPrice())
                 .basePrice(product.getSellingPrice())
                 .imageUrl(product.getImageUrl())
+                .galleryImages(product.getImageUrls())
                 .inStock(product.getQuantity() != null && product.getQuantity().compareTo(BigDecimal.ZERO) > 0)
                 .collection(product.getCustomAttribute("collection"))
                 .build();

@@ -31,7 +31,14 @@ import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { OrderDocumentsBar } from '../../components/orders/OrderDocumentsBar';
 import { PaymentScheduleBar } from '../../components/orders/PaymentScheduleBar';
 import { WarrantyClaimButton } from '../../components/orders/WarrantyClaimButton';
-import { formatCurrency, formatDateTime } from '../../config/constants';
+import {
+  formatCurrency,
+  formatDateTime,
+  getOrderStatusLabel,
+  getOrderStatusColor,
+  getOrderPaymentTypeLabel,
+  getPaymentMethodLabel,
+} from '../../config/constants';
 import type {
   Order,
   OrderStatus,
@@ -41,42 +48,6 @@ import type {
   OrderPaymentRequest,
 } from '../../types';
 import toast from 'react-hot-toast';
-
-// ==================== STATUS MAPS ====================
-
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-info',
-  NARX_TASDIQLANDI: 'badge-accent',
-  ZAKLAD_QABUL_QILINDI: 'badge-primary',
-  ISHLAB_CHIQARISHDA: 'badge-secondary',
-  TAYYOR: 'badge-success',
-  ORNATISHGA_TAYINLANDI: 'badge-warning',
-  ORNATISH_JARAYONIDA: 'badge-secondary',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-error',
-};
 
 // Timeline stepper phases
 const TIMELINE_PHASES: { key: string; label: string; statuses: OrderStatus[] }[] = [
@@ -106,18 +77,6 @@ const ALL_STATUSES_ORDER: OrderStatus[] = [
   'YAKUNLANDI',
   'QARZGA_OTKAZILDI',
 ];
-
-const PAYMENT_TYPE_LABELS: Record<OrderPaymentType, string> = {
-  DEPOSIT: 'Zaklad',
-  FINAL_PAYMENT: "Yakuniy to'lov",
-  PARTIAL_PAYMENT: "Qisman to'lov",
-};
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: 'Naqd',
-  CARD: 'Karta',
-  TRANSFER: "O'tkazma",
-};
 
 const FINAL_STATUSES: OrderStatus[] = ['YAKUNLANDI', 'QARZGA_OTKAZILDI', 'BEKOR_QILINDI'];
 
@@ -828,8 +787,8 @@ export function OrderDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`badge badge-lg ${ORDER_STATUS_COLORS[status]}`}>
-            {ORDER_STATUS_LABELS[status]}
+          <span className={`badge badge-lg ${getOrderStatusColor(status)}`}>
+            {getOrderStatusLabel(status)}
           </span>
         </div>
       </div>
@@ -1367,14 +1326,14 @@ export function OrderDetailPage() {
                     <td className="text-base-content/60">{index + 1}</td>
                     <td>
                       <span className="badge badge-ghost badge-sm">
-                        {PAYMENT_TYPE_LABELS[payment.paymentType] || payment.paymentType}
+                        {getOrderPaymentTypeLabel(payment.paymentType)}
                       </span>
                     </td>
                     <td className="text-right font-semibold">
                       {new Intl.NumberFormat('uz-UZ').format(payment.amount)} so'm
                     </td>
                     <td>
-                      {PAYMENT_METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}
+                      {getPaymentMethodLabel(payment.paymentMethod)}
                     </td>
                     <td className="text-base-content/70">{payment.collectedByName || '\u2014'}</td>
                     <td className="text-sm">{formatDateTime(payment.createdAt)}</td>
@@ -1496,7 +1455,7 @@ export function OrderDetailPage() {
                       )}
                       <span
                         className={`badge badge-sm ${
-                          entry.toStatus ? ORDER_STATUS_COLORS[entry.toStatus] || 'badge-ghost' : 'badge-ghost'
+                          entry.toStatus ? getOrderStatusColor(entry.toStatus) : 'badge-ghost'
                         }`}
                       >
                         {entry.toStatusDisplayName}

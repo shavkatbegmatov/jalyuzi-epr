@@ -3,42 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ClipboardList, Phone, MapPin, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
-import { formatCurrency } from '../../config/constants';
-import type { Order, OrderStatus } from '../../types';
-
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-accent',
-  NARX_TASDIQLANDI: 'badge-primary',
-  ZAKLAD_QABUL_QILINDI: 'badge-success',
-  ISHLAB_CHIQARISHDA: 'badge-warning',
-  TAYYOR: 'badge-accent',
-  ORNATISHGA_TAYINLANDI: 'badge-info',
-  ORNATISH_JARAYONIDA: 'badge-warning',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-ghost',
-};
+import { formatCurrency, getOrderStatusLabel, getOrderStatusColor } from '../../config/constants';
+import type { Order } from '../../types';
 
 function isToday(dateStr?: string): boolean {
   if (!dateStr) return false;
@@ -101,8 +67,8 @@ export function InstallerDashboardPage() {
             </span>
             <div className="text-sm font-medium mt-0.5">{order.customerName}</div>
           </div>
-          <span className={`badge badge-sm ${ORDER_STATUS_COLORS[order.status]}`}>
-            {ORDER_STATUS_LABELS[order.status]}
+          <span className={`badge badge-sm ${getOrderStatusColor(order.status)}`}>
+            {getOrderStatusLabel(order.status)}
           </span>
         </div>
 

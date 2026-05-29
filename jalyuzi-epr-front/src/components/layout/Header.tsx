@@ -26,7 +26,11 @@ import { rolesApi } from '../../api/roles.api';
 import { authApi } from '../../api/auth.api';
 import { ROLES } from '../../config/constants';
 import { SearchCommand } from '../common/SearchCommand';
+import { HelpCenter } from '../common/HelpCenter';
 import type { Role } from '../../types';
+
+// Onboarding flagi — yangi foydalanuvchi yordam markazini birinchi marta ko'rgani localStorage'da saqlanadi
+const ONBOARDING_SEEN_KEY = 'jalyuzi-onboarding-seen';
 
 const getNotificationIcon = (type: Notification['type']) => {
   switch (type) {
@@ -99,6 +103,29 @@ export function Header() {
   const [roles, setRoles] = useState<Role[]>([]);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Yordam markazi / onboarding holati
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpFirstVisit, setHelpFirstVisit] = useState(false);
+
+  // Yangi foydalanuvchi birinchi marta kirganda yordam markazini avtomatik ochamiz
+  useEffect(() => {
+    if (!localStorage.getItem(ONBOARDING_SEEN_KEY)) {
+      setHelpFirstVisit(true);
+      setHelpOpen(true);
+    }
+  }, []);
+
+  const openHelp = () => {
+    setHelpFirstVisit(false);
+    setHelpOpen(true);
+  };
+
+  const closeHelp = () => {
+    setHelpOpen(false);
+    setHelpFirstVisit(false);
+    localStorage.setItem(ONBOARDING_SEEN_KEY, 'true');
+  };
 
   const isDark = themeMode === 'dark' || (themeMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 
@@ -213,6 +240,7 @@ export function Header() {
   };
 
   return (
+    <>
     <header className="safe-area-top sticky top-0 z-30 border-b border-base-200/80 bg-base-100/95 backdrop-blur-md">
       <div className="flex h-16 w-full items-center gap-3 px-4 lg:px-6">
         {/* Left section - Menu & Title */}
@@ -268,6 +296,7 @@ export function Header() {
           <button
             className="btn btn-ghost btn-sm btn-square hidden lg:flex"
             title="Yordam"
+            onClick={openHelp}
           >
             <HelpCircle className="h-4 w-4" />
           </button>
@@ -488,5 +517,8 @@ export function Header() {
         </div>
       </div>
     </header>
+
+    <HelpCenter open={helpOpen} onClose={closeHelp} isFirstVisit={helpFirstVisit} />
+    </>
   );
 }

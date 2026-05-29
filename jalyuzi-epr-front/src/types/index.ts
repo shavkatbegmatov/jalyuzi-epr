@@ -215,6 +215,7 @@ export interface Product {
   compatibleBlindTypes?: string;
   description?: string;
   imageUrl?: string;
+  imageUrls?: string[];
   active: boolean;
 }
 

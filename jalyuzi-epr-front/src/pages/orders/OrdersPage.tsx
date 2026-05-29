@@ -12,60 +12,15 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
-import { formatDateTime, formatCurrency } from '../../config/constants';
+import {
+  formatDateTime,
+  formatCurrency,
+  getOrderStatusLabel,
+  getOrderStatusColor,
+  ORDER_STATUS_LIST,
+} from '../../config/constants';
 import { usePermission, PermissionCode } from '../../hooks/usePermission';
 import type { Order, OrderStatus, OrderStatsResponse } from '../../types';
-
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-accent',
-  NARX_TASDIQLANDI: 'badge-primary',
-  ZAKLAD_QABUL_QILINDI: 'badge-success',
-  ISHLAB_CHIQARISHDA: 'badge-warning',
-  TAYYOR: 'badge-accent',
-  ORNATISHGA_TAYINLANDI: 'badge-info',
-  ORNATISH_JARAYONIDA: 'badge-warning',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-ghost',
-};
-
-const ALL_STATUSES: OrderStatus[] = [
-  'YANGI',
-  'OLCHOV_KUTILMOQDA',
-  'OLCHOV_BAJARILDI',
-  'NARX_TASDIQLANDI',
-  'ZAKLAD_QABUL_QILINDI',
-  'ISHLAB_CHIQARISHDA',
-  'TAYYOR',
-  'ORNATISHGA_TAYINLANDI',
-  'ORNATISH_JARAYONIDA',
-  'ORNATISH_BAJARILDI',
-  'TOLOV_KUTILMOQDA',
-  'YAKUNLANDI',
-  'QARZGA_OTKAZILDI',
-  'BEKOR_QILINDI',
-];
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -154,8 +109,8 @@ export function OrdersPage() {
   };
 
   const getStatusBadge = (status: OrderStatus) => (
-    <span className={`badge badge-sm ${ORDER_STATUS_COLORS[status]}`}>
-      {ORDER_STATUS_LABELS[status]}
+    <span className={`badge badge-sm ${getOrderStatusColor(status)}`}>
+      {getOrderStatusLabel(status)}
     </span>
   );
 
@@ -251,13 +206,13 @@ export function OrdersPage() {
           >
             Barchasi
           </button>
-          {ALL_STATUSES.map((status) => (
+          {ORDER_STATUS_LIST.map((status) => (
             <button
               key={status}
               className={`btn btn-sm whitespace-nowrap ${statusFilter === status ? 'btn-primary' : 'btn-ghost'}`}
               onClick={() => handleStatusFilterChange(status)}
             >
-              {ORDER_STATUS_LABELS[status]}
+              {getOrderStatusLabel(status)}
               {stats?.statusCounts?.[status] != null && (
                 <span className="badge badge-sm badge-neutral ml-1">
                   {stats.statusCounts[status]}

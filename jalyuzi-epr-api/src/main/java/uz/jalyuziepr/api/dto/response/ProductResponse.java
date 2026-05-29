@@ -131,6 +131,7 @@ public class ProductResponse {
 
     private String description;
     private String imageUrl;
+    private java.util.List<String> imageUrls;
 
     @ExportColumn(header = "Faol", order = 29, type = ColumnType.BOOLEAN)
     private Boolean active;
@@ -173,6 +174,7 @@ public class ProductResponse {
                 .compatibleBlindTypes(product.getCompatibleBlindTypes())
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
+                .imageUrls(product.getImageUrls())
                 .active(product.getActive())
                 .build();
     }

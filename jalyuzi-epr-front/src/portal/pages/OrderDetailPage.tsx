@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, CreditCard, Clock, CheckCircle } from 'lucide-react';
 import portalApi from '../api/portalAxios';
+import { getOrderStatusLabel, getOrderStatusColor, getOrderPaymentTypeLabel, getPaymentMethodLabel } from '../../config/constants';
 
 interface OrderItemDetail {
   id: number;
@@ -64,40 +65,6 @@ interface OrderDetail {
   statusHistory?: OrderStatusHistory[];
 }
 
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<string, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-info',
-  NARX_TASDIQLANDI: 'badge-accent',
-  ZAKLAD_QABUL_QILINDI: 'badge-primary',
-  ISHLAB_CHIQARISHDA: 'badge-secondary',
-  TAYYOR: 'badge-success',
-  ORNATISHGA_TAYINLANDI: 'badge-warning',
-  ORNATISH_JARAYONIDA: 'badge-secondary',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-ghost',
-};
-
 const TIMELINE_PHASES = [
   { key: 'yangi', label: 'Yangi', statuses: ['YANGI'] },
   { key: 'olchov', label: "O'lchov", statuses: ['OLCHOV_KUTILMOQDA', 'OLCHOV_BAJARILDI'] },
@@ -125,18 +92,6 @@ const ALL_STATUSES_ORDER = [
   'YAKUNLANDI',
   'QARZGA_OTKAZILDI',
 ];
-
-const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  DEPOSIT: 'Zaklad',
-  FINAL_PAYMENT: "Yakuniy to'lov",
-  PARTIAL_PAYMENT: "Qisman to'lov",
-};
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: 'Naqd',
-  CARD: 'Karta',
-  TRANSFER: "O'tkazma",
-};
 
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat('uz-UZ').format(amount);
@@ -224,8 +179,8 @@ export default function OrderDetailPage() {
           <h1 className="text-lg font-bold truncate">{order.orderNumber}</h1>
           <p className="text-xs opacity-80">{formatDate(order.createdAt)}</p>
         </div>
-        <span className={`badge badge-sm ${ORDER_STATUS_COLORS[order.status] || 'badge-ghost'}`}>
-          {ORDER_STATUS_LABELS[order.status] || order.statusDisplayName}
+        <span className={`badge badge-sm ${getOrderStatusColor(order.status)}`}>
+          {getOrderStatusLabel(order.status)}
         </span>
       </div>
 
@@ -414,10 +369,10 @@ export default function OrderDetailPage() {
                   >
                     <div>
                       <p className="font-medium text-sm">
-                        {PAYMENT_TYPE_LABELS[payment.paymentType] || payment.paymentType}
+                        {getOrderPaymentTypeLabel(payment.paymentType)}
                       </p>
                       <p className="text-xs text-base-content/60">
-                        {PAYMENT_METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}
+                        {getPaymentMethodLabel(payment.paymentMethod)}
                       </p>
                       <p className="text-xs text-base-content/50">
                         {formatDateTime(payment.createdAt)}
@@ -471,11 +426,9 @@ export default function OrderDetailPage() {
                     <div className="pb-4 flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span
-                          className={`badge badge-xs ${
-                            ORDER_STATUS_COLORS[entry.toStatus] || 'badge-ghost'
-                          }`}
+                          className={`badge badge-xs ${getOrderStatusColor(entry.toStatus)}`}
                         >
-                          {ORDER_STATUS_LABELS[entry.toStatus] || entry.toStatusDisplayName}
+                          {getOrderStatusLabel(entry.toStatus)}
                         </span>
                       </div>
                       <p className="text-xs text-base-content/50 mt-0.5">

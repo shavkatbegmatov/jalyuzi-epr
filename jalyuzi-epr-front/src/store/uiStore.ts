@@ -5,9 +5,12 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 
 interface UIState {
   sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
   themeMode: ThemeMode;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebarCollapsed: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   setThemeMode: (mode: ThemeMode) => void;
   getEffectiveTheme: () => 'jalyuzi' | 'jalyuzi-dark';
 }
@@ -23,12 +26,18 @@ export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
       sidebarOpen: true,
+      sidebarCollapsed: false,
       themeMode: 'system',
 
       toggleSidebar: () =>
         set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
+      toggleSidebarCollapsed: () =>
+        set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
 
       setThemeMode: (mode) => {
         set({ themeMode: mode });
@@ -50,6 +59,7 @@ export const useUIStore = create<UIState>()(
       name: 'ui-storage',
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,
+        sidebarCollapsed: state.sidebarCollapsed,
         themeMode: state.themeMode,
       }),
     }

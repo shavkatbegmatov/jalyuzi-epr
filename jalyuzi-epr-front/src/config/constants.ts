@@ -1,3 +1,5 @@
+import type { OrderStatus, OrderPaymentType } from '../types';
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // ==================== TIMEZONE CONFIGURATION ====================
@@ -117,6 +119,48 @@ export const INSTALLATION_STATUSES = {
   CANCELLED: { label: 'Bekor qilindi', value: 'CANCELLED', color: 'badge-error' },
 } as const;
 
+// ==================== BUYURTMA STATUSLARI (MARKAZIY MANBA) ====================
+// Bu yagona manba — barcha sahifalar shu yerdan label va rang oladi.
+// Ilgari bu map 9 ta faylda takrorlangan va ranglar nomuvofiq edi.
+// Tartib backend OrderStatus.order maydoniga mos (buyurtma jarayoni bosqichlari).
+export const ORDER_STATUSES: Record<OrderStatus, { label: string; color: string }> = {
+  YANGI: { label: 'Yangi', color: 'badge-info' },
+  OLCHOV_KUTILMOQDA: { label: "O'lchov kutilmoqda", color: 'badge-warning' },
+  OLCHOV_BAJARILDI: { label: "O'lchov bajarildi", color: 'badge-info' },
+  NARX_TASDIQLANDI: { label: 'Narx tasdiqlandi', color: 'badge-accent' },
+  ZAKLAD_QABUL_QILINDI: { label: 'Zaklad qabul qilindi', color: 'badge-primary' },
+  ISHLAB_CHIQARISHDA: { label: 'Ishlab chiqarishda', color: 'badge-secondary' },
+  TAYYOR: { label: 'Tayyor', color: 'badge-accent' },
+  ORNATISHGA_TAYINLANDI: { label: "O'rnatishga tayinlandi", color: 'badge-info' },
+  ORNATISH_JARAYONIDA: { label: "O'rnatish jarayonida", color: 'badge-warning' },
+  ORNATISH_BAJARILDI: { label: "O'rnatish bajarildi", color: 'badge-success' },
+  TOLOV_KUTILMOQDA: { label: "To'lov kutilmoqda", color: 'badge-warning' },
+  YAKUNLANDI: { label: 'Yakunlandi', color: 'badge-success' },
+  QARZGA_OTKAZILDI: { label: "Qarzga o'tkazildi", color: 'badge-error' },
+  BEKOR_QILINDI: { label: 'Bekor qilindi', color: 'badge-ghost' },
+};
+
+// Buyurtma statuslari ro'yxati (jarayon tartibida) — filtr tugmalari uchun
+export const ORDER_STATUS_LIST = Object.keys(ORDER_STATUSES) as OrderStatus[];
+
+// Statusning o'zbekcha nomini qaytaradi (noma'lum status kelsa — xom qiymat)
+export const getOrderStatusLabel = (status: string): string =>
+  ORDER_STATUSES[status as OrderStatus]?.label ?? status;
+
+// Statusning DaisyUI badge rangini qaytaradi
+export const getOrderStatusColor = (status: string): string =>
+  ORDER_STATUSES[status as OrderStatus]?.color ?? 'badge-ghost';
+
+// Buyurtma to'lov turlari
+export const ORDER_PAYMENT_TYPES: Record<OrderPaymentType, string> = {
+  DEPOSIT: 'Zaklad',
+  FINAL_PAYMENT: "Yakuniy to'lov",
+  PARTIAL_PAYMENT: "Qisman to'lov",
+};
+
+export const getOrderPaymentTypeLabel = (type: string): string =>
+  ORDER_PAYMENT_TYPES[type as OrderPaymentType] ?? type;
+
 // Universal mahsulot turlari
 export const PRODUCT_TYPES = {
   FINISHED_PRODUCT: { label: 'Tayyor jalyuzi', value: 'FINISHED_PRODUCT' },
@@ -146,6 +190,10 @@ export const PAYMENT_METHODS = {
   TRANSFER: { label: "O'tkazma", value: 'TRANSFER' },
   MIXED: { label: 'Aralash', value: 'MIXED' },
 } as const;
+
+// To'lov usulining o'zbekcha nomini qaytaradi (noma'lum kelsa — xom qiymat)
+export const getPaymentMethodLabel = (method: string): string =>
+  PAYMENT_METHODS[method as keyof typeof PAYMENT_METHODS]?.label ?? method;
 
 export const PAYMENT_STATUSES = {
   PAID: { label: "To'langan", value: 'PAID' },

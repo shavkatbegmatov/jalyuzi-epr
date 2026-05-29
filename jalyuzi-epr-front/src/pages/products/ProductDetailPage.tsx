@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi } from '../../api/products.api';
+import { ProductImageManager } from '../../components/products/ProductImageManager';
 import { formatCurrency, BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES } from '../../config/constants';
 import type { Product } from '../../types';
 
@@ -319,6 +320,13 @@ export function ProductDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Mahsulot rasmlari galereyasi */}
+      <ProductImageManager
+        productId={product.id}
+        initialImages={product.imageUrls ?? []}
+        initialCover={product.imageUrl}
+      />
 
       {/* Description */}
       {product.description && (

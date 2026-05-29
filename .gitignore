@@ -8,6 +8,9 @@
 # Maven
 jalyuzi-epr-api/target/
 
+# User uploaded files (photos, signatures) — must NEVER be committed
+jalyuzi-epr-api/uploads/
+
 # Node
 jalyuzi-epr-front/node_modules/
 jalyuzi-epr-front/dist/

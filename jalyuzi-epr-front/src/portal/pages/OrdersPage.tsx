@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { ClipboardList, ChevronRight } from 'lucide-react';
 import portalApi from '../api/portalAxios';
+import { getOrderStatusLabel, getOrderStatusColor } from '../../config/constants';
 
 interface OutletContextType {
   newNotificationTrigger: number;
@@ -29,40 +30,6 @@ interface PagedResponse {
   last: boolean;
   first: boolean;
 }
-
-const ORDER_STATUS_LABELS: Record<string, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<string, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-info',
-  NARX_TASDIQLANDI: 'badge-accent',
-  ZAKLAD_QABUL_QILINDI: 'badge-primary',
-  ISHLAB_CHIQARISHDA: 'badge-secondary',
-  TAYYOR: 'badge-success',
-  ORNATISHGA_TAYINLANDI: 'badge-warning',
-  ORNATISH_JARAYONIDA: 'badge-secondary',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-ghost',
-};
 
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat('uz-UZ').format(amount);
@@ -126,11 +93,11 @@ export default function OrdersPage() {
   };
 
   const getStatusLabel = (status: string): string => {
-    return ORDER_STATUS_LABELS[status] || status;
+    return getOrderStatusLabel(status);
   };
 
   const getStatusColor = (status: string): string => {
-    return ORDER_STATUS_COLORS[status] || 'badge-ghost';
+    return getOrderStatusColor(status);
   };
 
   if (loading) {

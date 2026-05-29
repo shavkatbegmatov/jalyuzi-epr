@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import uz.jalyuziepr.api.dto.request.ProductRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
@@ -29,6 +30,7 @@ import uz.jalyuziepr.api.enums.ProductType;
 import java.math.BigDecimal;
 import uz.jalyuziepr.api.security.RequiresPermission;
 import uz.jalyuziepr.api.service.ProductService;
+import uz.jalyuziepr.api.service.ProductImageService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
 
 import java.io.ByteArrayOutputStream;
@@ -42,6 +44,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductImageService productImageService;
     private final GenericExportService genericExportService;
 
     @GetMapping
@@ -177,5 +180,41 @@ public class ProductController {
         } catch (Exception e) {
             throw new RuntimeException("Eksport qilishda xatolik: " + e.getMessage(), e);
         }
+    }
+
+    // ==================== MAHSULOT RASMLARI (GALEREYA) ====================
+
+    @GetMapping("/{id}/images")
+    @Operation(summary = "Mahsulot rasmlari ro'yxati")
+    @RequiresPermission(PermissionCode.PRODUCTS_VIEW)
+    public ResponseEntity<ApiResponse<List<String>>> getImages(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(productImageService.getImages(id)));
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = "multipart/form-data")
+    @Operation(summary = "Mahsulotga rasm yuklash")
+    @RequiresPermission(PermissionCode.PRODUCTS_UPDATE)
+    public ResponseEntity<ApiResponse<List<String>>> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(ApiResponse.success(productImageService.uploadImage(id, file)));
+    }
+
+    @DeleteMapping("/{id}/images")
+    @Operation(summary = "Mahsulot rasmini o'chirish (URL'i bilan)")
+    @RequiresPermission(PermissionCode.PRODUCTS_UPDATE)
+    public ResponseEntity<ApiResponse<List<String>>> deleteImage(
+            @PathVariable Long id,
+            @RequestParam("url") String url) {
+        return ResponseEntity.ok(ApiResponse.success(productImageService.deleteImage(id, url)));
+    }
+
+    @PutMapping("/{id}/images/cover")
+    @Operation(summary = "Asosiy (muqova) rasmni tanlash")
+    @RequiresPermission(PermissionCode.PRODUCTS_UPDATE)
+    public ResponseEntity<ApiResponse<List<String>>> setCoverImage(
+            @PathVariable Long id,
+            @RequestParam("url") String url) {
+        return ResponseEntity.ok(ApiResponse.success(productImageService.setCover(id, url)));
     }
 }

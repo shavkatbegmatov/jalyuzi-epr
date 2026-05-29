@@ -13,48 +13,8 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
-import { formatCurrency } from '../../config/constants';
-import type { Order, OrderPaymentType, OrderStatus } from '../../types';
-
-const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  YANGI: 'Yangi',
-  OLCHOV_KUTILMOQDA: "O'lchov kutilmoqda",
-  OLCHOV_BAJARILDI: "O'lchov bajarildi",
-  NARX_TASDIQLANDI: 'Narx tasdiqlandi',
-  ZAKLAD_QABUL_QILINDI: 'Zaklad qabul qilindi',
-  ISHLAB_CHIQARISHDA: 'Ishlab chiqarishda',
-  TAYYOR: 'Tayyor',
-  ORNATISHGA_TAYINLANDI: "O'rnatishga tayinlandi",
-  ORNATISH_JARAYONIDA: "O'rnatish jarayonida",
-  ORNATISH_BAJARILDI: "O'rnatish bajarildi",
-  TOLOV_KUTILMOQDA: "To'lov kutilmoqda",
-  YAKUNLANDI: 'Yakunlandi',
-  QARZGA_OTKAZILDI: "Qarzga o'tkazildi",
-  BEKOR_QILINDI: 'Bekor qilindi',
-};
-
-const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-accent',
-  NARX_TASDIQLANDI: 'badge-primary',
-  ZAKLAD_QABUL_QILINDI: 'badge-success',
-  ISHLAB_CHIQARISHDA: 'badge-warning',
-  TAYYOR: 'badge-accent',
-  ORNATISHGA_TAYINLANDI: 'badge-info',
-  ORNATISH_JARAYONIDA: 'badge-warning',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-ghost',
-};
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-  CASH: 'Naqd',
-  CARD: 'Karta',
-  TRANSFER: "O'tkazma",
-};
+import { formatCurrency, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
+import type { Order, OrderPaymentType } from '../../types';
 
 export function InstallerOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -197,8 +157,8 @@ export function InstallerOrderDetailPage() {
         <div className="flex-1">
           <h2 className="font-mono text-lg font-bold">{order.orderNumber}</h2>
         </div>
-        <span className={`badge ${ORDER_STATUS_COLORS[order.status]}`}>
-          {ORDER_STATUS_LABELS[order.status]}
+        <span className={`badge ${getOrderStatusColor(order.status)}`}>
+          {getOrderStatusLabel(order.status)}
         </span>
       </div>
 
@@ -332,7 +292,7 @@ export function InstallerOrderDetailPage() {
                     <div className="flex items-center gap-2">
                       <Clock className="h-3 w-3 text-base-content/40" />
                       <span className="text-base-content/70">
-                        {PAYMENT_METHOD_LABELS[payment.paymentMethod] || payment.paymentMethod}
+                        {getPaymentMethodLabel(payment.paymentMethod)}
                       </span>
                       {payment.isConfirmed && (
                         <CheckCircle className="h-3 w-3 text-success" />
@@ -452,7 +412,7 @@ export function InstallerOrderDetailPage() {
                       }`}
                       onClick={() => setPaymentMethod(method)}
                     >
-                      {PAYMENT_METHOD_LABELS[method]}
+                      {getPaymentMethodLabel(method)}
                     </button>
                   ))}
                 </div>

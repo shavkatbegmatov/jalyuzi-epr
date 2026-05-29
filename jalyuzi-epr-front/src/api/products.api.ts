@@ -84,6 +84,39 @@ export const productsApi = {
     return response.data.data;
   },
 
+  // ==================== Mahsulot rasmlari (galereya) ====================
+  getImages: async (id: number): Promise<string[]> => {
+    const response = await api.get<ApiResponse<string[]>>(`/v1/products/${id}/images`);
+    return response.data.data;
+  },
+
+  uploadImage: async (id: number, file: File): Promise<string[]> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<ApiResponse<string[]>>(
+      `/v1/products/${id}/images`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data.data;
+  },
+
+  deleteImage: async (id: number, url: string): Promise<string[]> => {
+    const response = await api.delete<ApiResponse<string[]>>(`/v1/products/${id}/images`, {
+      params: { url },
+    });
+    return response.data.data;
+  },
+
+  setCoverImage: async (id: number, url: string): Promise<string[]> => {
+    const response = await api.put<ApiResponse<string[]>>(
+      `/v1/products/${id}/images/cover`,
+      null,
+      { params: { url } }
+    );
+    return response.data.data;
+  },
+
   // Export functionality
   export: createExportApi('/v1/products'),
 };

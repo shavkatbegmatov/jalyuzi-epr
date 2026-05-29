@@ -16,30 +16,12 @@ import {
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { installersApi } from '../../api/installers.api';
-import { formatCurrency, formatDate } from '../../config/constants';
+import { formatCurrency, formatDate, getOrderStatusColor } from '../../config/constants';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ModalPortal } from '../../components/common/Modal';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { usePermission, PermissionCode } from '../../hooks/usePermission';
 import type { InstallerDetail, InstallerUpdateRequest, Order } from '../../types';
-
-// Order status color mapping
-const ORDER_STATUS_COLORS: Record<string, string> = {
-  YANGI: 'badge-info',
-  OLCHOV_KUTILMOQDA: 'badge-warning',
-  OLCHOV_BAJARILDI: 'badge-info',
-  NARX_TASDIQLANDI: 'badge-info',
-  ZAKLAD_QABUL_QILINDI: 'badge-success',
-  ISHLAB_CHIQARISHDA: 'badge-warning',
-  TAYYOR: 'badge-success',
-  ORNATISHGA_TAYINLANDI: 'badge-primary',
-  ORNATISH_JARAYONIDA: 'badge-warning',
-  ORNATISH_BAJARILDI: 'badge-success',
-  TOLOV_KUTILMOQDA: 'badge-warning',
-  YAKUNLANDI: 'badge-success',
-  QARZGA_OTKAZILDI: 'badge-error',
-  BEKOR_QILINDI: 'badge-error',
-};
 
 export function InstallerDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -178,7 +160,7 @@ export function InstallerDetailPage() {
         <span
           className={clsx(
             'badge badge-sm',
-            ORDER_STATUS_COLORS[order.status] || 'badge-ghost'
+            getOrderStatusColor(order.status)
           )}
         >
           {order.statusDisplayName}

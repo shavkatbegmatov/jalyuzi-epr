@@ -140,8 +140,16 @@ public class Product extends BaseEntity implements Auditable {
     @Column(length = 1000)
     private String description;
 
+    // Asosiy (muqova) rasm — katalog kartochkasida ko'rsatiladi
     @Column(name = "image_url")
     private String imageUrl;
+
+    // Mahsulot rasmlari galereyasi (JSONB) — bir nechta rasm.
+    // imageUrl bo'sh bo'lsa, birinchi yuklangan rasm muqova sifatida ishlatiladi.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "image_urls", columnDefinition = "jsonb")
+    @Builder.Default
+    private java.util.List<String> imageUrls = new java.util.ArrayList<>();
 
     @Column(nullable = false)
     @Builder.Default
