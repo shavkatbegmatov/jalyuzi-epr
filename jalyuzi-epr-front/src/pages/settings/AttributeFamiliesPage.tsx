@@ -9,9 +9,10 @@ import { PermissionGate } from '../../components/common/PermissionGate';
 import { PermissionCode, usePermission } from '../../hooks/usePermission';
 import { FamilyTreeView } from '../../components/products/attribute-families/FamilyTreeView';
 import { FamilyNodeEditorPanel } from '../../components/products/attribute-families/FamilyNodeEditorPanel';
+import { AttributeOverrideModal } from '../../components/products/attribute-families/AttributeOverrideModal';
 import type {
   AttributeFamily, AttributeFamilyRequest, AttributeDefinition,
-  EffectiveSchema, ProductTypeEntity,
+  EffectiveSchema, ProductTypeEntity, ResolvedAttributeDefinition,
 } from '../../types';
 
 const COLOR_OPTIONS = ['primary', 'secondary', 'accent', 'info', 'success', 'warning', 'error', 'neutral'];
@@ -49,6 +50,9 @@ export function AttributeFamiliesPage() {
   const [nodeForm, setNodeForm] = useState<AttributeFamilyRequest>(emptyNode);
   const [nodeSaving, setNodeSaving] = useState(false);
   const [deletingNode, setDeletingNode] = useState<AttributeFamily | null>(null);
+
+  // Override modal
+  const [overrideAttr, setOverrideAttr] = useState<ResolvedAttributeDefinition | null>(null);
 
   const flat = useMemo(() => flatten(tree), [tree]);
 
@@ -186,6 +190,28 @@ export function AttributeFamiliesPage() {
     } catch (e) { handleApiError(e, "O'chirishda xatolik"); } finally { setBusy(false); }
   };
 
+  // ---- Override (property-level) ----
+  const saveOverride = async (changedProps: Record<string, unknown>) => {
+    if (!selectedId || !overrideAttr) return;
+    setBusy(true);
+    try {
+      await attributeFamiliesApi.setOverride(selectedId, overrideAttr.key, changedProps);
+      toast.success('Override saqlandi');
+      setOverrideAttr(null);
+      await refreshAfterMutation();
+    } catch (e) { handleApiError(e, 'Saqlashda xatolik'); } finally { setBusy(false); }
+  };
+  const clearOverride = async () => {
+    if (!selectedId || !overrideAttr) return;
+    setBusy(true);
+    try {
+      await attributeFamiliesApi.clearOverride(selectedId, overrideAttr.key);
+      toast.success('Merosga qaytarildi');
+      setOverrideAttr(null);
+      await refreshAfterMutation();
+    } catch (e) { handleApiError(e, "O'chirishda xatolik"); } finally { setBusy(false); }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -239,6 +265,7 @@ export function AttributeFamiliesPage() {
                 onAddAttribute={addAttribute}
                 onUpdateAttribute={updateAttribute}
                 onRemoveAttribute={removeAttribute}
+                onOverrideInherited={setOverrideAttr}
               />
             </div>
           )}
@@ -337,6 +364,17 @@ export function AttributeFamiliesPage() {
           </div>
         </div>
       </ModalPortal>
+
+      {/* Override modal */}
+      <AttributeOverrideModal
+        open={!!overrideAttr}
+        attr={overrideAttr}
+        existing={detail?.overrides?.find((o) => o.key === overrideAttr?.key)?.changedProps}
+        saving={busy}
+        onClose={() => setOverrideAttr(null)}
+        onSave={saveOverride}
+        onClear={clearOverride}
+      />
     </div>
   );
 }
