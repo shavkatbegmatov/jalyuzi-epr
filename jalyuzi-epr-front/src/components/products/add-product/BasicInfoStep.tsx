@@ -4,7 +4,7 @@ import { Select } from '../../ui/Select';
 import { NumberInput } from '../../ui/NumberInput';
 import { DynamicProductForm } from '../DynamicProductForm';
 import { BLIND_TYPES, BLIND_MATERIALS, CONTROL_TYPES, UNIT_TYPES } from '../../../config/constants';
-import type { ProductTypeEntity, Brand, Category, BlindType, BlindMaterial, ControlType, UnitType, ProductType } from '../../../types';
+import type { ProductTypeEntity, Brand, Category, BlindType, BlindMaterial, ControlType, UnitType, ProductType, EffectiveSchema } from '../../../types';
 import type { WizardState } from '../../../hooks/useAddProductWizard';
 
 interface BasicInfoStepProps {
@@ -12,6 +12,8 @@ interface BasicInfoStepProps {
   productTypeCode: ProductType | null;
   basicInfo: WizardState['basicInfo'];
   customAttributes: Record<string, unknown>;
+  /** V40: effektiv (kaskad) sxema — berilsa, qo'shimcha xususiyatlar shundan quriladi */
+  effectiveSchema?: EffectiveSchema | null;
   brands: Brand[];
   categories: Category[];
   errors: Record<string, string>;
@@ -29,6 +31,7 @@ export function BasicInfoStep({
   productTypeCode,
   basicInfo,
   customAttributes,
+  effectiveSchema,
   brands,
   categories,
   errors,
@@ -333,14 +336,14 @@ export function BasicInfoStep({
         </div>
       )}
 
-      {/* Section: Custom attributes from schema */}
-      {productType?.attributeSchema?.attributes && productType.attributeSchema.attributes.length > 0 && (
+      {/* Section: Custom attributes — effective (family) schema takes priority */}
+      {effectiveSchema && effectiveSchema.attributes.length > 0 ? (
         <div className="surface-soft rounded-xl p-4 sm:p-6 space-y-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
-            Qo'shimcha xususiyatlar ({productType.name})
+            Xususiyatlar <span className="normal-case tracking-normal text-base-content/40">(meros + maxsus)</span>
           </p>
           <DynamicProductForm
-            schema={productType.attributeSchema}
+            schema={{ groups: effectiveSchema.groups, attributes: effectiveSchema.attributes }}
             values={customAttributes}
             onChange={onUpdateCustomAttributes}
             disabled={disabled}
@@ -348,6 +351,22 @@ export function BasicInfoStep({
             columns={2}
           />
         </div>
+      ) : (
+        productType?.attributeSchema?.attributes && productType.attributeSchema.attributes.length > 0 && (
+          <div className="surface-soft rounded-xl p-4 sm:p-6 space-y-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+              Qo'shimcha xususiyatlar ({productType.name})
+            </p>
+            <DynamicProductForm
+              schema={productType.attributeSchema}
+              values={customAttributes}
+              onChange={onUpdateCustomAttributes}
+              disabled={disabled}
+              showGroupHeaders={true}
+              columns={2}
+            />
+          </div>
+        )
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, AlertTriangle } from 'lucide-react';
 import { productTypesApi } from '../../api/product-types.api';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
+import { attributeFamiliesApi } from '../../api/attribute-families.api';
 import { suppliersApi } from '../../api/suppliers.api';
 import { purchasesApi } from '../../api/purchases.api';
 import { useAddProductWizard } from '../../hooks/useAddProductWizard';
@@ -13,8 +14,10 @@ import {
   BasicInfoStep,
   PricingStep,
 } from '../../components/products/add-product';
+import { FamilyPickerStep } from '../../components/products/add-product/FamilyPickerStep';
 import { ModalPortal } from '../../components/common/Modal';
-import type { ProductTypeEntity, Brand, Category, Supplier } from '../../types';
+import { FEATURE_ATTRIBUTE_FAMILIES } from '../../config/constants';
+import type { ProductTypeEntity, Brand, Category, Supplier, AttributeFamily } from '../../types';
 
 export function AddProductPage() {
   const navigate = useNavigate();
@@ -25,6 +28,8 @@ export function AddProductPage() {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [familyTree, setFamilyTree] = useState<AttributeFamily[]>([]);
+  const [loadingTree, setLoadingTree] = useState(FEATURE_ATTRIBUTE_FAMILIES);
 
   // Loading states
   const [loadingProductTypes, setLoadingProductTypes] = useState(true);
@@ -53,6 +58,18 @@ export function AddProductPage() {
         setProductTypes(typesData);
         setBrands(brandsData);
         setCategories(categoriesData);
+
+        // V40: atribut oilasi daraxti (feature flag yoqilganda)
+        if (FEATURE_ATTRIBUTE_FAMILIES) {
+          try {
+            const treeData = await attributeFamiliesApi.getTree();
+            setFamilyTree(treeData);
+          } catch (e) {
+            console.error('Failed to load family tree:', e);
+          } finally {
+            setLoadingTree(false);
+          }
+        }
 
         // Check for draft
         if (wizard.hasDraft()) {
@@ -87,6 +104,18 @@ export function AddProductPage() {
       void loadSuppliers();
     }
   }, [wizard.state.currentStep, suppliers.length]);
+
+  // V40: tanlangan barg uchun effektiv sxemani yuklash (qoralama tiklanganda ham)
+  useEffect(() => {
+    if (!FEATURE_ATTRIBUTE_FAMILIES) return;
+    const fid = wizard.state.selectedFamilyId;
+    if (fid && !wizard.state.effectiveSchema) {
+      attributeFamiliesApi.getEffectiveSchema(fid)
+        .then(wizard.setEffectiveSchema)
+        .catch((e) => console.error('Failed to load effective schema:', e));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wizard.state.selectedFamilyId, wizard.state.effectiveSchema]);
 
   // Handle draft modal
   const handleRestoreDraft = () => {
@@ -241,15 +270,26 @@ export function AddProductPage() {
               </div>
             )}
 
-            {/* Step 1: Product Type Selection */}
+            {/* Step 1: Family leaf (V40) yoki ProductType (legacy) tanlash */}
             {wizard.state.currentStep === 1 && (
-              <ProductTypeStep
-                productTypes={productTypes}
-                selectedProductTypeId={wizard.state.selectedProductTypeId}
-                onSelect={wizard.selectProductType}
-                loading={loadingProductTypes}
-                error={loadError || undefined}
-              />
+              FEATURE_ATTRIBUTE_FAMILIES ? (
+                <FamilyPickerStep
+                  tree={familyTree}
+                  selectedFamilyId={wizard.state.selectedFamilyId}
+                  selectedFamily={wizard.state.selectedFamily}
+                  onSelect={wizard.selectFamily}
+                  loading={loadingTree}
+                  error={loadError || undefined}
+                />
+              ) : (
+                <ProductTypeStep
+                  productTypes={productTypes}
+                  selectedProductTypeId={wizard.state.selectedProductTypeId}
+                  onSelect={wizard.selectProductType}
+                  loading={loadingProductTypes}
+                  error={loadError || undefined}
+                />
+              )
             )}
 
             {/* Step 2: Basic Info */}
@@ -259,6 +299,7 @@ export function AddProductPage() {
                 productTypeCode={wizard.getProductTypeCode()}
                 basicInfo={wizard.state.basicInfo}
                 customAttributes={wizard.state.customAttributes}
+                effectiveSchema={wizard.state.effectiveSchema}
                 brands={brands}
                 categories={categories}
                 errors={wizard.state.errors}

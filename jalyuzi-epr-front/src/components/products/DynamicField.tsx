@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { NumberInput } from '../ui/NumberInput';
 import { CurrencyInput } from '../ui/CurrencyInput';
 import { Select } from '../ui/Select';
-import type { AttributeDefinition } from '../../types';
+import type { AttributeDefinition, ResolvedAttributeDefinition } from '../../types';
 
 interface DynamicFieldProps {
   attribute: AttributeDefinition;
@@ -26,11 +26,20 @@ export function DynamicField({
   const { label, dataType, required, placeholder, helpText, unit, options, validation } =
     attribute;
 
+  // Provenance badge (only present when fed an effective/resolved schema)
+  const origin = (attribute as Partial<ResolvedAttributeDefinition>).origin;
+
   // Label with required indicator
   const labelElement = (
     <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
       {label} {required && <span className="text-error">*</span>}
       {unit && <span className="ml-1 normal-case tracking-normal">({unit})</span>}
+      {origin === 'INHERITED' && (
+        <span className="badge badge-ghost badge-xs ml-1.5 normal-case tracking-normal" title="Bazaviy (meros) xususiyat">bazaviy</span>
+      )}
+      {origin === 'OVERRIDDEN' && (
+        <span className="badge badge-info badge-xs ml-1.5 normal-case tracking-normal" title="Meros olingan, ammo o'zgartirilgan">maxsus</span>
+      )}
     </span>
   );
 

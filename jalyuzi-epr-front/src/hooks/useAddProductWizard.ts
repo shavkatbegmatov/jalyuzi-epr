@@ -1,13 +1,19 @@
 import { useState, useCallback, useEffect } from 'react';
-import type { ProductTypeEntity, Supplier, ProductType, UnitType, BlindType, BlindMaterial, ControlType } from '../types';
+import type {
+  ProductTypeEntity, Supplier, ProductType, UnitType, BlindType, BlindMaterial, ControlType,
+  AttributeFamily, EffectiveSchema,
+} from '../types';
 
 // Wizard state interface
 export interface WizardState {
   currentStep: 1 | 2 | 3;
 
-  // Step 1
+  // Step 1 — ProductType (legacy) yoki AttributeFamily (V40)
   selectedProductTypeId: number | null;
   selectedProductType: ProductTypeEntity | null;
+  selectedFamilyId: number | null;
+  selectedFamily: AttributeFamily | null;
+  effectiveSchema: EffectiveSchema | null;
 
   // Step 2
   basicInfo: {
@@ -62,6 +68,9 @@ const initialState: WizardState = {
   currentStep: 1,
   selectedProductTypeId: null,
   selectedProductType: null,
+  selectedFamilyId: null,
+  selectedFamily: null,
+  effectiveSchema: null,
   basicInfo: {
     sku: '',
     name: '',
@@ -97,11 +106,13 @@ const loadDraft = (): WizardState | null => {
   return null;
 };
 
-// Save draft to localStorage
+// Save draft to localStorage. effectiveSchema is NOT persisted (it can become
+// stale) — it is re-fetched on restore from selectedFamilyId.
 const saveDraft = (state: WizardState) => {
   try {
+    const toSave: WizardState = { ...state, effectiveSchema: null };
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      state,
+      state: toSave,
       savedAt: Date.now(),
     }));
   } catch (e) {
@@ -165,6 +176,22 @@ export function useAddProductWizard() {
     }));
   }, []);
 
+  // Step 1 (V40): AttributeFamily leaf selection
+  const selectFamily = useCallback((family: AttributeFamily) => {
+    setState(prev => ({
+      ...prev,
+      selectedFamilyId: family.id,
+      selectedFamily: family,
+      effectiveSchema: null,
+      customAttributes: {},
+      errors: {},
+    }));
+  }, []);
+
+  const setEffectiveSchema = useCallback((schema: EffectiveSchema | null) => {
+    setState(prev => ({ ...prev, effectiveSchema: schema }));
+  }, []);
+
   // Step 2: Basic info updates
   const updateBasicInfo = useCallback(<K extends keyof WizardState['basicInfo']>(
     field: K,
@@ -220,8 +247,8 @@ export function useAddProductWizard() {
 
   // Validation
   const validateStep1 = useCallback((): boolean => {
-    return state.selectedProductTypeId !== null;
-  }, [state.selectedProductTypeId]);
+    return state.selectedProductTypeId !== null || state.selectedFamilyId !== null;
+  }, [state.selectedProductTypeId, state.selectedFamilyId]);
 
   const validateStep2 = useCallback((): { isValid: boolean; errors: Record<string, string> } => {
     const errors: Record<string, string> = {};
@@ -336,6 +363,7 @@ export function useAddProductWizard() {
       // Faqat standart enum qiymatlarni yuboramiz
       productType: isStandardType ? productTypeCode : undefined,
       productTypeId: state.selectedProductTypeId || undefined,
+      attributeFamilyId: state.selectedFamilyId || undefined,
       unitType: state.basicInfo.unitType,
       color: state.basicInfo.color,
       description: state.basicInfo.description,
@@ -389,6 +417,8 @@ export function useAddProductWizard() {
     prevStep,
     // Step 1
     selectProductType,
+    selectFamily,
+    setEffectiveSchema,
     validateStep1,
     // Step 2
     updateBasicInfo,

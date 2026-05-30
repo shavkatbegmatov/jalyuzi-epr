@@ -229,6 +229,7 @@ export interface ProductRequest {
   unitType?: UnitType;
   // Yangi mahsulot turi tizimi (V24+)
   productTypeId?: number;
+  attributeFamilyId?: number;
   // Dinamik atributlar
   customAttributes?: Record<string, unknown>;
   // Jalyuzi xususiyatlari (FINISHED_PRODUCT uchun)
