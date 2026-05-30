@@ -208,9 +208,20 @@ export function AddProductPage() {
       });
     } catch (error) {
       console.error('Failed to save product:', error);
-      wizard.setErrors({
-        general: 'Mahsulotni saqlashda xatolik yuz berdi. Qaytadan urinib ko\'ring.',
-      });
+      const err = error as { response?: { data?: { message?: string; data?: Record<string, string> } } };
+      const fieldErrors = err?.response?.data?.data;
+      if (fieldErrors && typeof fieldErrors === 'object' && Object.keys(fieldErrors).length > 0) {
+        // Backend atribut validatsiyasi (key -> xabar) — formaga ko'rsatamiz
+        wizard.setErrors({
+          ...fieldErrors,
+          general: err.response?.data?.message || 'Xususiyatlar validatsiyadan o\'tmadi',
+        });
+        wizard.goToStep(2);
+      } else {
+        wizard.setErrors({
+          general: err?.response?.data?.message || 'Mahsulotni saqlashda xatolik yuz berdi. Qaytadan urinib ko\'ring.',
+        });
+      }
     } finally {
       setSaving(false);
     }

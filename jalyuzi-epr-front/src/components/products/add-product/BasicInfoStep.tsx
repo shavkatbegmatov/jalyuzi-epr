@@ -346,6 +346,7 @@ export function BasicInfoStep({
             schema={{ groups: effectiveSchema.groups, attributes: effectiveSchema.attributes }}
             values={customAttributes}
             onChange={onUpdateCustomAttributes}
+            errors={errors}
             disabled={disabled}
             showGroupHeaders={true}
             columns={2}
