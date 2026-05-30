@@ -20,6 +20,7 @@ import {
   FileText,
   Wrench,
   Layers,
+  Network,
   ClipboardList,
   HardHat,
   Factory,
@@ -89,6 +90,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { path: '/products', icon: Package, label: 'Mahsulotlar', permission: PermissionCode.PRODUCTS_VIEW },
       { path: '/product-types', icon: Layers, label: 'Mahsulot turlari', permission: PermissionCode.PRODUCT_TYPES_VIEW },
+      { path: '/attribute-families', icon: Network, label: 'Atribut oilasi', permission: PermissionCode.ATTRIBUTE_FAMILIES_VIEW },
       { path: '/warehouse', icon: Warehouse, label: 'Ombor', permission: PermissionCode.WAREHOUSE_VIEW },
       { path: '/suppliers', icon: TruckIcon, label: "Ta'minotchilar", permission: PermissionCode.SUPPLIERS_VIEW },
       { path: '/purchases', icon: ShoppingBag, label: 'Xaridlar', permission: PermissionCode.PURCHASES_VIEW },

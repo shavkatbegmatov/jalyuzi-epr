@@ -31,6 +31,7 @@ const PurchasesPage = lazy(() => import('../pages/purchases/PurchasesPage').then
 const PurchaseDetailPage = lazy(() => import('../pages/purchases/PurchaseDetailPage').then(m => ({ default: m.PurchaseDetailPage })));
 const SettingsPage = lazy(() => import('../pages/settings/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const ProductTypesPage = lazy(() => import('../pages/settings/ProductTypesPage').then(m => ({ default: m.ProductTypesPage })));
+const AttributeFamiliesPage = lazy(() => import('../pages/settings/AttributeFamiliesPage').then(m => ({ default: m.AttributeFamiliesPage })));
 const NotificationsPage = lazy(() => import('../pages/notifications/NotificationsPage').then(m => ({ default: m.NotificationsPage })));
 const ReportsPage = lazy(() => import('../pages/reports/ReportsPage').then(m => ({ default: m.ReportsPage })));
 const EmployeesPage = lazy(() => import('../pages/employees/EmployeesPage').then(m => ({ default: m.EmployeesPage })));
@@ -365,6 +366,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Mahsulot Turlari' },
+      },
+      {
+        path: 'attribute-families',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ATTRIBUTE_FAMILIES_VIEW}>
+            <LazyRoute>
+              <AttributeFamiliesPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Atribut oilasi' },
       },
       {
         path: 'employees',
