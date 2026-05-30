@@ -58,6 +58,11 @@ public class ProductResponse {
     private String productTypeCode;
     private String productTypeName;
 
+    // Ierarxik atribut oilasi (V40+)
+    private Long attributeFamilyId;
+    private String attributeFamilyCode;
+    private String attributeFamilyName;
+
     // Dinamik atributlar
     private Map<String, Object> customAttributes;
 
@@ -150,6 +155,9 @@ public class ProductResponse {
                 .productTypeId(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getId() : null)
                 .productTypeCode(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getCode() : null)
                 .productTypeName(product.getProductTypeEntity() != null ? product.getProductTypeEntity().getName() : null)
+                .attributeFamilyId(product.getAttributeFamily() != null ? product.getAttributeFamily().getId() : null)
+                .attributeFamilyCode(product.getAttributeFamily() != null ? product.getAttributeFamily().getCode() : null)
+                .attributeFamilyName(product.getAttributeFamily() != null ? product.getAttributeFamily().getName() : null)
                 .customAttributes(product.getCustomAttributes())
                 .blindType(product.getBlindType())
                 .material(product.getMaterial())

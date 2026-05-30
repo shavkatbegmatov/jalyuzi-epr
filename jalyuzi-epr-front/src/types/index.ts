@@ -358,6 +358,93 @@ export interface ProductTypeRequest {
   attributeSchema?: AttributeSchema;
 }
 
+// ========================================
+// Attribute Family Tree System (V40+)
+// Ierarxik atribut oilasi — CSS-uslubidagi kaskad meros
+// ========================================
+
+// Meros olingan atributga xossa-darajasidagi sparse override
+export interface AttributeOverride {
+  key: string;
+  // Faqat o'zgartirilgan xossalar (AttributeDefinition xossa nomlari bo'yicha)
+  changedProps: Record<string, unknown>;
+}
+
+// Bir resolved xossa qaysi tugundan kelganini bildiradi
+export interface PropertyProvenance {
+  sourceFamilyId: number;
+  sourceFamilyCode: string;
+  overridden: boolean;
+}
+
+// Ildizdan barggacha breadcrumb tuguni
+export interface FamilyPathNode {
+  id: number;
+  code: string;
+  name: string;
+}
+
+// AttributeFamily daraxt tuguni (backenddan)
+export interface AttributeFamily {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  parentId?: number | null;
+  parentName?: string;
+  productTypeId?: number | null;
+  productTypeCode?: string;
+  productTypeName?: string;
+  depth?: number;
+  isSystem?: boolean;
+  isActive?: boolean;
+  displayOrder?: number;
+  leaf?: boolean; // bola yo'q — mahsulot shu yerda yaratiladi
+  productCount?: number;
+  attributeSchema?: AttributeSchema; // shu tugun OWN deltasi
+  overrides?: AttributeOverride[];
+  children?: AttributeFamily[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Daraxt tuguni yaratish/yangilash uchun request DTO
+export interface AttributeFamilyRequest {
+  code: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  parentId?: number | null;
+  productTypeId?: number | null;
+  displayOrder?: number;
+  attributeSchema?: AttributeSchema;
+  overrides?: AttributeOverride[];
+}
+
+// Effective sxemadagi guruh (provenance bilan)
+export interface ResolvedAttributeGroup extends AttributeGroup {
+  ownerFamilyId?: number;
+  overridden?: boolean;
+}
+
+// Effective sxemadagi atribut (AttributeDefinition + provenance)
+export interface ResolvedAttributeDefinition extends AttributeDefinition {
+  ownerFamilyId?: number;
+  origin?: 'OWN' | 'INHERITED' | 'OVERRIDDEN';
+  propertyProvenance?: Record<string, PropertyProvenance>;
+}
+
+// Barg tugun uchun yakuniy hisoblangan (kaskad) sxema — server hisoblaydi
+export interface EffectiveSchema {
+  leafFamilyId: number;
+  groups: ResolvedAttributeGroup[];
+  attributes: ResolvedAttributeDefinition[];
+  resolutionPath: FamilyPathNode[];
+}
+
 // Customer Types
 export type CustomerType = 'INDIVIDUAL' | 'BUSINESS';
 

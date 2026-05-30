@@ -18,16 +18,21 @@ import uz.jalyuziepr.api.enums.BlindType;
 import uz.jalyuziepr.api.enums.ControlType;
 import uz.jalyuziepr.api.enums.ProductType;
 import uz.jalyuziepr.api.enums.UnitType;
+import uz.jalyuziepr.api.dto.schema.ResolvedAttributeSchema;
+import uz.jalyuziepr.api.entity.AttributeFamily;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
+import uz.jalyuziepr.api.repository.AttributeFamilyRepository;
 import uz.jalyuziepr.api.repository.BrandRepository;
 import uz.jalyuziepr.api.repository.CategoryRepository;
 import uz.jalyuziepr.api.repository.ProductRepository;
+import uz.jalyuziepr.api.repository.ProductTypeRepository;
 import uz.jalyuziepr.api.repository.UserRepository;
 import uz.jalyuziepr.api.security.CustomUserDetails;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +44,10 @@ public class ProductService {
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ProductTypeRepository productTypeRepository;
+    private final AttributeFamilyRepository attributeFamilyRepository;
+    private final AttributeSchemaResolver schemaResolver;
+    private final AttributeValueValidator attributeValueValidator;
 
     public Page<ProductResponse> getAllProducts(Pageable pageable) {
         return productRepository.findByActiveTrue(pageable)
@@ -251,6 +260,62 @@ public class ProductService {
         } else {
             product.setCategory(null);
         }
+
+        // Dinamik atributlar (JSONB) — har doim saqlanadi
+        product.setCustomAttributes(request.getCustomAttributes() != null
+                ? request.getCustomAttributes() : new HashMap<>());
+
+        // Eski mahsulot turi entity bog'lanishi (V24 tizimi)
+        if (request.getProductTypeId() != null) {
+            uz.jalyuziepr.api.entity.ProductType pt = productTypeRepository.findById(request.getProductTypeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Mahsulot turi", "id", request.getProductTypeId()));
+            product.setProductTypeEntity(pt);
+        }
+
+        // Ierarxik atribut oilasi (V40) — leaf tekshiruvi + effective validatsiya + back-compat
+        applyAttributeFamily(request, product);
+    }
+
+    /**
+     * Resolve the chosen attribute family, enforce leaf-only, validate custom
+     * attribute values against the effective (cascade) schema, and bridge the
+     * legacy product_type_id from the nearest ancestor that maps to a ProductType.
+     */
+    private void applyAttributeFamily(ProductRequest request, Product product) {
+        if (request.getAttributeFamilyId() == null) {
+            return; // legacy path (ProductType-only) — unchanged behaviour
+        }
+        AttributeFamily family = attributeFamilyRepository.findById(request.getAttributeFamilyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Atribut oilasi", "id", request.getAttributeFamilyId()));
+        if (Boolean.FALSE.equals(family.getIsActive())) {
+            throw new BadRequestException("Tanlangan atribut oilasi faol emas");
+        }
+        if (!attributeFamilyRepository.isLeaf(family.getId())) {
+            throw new BadRequestException("Mahsulot faqat daraxtning eng quyi (barg) tugunida yaratiladi. Iltimos aniqroq turni tanlang.");
+        }
+
+        ResolvedAttributeSchema effective = schemaResolver.resolveEffective(family);
+        attributeValueValidator.validate(effective, request.getCustomAttributes());
+
+        product.setAttributeFamily(family);
+
+        // Back-compat: product_type_id ni eng yaqin bog'langan ajdoddan to'ldiramiz
+        uz.jalyuziepr.api.entity.ProductType bridged = resolveFamilyProductType(family);
+        if (bridged != null) {
+            product.setProductTypeEntity(bridged);
+        }
+    }
+
+    private uz.jalyuziepr.api.entity.ProductType resolveFamilyProductType(AttributeFamily family) {
+        AttributeFamily cur = family;
+        int guard = 0;
+        while (cur != null && guard++ < 32) {
+            if (cur.getProductType() != null) {
+                return cur.getProductType();
+            }
+            cur = cur.getParent();
+        }
+        return null;
     }
 
     private User getCurrentUser() {

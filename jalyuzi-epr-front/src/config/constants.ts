@@ -2,6 +2,11 @@ import type { OrderStatus, OrderPaymentType } from '../types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Feature flag — ierarxik atribut oilasi (AttributeFamily) tizimi (V40+).
+// Default o'chiq: yoqilmaguncha hozirgi ProductType-asosli oqim o'zgarmaydi.
+export const FEATURE_ATTRIBUTE_FAMILIES =
+  import.meta.env.VITE_FEATURE_ATTRIBUTE_FAMILIES === 'true';
+
 // ==================== TIMEZONE CONFIGURATION ====================
 // Loyiha standarti: Asia/Tashkent (UTC+5)
 export const TIMEZONE = 'Asia/Tashkent';

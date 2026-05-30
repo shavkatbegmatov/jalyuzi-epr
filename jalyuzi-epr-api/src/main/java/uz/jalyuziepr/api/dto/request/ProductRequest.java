@@ -41,6 +41,9 @@ public class ProductRequest {
     // Yangi mahsulot turi tizimi (V24+)
     private Long productTypeId;
 
+    // Ierarxik atribut oilasi (V40+) — tanlangan barg tugun
+    private Long attributeFamilyId;
+
     // Dinamik atributlar
     private Map<String, Object> customAttributes;
 

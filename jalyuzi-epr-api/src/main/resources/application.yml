@@ -42,6 +42,9 @@ app:
   storage:
     upload-dir: ${UPLOAD_DIR:./uploads}
     public-url-prefix: /api/files
+  # Mahsulot atribut qiymatlari validatsiyasi: STRICT yoki LENIENT (migratsiya davri uchun)
+  attribute-validation:
+    mode: ${ATTRIBUTE_VALIDATION_MODE:LENIENT}
 
 # Online payment providers (Click, Payme)
 # Enable rejimi faqat env variable kalitlar mavjudligida ishlaydi

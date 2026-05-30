@@ -112,6 +112,19 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(AttributeValidationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleAttributeValidationException(
+            AttributeValidationException ex) {
+        log.warn("Attribute validation failed: {}", ex.getFieldErrors());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.<Map<String, String>>builder()
+                        .success(false)
+                        .message("Atribut validatsiya xatosi")
+                        .data(ex.getFieldErrors())
+                        .build());
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
         log.error("Illegal argument: {}", ex.getMessage());

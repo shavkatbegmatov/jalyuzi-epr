@@ -49,6 +49,11 @@ public class Product extends BaseEntity implements Auditable {
     @JoinColumn(name = "product_type_id")
     private uz.jalyuziepr.api.entity.ProductType productTypeEntity;
 
+    // Ierarxik atribut oilasi (V40+) — mahsulot yaratilgan barg tugun
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_family_id")
+    private AttributeFamily attributeFamily;
+
     // Dinamik atributlar (JSONB)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "custom_attributes", columnDefinition = "jsonb")
