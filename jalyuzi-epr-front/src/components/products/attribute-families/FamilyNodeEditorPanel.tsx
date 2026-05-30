@@ -28,7 +28,7 @@ export function FamilyNodeEditorPanel({
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<AttributeDefinition | null>(null);
 
-  const ownAttributes = family.attributeSchema?.attributes ?? [];
+  const ownAttributes = useMemo(() => family.attributeSchema?.attributes ?? [], [family.attributeSchema?.attributes]);
   const inherited = useMemo<ResolvedAttributeDefinition[]>(
     () => (effective?.attributes ?? []).filter((a) => a.ownerFamilyId !== family.id),
     [effective, family.id]
