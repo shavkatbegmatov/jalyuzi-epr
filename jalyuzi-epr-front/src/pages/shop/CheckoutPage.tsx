@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { useShopStore } from '../../store/shopStore';
 import { shopOrderApi, type ShopOrderRequest } from '../../api/shop.api';
 import { formatCurrency } from '../../config/constants';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 
 export function ShopCheckoutPage() {
   const { t } = useTranslation();
@@ -110,19 +111,12 @@ export function ShopCheckoutPage() {
                     placeholder={t('shop.auth.fullNamePlaceholder')}
                   />
                 </div>
-                <div className="form-control">
-                  <label className="label">
-                    <span className="label-text">{t('shop.auth.phone')} *</span>
-                  </label>
-                  <input
-                    type="tel"
-                    className="input input-bordered"
-                    value={form.customerPhone}
-                    onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
-                    placeholder={t('shop.auth.phonePlaceholder')}
-                    required
-                  />
-                </div>
+                <PhoneInput
+                  label={t('shop.auth.phone')}
+                  required
+                  value={form.customerPhone}
+                  onChange={(v) => setForm({ ...form, customerPhone: v })}
+                />
               </div>
             </div>
           )}

@@ -12,6 +12,7 @@ import {
   Power,
   Users,
 } from 'lucide-react';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { installersApi } from '../../api/installers.api';
@@ -461,18 +462,12 @@ export function InstallersPage() {
             </div>
 
             {/* Phone */}
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Telefon raqam *</span>
-              </label>
-              <input
-                type="tel"
-                className="input input-bordered w-full"
-                placeholder="+998 90 123 45 67"
-                value={formData.phone}
-                onChange={(e) => handleFormChange('phone', e.target.value)}
-              />
-            </div>
+            <PhoneInput
+              label="Telefon raqam"
+              required
+              value={formData.phone}
+              onChange={(v) => handleFormChange('phone', v)}
+            />
 
             {/* Email */}
             <div className="form-control">

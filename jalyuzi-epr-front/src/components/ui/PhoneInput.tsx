@@ -11,7 +11,15 @@ interface PhoneInputProps {
   error?: string;
   className?: string;
   required?: boolean;
+  autoFocus?: boolean;
+  name?: string;
+  /** Parent key handler (e.g. Enter to submit). Called before digit filtering. */
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
+
+/** To'liq O'zbek raqami (+998 va 9 ta raqam) ekanligini tekshiradi. */
+export const isValidUzbekPhone = (value: string | undefined | null): boolean =>
+  !!value && /^\+998\d{9}$/.test(value);
 
 // Format phone number: XX XXX XX XX
 const formatPhoneNumber = (digits: string): string => {
@@ -55,6 +63,9 @@ export function PhoneInput({
   error,
   className,
   required,
+  autoFocus,
+  name,
+  onKeyDown,
 }: PhoneInputProps) {
   const [displayValue, setDisplayValue] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -98,7 +109,10 @@ export function PhoneInput({
   };
 
   // Handle key down - only allow digits and control keys
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Parent handler first (e.g. Enter to submit)
+    onKeyDown?.(e);
+
     // Allow: backspace, delete, tab, escape, enter, arrows
     if (
       e.key === 'Backspace' ||
@@ -163,6 +177,8 @@ export function PhoneInput({
           type="tel"
           inputMode="numeric"
           autoComplete="tel-national"
+          autoFocus={autoFocus}
+          name={name}
           className={clsx(
             'flex-1 min-w-0 bg-transparent outline-none px-2 font-semibold',
             'placeholder:text-base-content/30 placeholder:font-normal'

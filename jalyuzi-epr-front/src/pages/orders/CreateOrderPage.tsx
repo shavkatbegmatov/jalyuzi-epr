@@ -19,6 +19,7 @@ import { ordersApi } from '../../api/orders.api';
 import { customersApi } from '../../api/customers.api';
 import { productsApi } from '../../api/products.api';
 import { ModalPortal } from '../../components/common/Modal';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES, UNIT_TYPES } from '../../config/constants';
 import type {
   OrderCreateRequest,
@@ -200,7 +201,7 @@ export function CreateOrderPage() {
     const isPhone = q !== '' && looksLikePhone(q);
     setNewCustomer({
       fullName: isPhone ? '' : q,
-      phone: isPhone ? q : '+998',
+      phone: isPhone ? q : '',
       address: '',
       customerType: 'INDIVIDUAL',
     });
@@ -1075,19 +1076,13 @@ export function CreateOrderPage() {
                 />
               </label>
 
-              <label className="form-control">
-                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                  Telefon *
-                </span>
-                <input
-                  type="tel"
-                  className="input input-bordered w-full"
-                  placeholder="+998901234567"
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer((p) => ({ ...p, phone: e.target.value }))}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
-                />
-              </label>
+              <PhoneInput
+                label="Telefon"
+                required
+                value={newCustomer.phone}
+                onChange={(v) => setNewCustomer((p) => ({ ...p, phone: v }))}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
+              />
 
               <label className="form-control">
                 <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">

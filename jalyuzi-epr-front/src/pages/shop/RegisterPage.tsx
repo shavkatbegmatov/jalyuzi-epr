@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { shopAuthApi, TelegramInfo } from '../../api/shop.api';
 import { useShopStore } from '../../store/shopStore';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 
 export function ShopRegisterPage() {
   const { t } = useTranslation();
@@ -123,19 +124,11 @@ export function ShopRegisterPage() {
 
           {step === 'phone' && (
             <form onSubmit={handleSendCode} className="space-y-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">{t('shop.auth.phone')}</span>
-                </label>
-                <input
-                  type="tel"
-                  className="input input-bordered text-lg"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={t('shop.auth.phonePlaceholder')}
-                  maxLength={13}
-                />
-              </div>
+              <PhoneInput
+                label={t('shop.auth.phone')}
+                value={phone}
+                onChange={setPhone}
+              />
 
               <button
                 type="submit"

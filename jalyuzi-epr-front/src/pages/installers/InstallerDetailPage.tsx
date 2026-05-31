@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import {
   ArrowLeft,
   Phone,
@@ -392,19 +393,12 @@ export function InstallerDetailPage() {
               />
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Telefon raqam *</span>
-              </label>
-              <input
-                type="tel"
-                className="input input-bordered w-full"
-                value={editFormData.phone}
-                onChange={(e) =>
-                  setEditFormData((prev) => ({ ...prev, phone: e.target.value }))
-                }
-              />
-            </div>
+            <PhoneInput
+              label="Telefon raqam"
+              required
+              value={editFormData.phone}
+              onChange={(v) => setEditFormData((prev) => ({ ...prev, phone: v }))}
+            />
 
             <div className="form-control">
               <label className="label">
