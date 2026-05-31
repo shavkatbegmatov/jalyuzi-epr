@@ -734,14 +734,15 @@ export function CreateOrderPage() {
                     </div>
 
                     {/* Item fields */}
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="space-y-3">
+                      {/* Xona nomi — to'liq kenglik */}
                       <div className="form-control">
                         <label className="label py-1">
                           <span className="label-text text-xs">Xona nomi</span>
                         </label>
                         <input
                           type="text"
-                          className="input input-bordered input-sm"
+                          className="input input-bordered input-sm w-full"
                           placeholder="masalan, Yotoqxona"
                           value={item.roomName}
                           onChange={(e) =>
@@ -749,57 +750,68 @@ export function CreateOrderPage() {
                           }
                         />
                       </div>
-                      <div className="form-control">
-                        <label className="label py-1">
-                          <span className="label-text text-xs">Eni (mm)</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered input-sm"
-                          placeholder="0"
-                          min={0}
-                          value={item.widthMm || ''}
-                          onChange={(e) =>
-                            updateItem(index, {
-                              widthMm: parseInt(e.target.value) || 0,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="form-control">
-                        <label className="label py-1">
-                          <span className="label-text text-xs">
-                            Bo'yi (mm)
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered input-sm"
-                          placeholder="0"
-                          min={0}
-                          value={item.heightMm || ''}
-                          onChange={(e) =>
-                            updateItem(index, {
-                              heightMm: parseInt(e.target.value) || 0,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="form-control">
-                        <label className="label py-1">
-                          <span className="label-text text-xs">Soni</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered input-sm"
-                          min={1}
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItem(index, {
-                              quantity: Math.max(1, parseInt(e.target.value) || 1),
-                            })
-                          }
-                        />
+
+                      {/* O'lcham va soni — 3 ustun */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="form-control">
+                          <label className="label py-1">
+                            <span className="label-text text-xs">Eni (mm)</span>
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className="input input-bordered input-sm w-full"
+                            placeholder="0"
+                            min={0}
+                            value={item.widthMm || ''}
+                            onChange={(e) =>
+                              updateItem(index, {
+                                widthMm: parseInt(e.target.value) || 0,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="form-control">
+                          <label className="label py-1">
+                            <span className="label-text text-xs">Bo'yi (mm)</span>
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className="input input-bordered input-sm w-full"
+                            placeholder="0"
+                            min={0}
+                            value={item.heightMm || ''}
+                            onChange={(e) =>
+                              updateItem(index, {
+                                heightMm: parseInt(e.target.value) || 0,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="form-control">
+                          <label className="label py-1">
+                            <span className="label-text text-xs">Soni</span>
+                          </label>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className="input input-bordered input-sm w-full"
+                            placeholder="1"
+                            min={1}
+                            value={item.quantity || ''}
+                            onChange={(e) =>
+                              updateItem(index, {
+                                quantity: parseInt(e.target.value) || 0,
+                              })
+                            }
+                            onBlur={(e) => {
+                              if ((parseInt(e.target.value) || 0) < 1) {
+                                updateItem(index, { quantity: 1 });
+                              }
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
 
