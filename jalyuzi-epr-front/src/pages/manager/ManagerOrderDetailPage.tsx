@@ -751,7 +751,7 @@ export function ManagerOrderDetailPage() {
                 >
                   <option value="">Xodimni tanlang</option>
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.userId || emp.id}>
+                    <option key={emp.id} value={emp.id}>
                       {emp.fullName} {emp.position ? `(${emp.position})` : ''}
                     </option>
                   ))}
