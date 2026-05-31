@@ -225,17 +225,19 @@ export function LoginPage() {
 
             <div className="mt-6 rounded-xl bg-base-200/50 p-4 text-sm text-base-content/70">
               <p className="font-medium text-base-content">Demo kirish</p>
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span>Admin:</span>
-                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">admin</code>
-                <span>/</span>
-                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">admin123</code>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span>Sotuvchi:</span>
-                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">seller</code>
-                <span>/</span>
-                <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">seller123</code>
+              <div className="mt-2 space-y-1.5">
+                {[
+                  { label: 'Admin', username: 'admin', password: 'admin123' },
+                  { label: 'Menejer', username: 'manager', password: 'manager123' },
+                  { label: "O'rnatuvchi", username: 'installer', password: 'installer123' },
+                ].map((u) => (
+                  <div key={u.username} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="w-24 shrink-0">{u.label}:</span>
+                    <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">{u.username}</code>
+                    <span>/</span>
+                    <code className="rounded bg-base-300/60 px-2 py-0.5 text-xs">{u.password}</code>
+                  </div>
+                ))}
               </div>
             </div>
 
