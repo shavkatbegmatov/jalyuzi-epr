@@ -19,7 +19,7 @@ import { ordersApi } from '../../api/orders.api';
 import { customersApi } from '../../api/customers.api';
 import { productsApi } from '../../api/products.api';
 import { ModalPortal } from '../../components/common/Modal';
-import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES } from '../../config/constants';
+import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES, UNIT_TYPES } from '../../config/constants';
 import type {
   OrderCreateRequest,
   OrderCreateItemRequest,
@@ -28,6 +28,7 @@ import type {
   CustomerType,
   CustomerSource,
   Product,
+  UnitType,
 } from '../../types';
 
 // ───────── Types ─────────
@@ -111,6 +112,18 @@ export function CreateOrderPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [productLoading, setProductLoading] = useState(false);
   const [items, setItems] = useState<OrderItem[]>([]);
+
+  // Inline "yangi mahsulot" (buyurtmadan chiqmasdan qo'shish)
+  const [showNewProduct, setShowNewProduct] = useState(false);
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState<{
+    name: string;
+    sku: string;
+    unitType: UnitType;
+    sellingPrice: number;
+    pricePerSquareMeter?: number;
+    installationPrice?: number;
+  }>({ name: '', sku: '', unitType: 'PIECE', sellingPrice: 0 });
 
   // Step 4 / Global
   const [discountAmount, setDiscountAmount] = useState(0);
@@ -248,6 +261,54 @@ export function CreateOrderPage() {
     ]);
     setProductSearch('');
     setProducts([]);
+  };
+
+  // ───── Inline yangi mahsulot ─────
+
+  const genSku = () =>
+    `PRD-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
+
+  const openNewProduct = () => {
+    setNewProduct({
+      name: productSearch.trim(),
+      sku: genSku(),
+      unitType: 'PIECE',
+      sellingPrice: 0,
+    });
+    setShowNewProduct(true);
+  };
+
+  const handleCreateProduct = async () => {
+    if (!newProduct.name.trim() || !newProduct.sku.trim()) {
+      toast.error('Nomi va SKU majburiy');
+      return;
+    }
+    if (!newProduct.sellingPrice || newProduct.sellingPrice <= 0) {
+      toast.error('Sotish narxini kiriting');
+      return;
+    }
+    setCreatingProduct(true);
+    try {
+      const created = await productsApi.create({
+        sku: newProduct.sku.trim(),
+        name: newProduct.name.trim(),
+        unitType: newProduct.unitType,
+        sellingPrice: newProduct.sellingPrice,
+        pricePerSquareMeter: newProduct.pricePerSquareMeter || undefined,
+        installationPrice: newProduct.installationPrice || undefined,
+      });
+      toast.success('Yangi mahsulot qo\'shildi');
+      handleAddProduct(created);
+      setShowNewProduct(false);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; data?: Record<string, string> } } };
+      const fieldErr = err.response?.data?.data
+        ? Object.values(err.response.data.data)[0]
+        : undefined;
+      toast.error(fieldErr || err.response?.data?.message || 'Mahsulot qo\'shishda xatolik');
+    } finally {
+      setCreatingProduct(false);
+    }
   };
 
   const handleRemoveItem = (index: number) => {
@@ -580,6 +641,17 @@ export function CreateOrderPage() {
                 />
               </div>
 
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm gap-1 text-primary"
+                  onClick={openNewProduct}
+                >
+                  <Plus className="h-4 w-4" />
+                  Yangi mahsulot qo'shish
+                </button>
+              </div>
+
               {productLoading && (
                 <div className="flex justify-center py-4">
                   <span className="loading loading-spinner loading-md" />
@@ -609,6 +681,23 @@ export function CreateOrderPage() {
                       <Plus className="h-5 w-5 text-primary" />
                     </button>
                   ))}
+                </div>
+              )}
+
+              {!productLoading && productSearch.trim() && products.length === 0 && (
+                <div className="rounded-xl border border-dashed border-base-300 p-6 text-center">
+                  <Package className="mx-auto mb-2 h-8 w-8 text-base-content/40" />
+                  <p className="text-base-content/60">
+                    "{productSearch.trim()}" bo'yicha mahsulot topilmadi
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm mt-3"
+                    onClick={openNewProduct}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Yangi mahsulot sifatida qo'shish
+                  </button>
                 </div>
               )}
             </div>
@@ -1069,6 +1158,141 @@ export function CreateOrderPage() {
               >
                 {creatingCustomer && <span className="loading loading-spinner loading-sm" />}
                 Saqlash va tanlash
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalPortal>
+
+      {/* ─── Inline "Yangi mahsulot" modal ─── */}
+      <ModalPortal isOpen={showNewProduct} onClose={() => setShowNewProduct(false)}>
+        <div className="w-full max-w-md rounded-2xl bg-base-100 shadow-2xl">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <Package className="h-5 w-5" />
+                  Yangi mahsulot
+                </h3>
+                <p className="text-sm text-base-content/60">
+                  Buyurtmaga tez qo'shing — batafsilini keyin "Mahsulotlar" bo'limida to'ldirasiz
+                </p>
+              </div>
+              <button
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={() => setShowNewProduct(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                  Nomi *
+                </span>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  placeholder="masalan, Roletka Premium Oq"
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateProduct()}
+                  autoFocus
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    O'lchov birligi
+                  </span>
+                  <select
+                    className="select select-bordered w-full"
+                    value={newProduct.unitType}
+                    onChange={(e) => setNewProduct((p) => ({ ...p, unitType: e.target.value as UnitType }))}
+                  >
+                    {Object.entries(UNIT_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    Sotish narxi (so'm) *
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={newProduct.sellingPrice || ''}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({ ...p, sellingPrice: parseFloat(e.target.value) || 0 }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    Narx/m² (ixtiyoriy)
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={newProduct.pricePerSquareMeter ?? ''}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({
+                        ...p,
+                        pricePerSquareMeter: e.target.value ? parseFloat(e.target.value) : undefined,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    O'rnatish narxi (ixtiyoriy)
+                  </span>
+                  <input
+                    type="number"
+                    min={0}
+                    className="input input-bordered w-full"
+                    placeholder="0"
+                    value={newProduct.installationPrice ?? ''}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({
+                        ...p,
+                        installationPrice: e.target.value ? parseFloat(e.target.value) : undefined,
+                      }))
+                    }
+                  />
+                </label>
+              </div>
+
+              <p className="text-xs text-base-content/40">
+                Narx/m² kiritilsa, o'lchamga qarab narx avtomatik hisoblanadi.
+              </p>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                className="btn btn-ghost"
+                onClick={() => setShowNewProduct(false)}
+                disabled={creatingProduct}
+              >
+                Bekor qilish
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleCreateProduct}
+                disabled={creatingProduct || !newProduct.name.trim() || newProduct.sellingPrice <= 0}
+              >
+                {creatingProduct && <span className="loading loading-spinner loading-sm" />}
+                Saqlash va qo'shish
               </button>
             </div>
           </div>
