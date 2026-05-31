@@ -20,6 +20,7 @@ import { customersApi } from '../../api/customers.api';
 import { productsApi } from '../../api/products.api';
 import { ModalPortal } from '../../components/common/Modal';
 import { PhoneInput } from '../../components/ui/PhoneInput';
+import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES, UNIT_TYPES } from '../../config/constants';
 import type {
   OrderCreateRequest,
@@ -127,6 +128,7 @@ export function CreateOrderPage() {
   }>({ name: '', sku: '', unitType: 'PIECE', sellingPrice: 0 });
 
   // Step 4 / Global
+  const [discountType, setDiscountType] = useState<'amount' | 'percent'>('amount');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [discountPercent, setDiscountPercent] = useState(0);
   const [notes, setNotes] = useState('');
@@ -325,10 +327,12 @@ export function CreateOrderPage() {
   // ───── Totals ─────
 
   const grandTotal = items.reduce((sum, item) => sum + calcItemPrice(item).itemTotal, 0);
-  const afterDiscount =
-    grandTotal -
-    (discountAmount || 0) -
-    (discountPercent ? (grandTotal * discountPercent) / 100 : 0);
+  // Faqat bitta chegirma turi qo'llanadi (so'm yoki %)
+  const discountValue =
+    discountType === 'percent'
+      ? (grandTotal * (discountPercent || 0)) / 100
+      : (discountAmount || 0);
+  const afterDiscount = Math.max(0, grandTotal - discountValue);
 
   // ───── Validation ─────
 
@@ -370,8 +374,8 @@ export function CreateOrderPage() {
         customerId: selectedCustomer.id,
         installationAddress: address || undefined,
         notes: notes || undefined,
-        discountAmount: discountAmount || undefined,
-        discountPercent: discountPercent || undefined,
+        discountAmount: discountType === 'amount' ? (discountAmount || undefined) : undefined,
+        discountPercent: discountType === 'percent' ? (discountPercent || undefined) : undefined,
         items: orderItems,
       };
 
@@ -933,41 +937,81 @@ export function CreateOrderPage() {
               </div>
             </div>
 
-            {/* Discount & Notes */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-sm">
-                    Chegirma (so'm)
-                  </span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered input-sm"
-                  min={0}
-                  value={discountAmount || ''}
-                  onChange={(e) =>
-                    setDiscountAmount(Math.max(0, parseInt(e.target.value) || 0))
-                  }
-                />
+            {/* Chegirma — bir vaqtda faqat bitta tur (so'm yoki %) */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-sm">Chegirma</span>
+              </label>
+
+              {/* Tur tanlash */}
+              <div className="join mb-2 w-full max-w-[200px]">
+                <button
+                  type="button"
+                  className={`join-item btn btn-sm flex-1 ${
+                    discountType === 'amount'
+                      ? 'btn-primary'
+                      : 'btn-ghost border border-base-300'
+                  }`}
+                  onClick={() => {
+                    setDiscountType('amount');
+                    setDiscountPercent(0);
+                  }}
+                >
+                  so'm
+                </button>
+                <button
+                  type="button"
+                  className={`join-item btn btn-sm flex-1 ${
+                    discountType === 'percent'
+                      ? 'btn-primary'
+                      : 'btn-ghost border border-base-300'
+                  }`}
+                  onClick={() => {
+                    setDiscountType('percent');
+                    setDiscountAmount(0);
+                  }}
+                >
+                  %
+                </button>
               </div>
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text text-sm">Chegirma (%)</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered input-sm"
-                  min={0}
-                  max={100}
-                  value={discountPercent || ''}
-                  onChange={(e) =>
-                    setDiscountPercent(
-                      Math.min(100, Math.max(0, parseFloat(e.target.value) || 0))
-                    )
-                  }
+
+              {discountType === 'amount' ? (
+                <CurrencyInput
+                  value={discountAmount}
+                  onChange={setDiscountAmount}
+                  size="sm"
+                  max={grandTotal}
+                  placeholder="0"
+                  className="max-w-[220px]"
                 />
-              </div>
+              ) : (
+                <>
+                  <div className="relative max-w-[160px]">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      className="input input-bordered input-sm w-full pr-8 text-right font-semibold"
+                      min={0}
+                      max={100}
+                      placeholder="0"
+                      value={discountPercent || ''}
+                      onChange={(e) =>
+                        setDiscountPercent(
+                          Math.min(100, Math.max(0, parseFloat(e.target.value) || 0))
+                        )
+                      }
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/50">
+                      %
+                    </span>
+                  </div>
+                  {discountPercent > 0 && (
+                    <span className="mt-1 text-xs text-base-content/50">
+                      = {formatCurrency((grandTotal * discountPercent) / 100)} chegirma
+                    </span>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="form-control">
