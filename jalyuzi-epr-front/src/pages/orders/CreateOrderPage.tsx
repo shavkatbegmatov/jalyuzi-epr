@@ -9,6 +9,8 @@ import {
   Trash2,
   Check,
   User,
+  UserPlus,
+  X,
   MapPin,
   Package,
   CheckCircle,
@@ -16,11 +18,15 @@ import {
 import { ordersApi } from '../../api/orders.api';
 import { customersApi } from '../../api/customers.api';
 import { productsApi } from '../../api/products.api';
-import { formatCurrency } from '../../config/constants';
+import { ModalPortal } from '../../components/common/Modal';
+import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES } from '../../config/constants';
 import type {
   OrderCreateRequest,
   OrderCreateItemRequest,
   Customer,
+  CustomerRequest,
+  CustomerType,
+  CustomerSource,
   Product,
 } from '../../types';
 
@@ -86,6 +92,16 @@ export function CreateOrderPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerLoading, setCustomerLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  // Inline "yangi mijoz" (buyurtmadan chiqmasdan qo'shish)
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState<CustomerRequest>({
+    fullName: '',
+    phone: '',
+    address: '',
+    customerType: 'INDIVIDUAL',
+  });
 
   // Step 2: Address
   const [address, setAddress] = useState('');
@@ -159,6 +175,51 @@ export function CreateOrderPage() {
     setAddress(customer.installationAddress || customer.address || '');
     setCustomerSearch('');
     setCustomers([]);
+  };
+
+  // ───── Inline yangi mijoz ─────
+
+  const looksLikePhone = (s: string) =>
+    s.trim().startsWith('+') || s.replace(/\D/g, '').length >= 7;
+
+  const openNewCustomer = () => {
+    const q = customerSearch.trim();
+    const isPhone = q !== '' && looksLikePhone(q);
+    setNewCustomer({
+      fullName: isPhone ? '' : q,
+      phone: isPhone ? q : '+998',
+      address: '',
+      customerType: 'INDIVIDUAL',
+    });
+    setShowNewCustomer(true);
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!newCustomer.fullName.trim() || !newCustomer.phone.trim()) {
+      toast.error('Ism va telefon majburiy');
+      return;
+    }
+    setCreatingCustomer(true);
+    try {
+      const created = await customersApi.create({
+        ...newCustomer,
+        fullName: newCustomer.fullName.trim(),
+        phone: newCustomer.phone.trim(),
+        address: newCustomer.address?.trim() || undefined,
+        source: newCustomer.source || undefined,
+      });
+      toast.success('Yangi mijoz qo\'shildi va tanlandi');
+      handleSelectCustomer(created);
+      setShowNewCustomer(false);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string; data?: Record<string, string> } } };
+      const fieldErr = err.response?.data?.data
+        ? Object.values(err.response.data.data)[0]
+        : undefined;
+      toast.error(fieldErr || err.response?.data?.message || 'Mijoz qo\'shishda xatolik');
+    } finally {
+      setCreatingCustomer(false);
+    }
   };
 
   // ───── Product add ─────
@@ -389,6 +450,17 @@ export function CreateOrderPage() {
                   />
                 </div>
 
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm gap-1 text-primary"
+                    onClick={openNewCustomer}
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Yangi mijoz qo'shish
+                  </button>
+                </div>
+
                 {customerLoading && (
                   <div className="flex justify-center py-4">
                     <span className="loading loading-spinner loading-md" />
@@ -426,9 +498,19 @@ export function CreateOrderPage() {
                 {!customerLoading &&
                   customerSearch.trim() &&
                   customers.length === 0 && (
-                    <div className="rounded-xl border border-base-200 p-6 text-center text-base-content/50">
-                      <User className="mx-auto mb-2 h-8 w-8" />
-                      <p>Mijoz topilmadi</p>
+                    <div className="rounded-xl border border-dashed border-base-300 p-6 text-center">
+                      <User className="mx-auto mb-2 h-8 w-8 text-base-content/40" />
+                      <p className="text-base-content/60">
+                        "{customerSearch.trim()}" bo'yicha mijoz topilmadi
+                      </p>
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm mt-3"
+                        onClick={openNewCustomer}
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Yangi mijoz sifatida qo'shish
+                      </button>
                     </div>
                   )}
               </div>
@@ -865,6 +947,133 @@ export function CreateOrderPage() {
           </button>
         )}
       </div>
+
+      {/* ─── Inline "Yangi mijoz" modal ─── */}
+      <ModalPortal isOpen={showNewCustomer} onClose={() => setShowNewCustomer(false)}>
+        <div className="w-full max-w-md rounded-2xl bg-base-100 shadow-2xl">
+          <div className="p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="flex items-center gap-2 text-lg font-semibold">
+                  <UserPlus className="h-5 w-5" />
+                  Yangi mijoz
+                </h3>
+                <p className="text-sm text-base-content/60">
+                  Buyurtmadan chiqmasdan tez qo'shing
+                </p>
+              </div>
+              <button
+                className="btn btn-ghost btn-sm btn-circle"
+                onClick={() => setShowNewCustomer(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                  Ism *
+                </span>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  placeholder="Mijoz ismi"
+                  value={newCustomer.fullName}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, fullName: e.target.value }))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
+                  autoFocus
+                />
+              </label>
+
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                  Telefon *
+                </span>
+                <input
+                  type="tel"
+                  className="input input-bordered w-full"
+                  placeholder="+998901234567"
+                  value={newCustomer.phone}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, phone: e.target.value }))}
+                  onKeyDown={(e) => e.key === 'Enter' && handleCreateCustomer()}
+                />
+              </label>
+
+              <label className="form-control">
+                <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                  Manzil
+                </span>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  placeholder="O'rnatish manzili (ixtiyoriy)"
+                  value={newCustomer.address || ''}
+                  onChange={(e) => setNewCustomer((p) => ({ ...p, address: e.target.value }))}
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    Tur
+                  </span>
+                  <select
+                    className="select select-bordered w-full"
+                    value={newCustomer.customerType || 'INDIVIDUAL'}
+                    onChange={(e) =>
+                      setNewCustomer((p) => ({ ...p, customerType: e.target.value as CustomerType }))
+                    }
+                  >
+                    {Object.entries(CUSTOMER_TYPES).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="form-control">
+                  <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
+                    Manba
+                  </span>
+                  <select
+                    className="select select-bordered w-full"
+                    value={newCustomer.source || ''}
+                    onChange={(e) =>
+                      setNewCustomer((p) => ({
+                        ...p,
+                        source: (e.target.value || undefined) as CustomerSource | undefined,
+                      }))
+                    }
+                  >
+                    <option value="">—</option>
+                    {Object.entries(CUSTOMER_SOURCES).map(([k, v]) => (
+                      <option key={k} value={k}>{v.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                className="btn btn-ghost"
+                onClick={() => setShowNewCustomer(false)}
+                disabled={creatingCustomer}
+              >
+                Bekor qilish
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleCreateCustomer}
+                disabled={creatingCustomer || !newCustomer.fullName.trim() || !newCustomer.phone.trim()}
+              >
+                {creatingCustomer && <span className="loading loading-spinner loading-sm" />}
+                Saqlash va tanlash
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalPortal>
     </div>
   );
 }
