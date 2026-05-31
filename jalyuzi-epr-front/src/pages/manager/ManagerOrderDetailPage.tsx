@@ -36,6 +36,10 @@ const ALLOWED_BACKWARD: Partial<Record<OrderStatus, OrderStatus[]>> = {
 
 const TERMINAL_STATUSES: OrderStatus[] = ['YAKUNLANDI', 'QARZGA_OTKAZILDI', 'BEKOR_QILINDI'];
 
+/** Backend qaytargan aniq xato xabarini ajratib oladi; bo'lmasa fallback matn qaytaradi. */
+const errMessage = (error: unknown, fallback: string): string =>
+  (error as { response?: { data?: { message?: string } } })?.response?.data?.message || fallback;
+
 export function ManagerOrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -125,7 +129,9 @@ export function ManagerOrderDetailPage() {
       setShowAssignModal(null);
     } catch (error) {
       console.error('Failed to assign:', error);
-      toast.error('Tayinlashda xatolik');
+      toast.error(errMessage(error, 'Tayinlashda xatolik'));
+      // Holat eskirgan bo'lishi mumkin (masalan, allaqachon tayinlangan) — buyurtmani qayta yuklaymiz
+      void loadOrder();
     } finally {
       setAssignSubmitting(false);
     }
@@ -143,7 +149,9 @@ export function ManagerOrderDetailPage() {
       toast.success(successMsg);
     } catch (error) {
       console.error('Action failed:', error);
-      toast.error('Amal bajarishda xatolik');
+      toast.error(errMessage(error, 'Amal bajarishda xatolik'));
+      // Holat eskirgan bo'lishi mumkin — buyurtmani qayta yuklab UI ni sinxronlaymiz
+      void loadOrder();
     } finally {
       setActionLoading(false);
     }
@@ -196,7 +204,7 @@ export function ManagerOrderDetailPage() {
       setShowPaymentModal(null);
     } catch (error) {
       console.error('Payment failed:', error);
-      toast.error("To'lov qabul qilishda xatolik");
+      toast.error(errMessage(error, "To'lov qabul qilishda xatolik"));
     } finally {
       setPaymentSubmitting(false);
     }
@@ -222,7 +230,8 @@ export function ManagerOrderDetailPage() {
       setShowConfirmModal(null);
     } catch (error) {
       console.error('Confirm action failed:', error);
-      toast.error('Amal bajarishda xatolik');
+      toast.error(errMessage(error, 'Amal bajarishda xatolik'));
+      void loadOrder();
     } finally {
       setConfirmSubmitting(false);
     }
@@ -237,7 +246,7 @@ export function ManagerOrderDetailPage() {
       toast.success("To'lov tasdiqlandi");
     } catch (error) {
       console.error('Failed to confirm payment:', error);
-      toast.error("To'lovni tasdiqlashda xatolik");
+      toast.error(errMessage(error, "To'lovni tasdiqlashda xatolik"));
     } finally {
       setActionLoading(false);
     }
@@ -270,7 +279,7 @@ export function ManagerOrderDetailPage() {
       setShowPaymentModal(null);
     } catch (error) {
       console.error('Payment failed:', error);
-      toast.error("To'lov qabul qilishda xatolik");
+      toast.error(errMessage(error, "To'lov qabul qilishda xatolik"));
     } finally {
       setPaymentSubmitting(false);
     }
@@ -290,7 +299,8 @@ export function ManagerOrderDetailPage() {
       setShowRevertModal(false);
     } catch (error) {
       console.error('Revert failed:', error);
-      toast.error("Statusni qaytarishda xatolik");
+      toast.error(errMessage(error, "Statusni qaytarishda xatolik"));
+      void loadOrder();
     } finally {
       setRevertSubmitting(false);
     }
