@@ -5,6 +5,7 @@ import clsx from 'clsx';
 
 // =============================================================================
 // ModalPortal - Simple portal wrapper for existing modal content
+// Responsive: mobile'da pastdan (bottom-sheet pozitsiya), lg+ da markazda.
 // =============================================================================
 interface ModalPortalProps {
   isOpen: boolean;
@@ -35,33 +36,14 @@ export function ModalPortal({ isOpen, onClose, children }: ModalPortalProps) {
   if (!isOpen) return null;
 
   const modalContent = (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      }}
-    >
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-[2px] p-0 lg:items-center lg:p-4">
       {/* Backdrop - click to close */}
-      <div
-        className="absolute inset-0"
-        onClick={onClose}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      />
+      <div className="absolute inset-0" onClick={onClose} />
       {/* Modal content wrapper */}
-      <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="relative z-10 flex w-full justify-center lg:w-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {children}
       </div>
     </div>
@@ -72,6 +54,7 @@ export function ModalPortal({ isOpen, onClose, children }: ModalPortalProps) {
 
 // =============================================================================
 // Modal - Full featured modal component
+// Responsive: mobile'da bottom-sheet (pastdan, rounded-t-3xl), lg+ da dialog.
 // =============================================================================
 interface ModalProps {
   isOpen: boolean;
@@ -82,17 +65,19 @@ interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl';
   showCloseButton?: boolean;
   closeOnBackdrop?: boolean;
+  /** Pastki sticky harakat paneli */
+  footer?: ReactNode;
 }
 
 const maxWidthClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  '2xl': 'max-w-2xl',
-  '3xl': 'max-w-3xl',
-  '4xl': 'max-w-4xl',
-  '5xl': 'max-w-5xl',
+  sm: 'lg:max-w-sm',
+  md: 'lg:max-w-md',
+  lg: 'lg:max-w-lg',
+  xl: 'lg:max-w-xl',
+  '2xl': 'lg:max-w-2xl',
+  '3xl': 'lg:max-w-3xl',
+  '4xl': 'lg:max-w-4xl',
+  '5xl': 'lg:max-w-5xl',
 };
 
 export function Modal({
@@ -104,6 +89,7 @@ export function Modal({
   maxWidth = '3xl',
   showCloseButton = true,
   closeOnBackdrop = true,
+  footer,
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -143,17 +129,7 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      }}
+      className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50 backdrop-blur-[2px] p-0 lg:items-center lg:p-4"
       onClick={handleBackdropClick}
     >
       {/* Modal content */}
@@ -161,37 +137,57 @@ export function Modal({
         ref={modalRef}
         tabIndex={-1}
         className={clsx(
-          'relative w-full bg-base-100 rounded-2xl shadow-2xl animate-fade-up',
-          'max-h-[90vh] overflow-y-auto',
+          'relative flex max-h-[92vh] w-full flex-col overflow-hidden bg-base-100 shadow-float',
+          'rounded-t-3xl animate-sheet-up',
+          'lg:max-h-[90vh] lg:rounded-2xl lg:animate-fade-up',
           maxWidthClasses[maxWidth]
         )}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile drag handle (vizual) */}
+        <div className="flex justify-center pt-2.5 lg:hidden">
+          <span className="h-1.5 w-11 rounded-full bg-base-content/15" />
+        </div>
+
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-base-200 bg-base-100 p-4 sm:p-6">
-            {title && (
-              <div>
-                <h3 className="text-xl font-semibold">{title}</h3>
-                {subtitle && <p className="mt-1 text-sm text-base-content/60">{subtitle}</p>}
+          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-base-300/60 px-5 py-4 lg:px-6">
+            {title ? (
+              <div className="min-w-0">
+                <h3 className="truncate text-lg font-bold lg:text-xl">{title}</h3>
+                {subtitle && <p className="mt-0.5 truncate text-sm text-base-content/55">{subtitle}</p>}
               </div>
+            ) : (
+              <span />
             )}
             {showCloseButton && (
               <button
-                className="btn btn-ghost btn-sm btn-square shrink-0"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-base-200 text-base-content/60 press-scale tap-transparent"
                 onClick={onClose}
                 aria-label="Yopish"
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             )}
           </div>
         )}
 
         {/* Body */}
-        <div className="p-4 sm:p-6">
+        <div
+          className={clsx(
+            'flex-1 overflow-y-auto overscroll-contain px-5 py-5 lg:px-6',
+            !footer && 'pb-[max(1.25rem,env(safe-area-inset-bottom))]'
+          )}
+        >
           {children}
         </div>
+
+        {/* Footer */}
+        {footer && (
+          <div className="shrink-0 border-t border-base-300/60 bg-base-100 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-6 lg:pb-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );

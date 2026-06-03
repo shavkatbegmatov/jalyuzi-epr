@@ -12,8 +12,6 @@ import {
   PieChart,
   Clock,
   Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
   ClipboardList,
   Ruler,
   Hammer,
@@ -22,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
+import { MetricCard } from '../../components/mobile';
 import {
   AreaChart,
   Area,
@@ -44,15 +43,15 @@ import type { DashboardStats, ChartData, OrderStatsResponse } from '../../types'
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { useAuthStore } from '../../store/authStore';
 
-// Professional rang palitrasi
+// Premium rang palitrasi (teal asosli — brendga mos)
 const COLORS = {
-  primary: '#6366f1',
-  success: '#22c55e',
-  warning: '#f59e0b',
-  error: '#ef4444',
-  info: '#3b82f6',
-  secondary: '#8b5cf6',
-  chart: ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'],
+  primary: '#0d9488',
+  success: '#16a34a',
+  warning: '#d97706',
+  error: '#dc2626',
+  info: '#0ea5e9',
+  secondary: '#f97316',
+  chart: ['#0d9488', '#0ea5e9', '#f97316', '#8b5cf6', '#16a34a', '#f59e0b', '#ec4899', '#6366f1'],
 };
 
 // Valyuta formatlash (qisqa)
@@ -68,85 +67,6 @@ const formatCompactCurrency = (value: number): string => {
   }
   return value.toString();
 };
-
-// KPI karta komponenti
-function KPICard({
-  title,
-  value,
-  icon: Icon,
-  trend,
-  trendLabel,
-  color = 'primary',
-  className,
-  style,
-}: {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: number;
-  trendLabel?: string;
-  color?: 'primary' | 'success' | 'warning' | 'error' | 'info' | 'secondary';
-  className?: string;
-  style?: CSSProperties;
-}) {
-  const colorMap = {
-    primary: 'bg-primary/10 text-primary border-primary/20',
-    success: 'bg-success/10 text-success border-success/20',
-    warning: 'bg-warning/10 text-warning border-warning/20',
-    error: 'bg-error/10 text-error border-error/20',
-    info: 'bg-info/10 text-info border-info/20',
-    secondary: 'bg-secondary/10 text-secondary border-secondary/20',
-  };
-
-  const isPositive = trend !== undefined && trend >= 0;
-
-  return (
-    <div
-      className={clsx(
-        'surface-card group relative overflow-hidden transition duration-300 hover:-translate-y-0.5 hover:shadow-lg',
-        className
-      )}
-      style={style}
-    >
-      <div className="p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-base-content/60">{title}</p>
-            <p className="mt-2 text-2xl font-bold tracking-tight lg:text-3xl">{value}</p>
-            {trend !== undefined && (
-              <div className="mt-3 flex items-center gap-1.5">
-                <span
-                  className={clsx(
-                    'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold',
-                    isPositive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'
-                  )}
-                >
-                  {isPositive ? (
-                    <ArrowUpRight className="h-3 w-3" />
-                  ) : (
-                    <ArrowDownRight className="h-3 w-3" />
-                  )}
-                  {Math.abs(trend).toFixed(1)}%
-                </span>
-                {trendLabel && (
-                  <span className="text-xs text-base-content/50">{trendLabel}</span>
-                )}
-              </div>
-            )}
-          </div>
-          <div
-            className={clsx(
-              'grid h-12 w-12 place-items-center rounded-2xl border',
-              colorMap[color]
-            )}
-          >
-            <Icon className="h-6 w-6" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Chart Card komponenti
 function ChartCard({
@@ -164,14 +84,14 @@ function ChartCard({
 }) {
   return (
     <div className={clsx('surface-card overflow-hidden', className)}>
-      <div className="flex items-center justify-between border-b border-base-200 px-5 py-4">
+      <div className="flex items-center justify-between border-b border-base-300/60 px-4 py-3.5 lg:px-5 lg:py-4">
         <h3 className="flex items-center gap-2 font-semibold">
           {Icon && <Icon className="h-5 w-5 text-primary" />}
           {title}
         </h3>
         {action}
       </div>
-      <div className="p-5">{children}</div>
+      <div className="p-3 lg:p-5">{children}</div>
     </div>
   );
 }
@@ -294,30 +214,30 @@ export function DashboardPage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold lg:text-3xl">Dashboard</h1>
-          <p className="mt-1 text-base-content/60">
+          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-base-content/55 lg:mt-1 lg:text-base">
             Biznesingiz haqida real vaqtda ma'lumotlar
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Period selector */}
-          <div className="join">
+          <div className="join flex-1 lg:flex-none">
             <button
-              className={clsx('join-item btn btn-sm', period === 7 && 'btn-primary')}
+              className={clsx('join-item btn btn-sm flex-1', period === 7 && 'btn-primary')}
               onClick={() => setPeriod(7)}
             >
               7 kun
             </button>
             <button
-              className={clsx('join-item btn btn-sm', period === 30 && 'btn-primary')}
+              className={clsx('join-item btn btn-sm flex-1', period === 30 && 'btn-primary')}
               onClick={() => setPeriod(30)}
             >
               30 kun
             </button>
           </div>
-          <Link to="/pos" className="btn btn-primary">
+          <Link to="/pos" className="btn btn-primary btn-sm hidden sm:inline-flex">
             <ShoppingCart className="h-4 w-4" />
             Yangi sotuv
           </Link>
@@ -326,16 +246,16 @@ export function DashboardPage() {
 
       {/* Bugungi ish kuni - tezkor ko'rinish */}
       <div className="surface-card overflow-hidden">
-        <div className="flex items-center gap-2 border-b border-base-200 px-5 py-3">
+        <div className="flex items-center gap-2 border-b border-base-300/60 px-4 py-3 lg:px-5">
           <div className="rounded-lg bg-warning/10 p-1.5">
             <Sun className="h-4 w-4 text-warning" />
           </div>
           <h3 className="font-semibold">Bugungi ish kuni</h3>
           <span className="ml-auto text-xs text-base-content/50">
-            {new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' })}
+            {new Date().toLocaleDateString('uz-UZ', { day: '2-digit', month: 'short' })}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-4 p-5 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-5 lg:gap-4 lg:p-5">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-2">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -387,8 +307,8 @@ export function DashboardPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <MetricCard
           title="Bugungi sotuvlar"
           value={stats?.todaySalesCount || 0}
           icon={ShoppingCart}
@@ -397,7 +317,7 @@ export function DashboardPage() {
           trendLabel="o'tgan haftaga nisbatan"
           style={{ '--i': 0 } as CSSProperties}
         />
-        <KPICard
+        <MetricCard
           title="Bugungi daromad"
           value={formatCurrency(stats?.todayRevenue || 0)}
           icon={DollarSign}
@@ -406,14 +326,14 @@ export function DashboardPage() {
           trendLabel="o'tgan haftaga nisbatan"
           style={{ '--i': 1 } as CSSProperties}
         />
-        <KPICard
+        <MetricCard
           title="Jami mahsulotlar"
           value={formatNumber(stats?.totalProducts || 0)}
           icon={Package}
           color="info"
           style={{ '--i': 2 } as CSSProperties}
         />
-        <KPICard
+        <MetricCard
           title="Mijozlar soni"
           value={formatNumber(stats?.totalCustomers || 0)}
           icon={Users}
@@ -740,25 +660,26 @@ export function DashboardPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="surface-card p-5">
-        <h3 className="mb-4 font-semibold">Tez havolalar</h3>
+      <div className="surface-card p-4 lg:p-5">
+        <h3 className="mb-3 font-semibold lg:mb-4">Tez havolalar</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Link to="/pos" className="btn btn-primary">
-            <ShoppingCart className="h-4 w-4" />
-            Kassa
-          </Link>
-          <Link to="/products" className="btn btn-outline">
-            <Package className="h-4 w-4" />
-            Mahsulotlar
-          </Link>
-          <Link to="/customers" className="btn btn-outline">
-            <Users className="h-4 w-4" />
-            Mijozlar
-          </Link>
-          <Link to="/reports" className="btn btn-outline">
-            <BarChart3 className="h-4 w-4" />
-            Hisobotlar
-          </Link>
+          {[
+            { to: '/pos', icon: ShoppingCart, label: 'Kassa', color: 'bg-primary/10 text-primary' },
+            { to: '/products', icon: Package, label: 'Mahsulotlar', color: 'bg-info/10 text-info' },
+            { to: '/customers', icon: Users, label: 'Mijozlar', color: 'bg-secondary/10 text-secondary' },
+            { to: '/reports', icon: BarChart3, label: 'Hisobotlar', color: 'bg-success/10 text-success' },
+          ].map(({ to, icon: Icon, label, color }) => (
+            <Link
+              key={to}
+              to={to}
+              className="surface-soft flex flex-col items-center justify-center gap-2.5 p-4 press-scale tap-transparent"
+            >
+              <div className={clsx('grid h-11 w-11 place-items-center rounded-xl', color)}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <span className="text-sm font-semibold">{label}</span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

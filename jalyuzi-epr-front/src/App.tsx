@@ -18,7 +18,7 @@ function useNativeStatusBar() {
 
     StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
     StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: isDark ? '#0f172a' : '#0f766e' }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: isDark ? '#0a0c10' : '#ffffff' }).catch(() => {});
   }, [themeMode, getEffectiveTheme]);
 }
 

@@ -55,7 +55,10 @@ export function MainLayout() {
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 pb-20 pt-6 lg:px-8 lg:pb-6" style={{ scrollbarGutter: 'stable' }}>
+        <main
+          className="flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-[calc(var(--bottom-nav-h)_+_env(safe-area-inset-bottom)_+_1.5rem)] lg:px-8 lg:pb-8 lg:pt-6"
+          style={{ scrollbarGutter: 'stable' }}
+        >
           <Outlet />
         </main>
         <Footer />

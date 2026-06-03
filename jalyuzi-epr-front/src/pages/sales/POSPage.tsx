@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, User, X, Users, ArrowRight, Phone, Wrench, Calendar, MapPin, FileText } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, User, X, Users, ArrowRight, Phone, Wrench, Calendar, MapPin, FileText, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import { PercentInput } from '../../components/ui/PercentInput';
 import { Select } from '../../components/ui/Select';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ModalPortal } from '../../components/common/Modal';
+import { BottomSheet } from '../../components/mobile';
 import { SearchInput } from '../../components/ui/SearchInput';
 import { CustomerSearchCombobox } from '../../components/common/NamePhoneSearchCombobox';
 import type { Product, PaymentMethod, Customer } from '../../types';
@@ -24,6 +25,7 @@ export function POSPage() {
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showCartSheet, setShowCartSheet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [paidAmount, setPaidAmount] = useState(0);
 
@@ -265,17 +267,263 @@ export function POSPage() {
     return null;
   }, [cart.discount, cart.discountPercent, subtotal]);
 
-  return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-      {/* Products Grid */}
-      <section className="surface-card flex min-h-[60vh] flex-col overflow-hidden">
-        <div className="border-b border-base-200 p-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">Mahsulotlar</h2>
-              <p className="text-xs text-base-content/60">
-                {products.length} ta mahsulot topildi
+  const goToPayment = () => {
+    if (cart.items.length === 0) return;
+    setPaidAmount(total);
+    setShowCartSheet(false);
+    setShowPayment(true);
+  };
+
+  // ===========================================================================
+  // Savat bo'laklari — desktop aside va mobil BottomSheet'da qayta ishlatiladi
+  // ===========================================================================
+  const customerSelector = cart.customer ? (
+    <div className="flex items-center justify-between gap-2 rounded-xl bg-primary/10 p-2.5">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-content">
+          <User className="h-4 w-4" />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{cart.customer.fullName}</p>
+          <p className="truncate text-xs text-base-content/60">{cart.customer.phone}</p>
+        </div>
+      </div>
+      <button
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-base-100/70 press-scale"
+        onClick={handleClearCustomer}
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  ) : (
+    <div className="flex items-center gap-2">
+      <div className="flex-1">
+        <CustomerSearchCombobox
+          value={customerSearch}
+          onChange={setCustomerSearch}
+          onSelect={handleSelectCustomer}
+          placeholder="Mijozni qidirish..."
+          getSubtitle={(customer) => {
+            const parts = [];
+            if (customer.companyName) parts.push(customer.companyName);
+            if (customer.hasDebt) parts.push('Qarz bor');
+            return parts.join(' • ') || undefined;
+          }}
+          dropdownFooter={
+            <button
+              className="w-full px-4 py-3 text-left transition-colors hover:bg-base-200 flex items-center justify-between gap-2 text-sm font-medium text-primary"
+              onClick={handleOpenModal}
+            >
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>Barchasini ko'rish</span>
+              </div>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          }
+        />
+      </div>
+      <button
+        className="btn btn-primary h-12 min-h-12"
+        onClick={handleOpenModal}
+        title="Barcha mijozlarni ko'rish"
+      >
+        <Users className="h-5 w-5" />
+      </button>
+    </div>
+  );
+
+  const itemsList =
+    cart.items.length === 0 ? (
+      <div className="flex flex-col items-center justify-center py-12 text-base-content/45">
+        <ShoppingCart className="mb-2 h-12 w-12" />
+        <p className="text-sm">Savat bo'sh</p>
+      </div>
+    ) : (
+      <div className="space-y-2.5">
+        {cart.items.map((item) => (
+          <div key={item.product.id} className="surface-soft flex gap-3 p-3">
+            <div className="min-w-0 flex-1">
+              <h4 className="text-sm font-semibold leading-tight">{item.product.name}</h4>
+              <p className="mt-0.5 text-xs text-base-content/60">
+                {formatCurrency(item.product.sellingPrice)} × {item.quantity}
               </p>
+              {item.discount > 0 && (
+                <p className="text-xs text-success">Chegirma: {formatCurrency(item.discount)}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                className="grid h-9 w-9 place-items-center rounded-lg bg-base-100 press-scale disabled:opacity-40"
+                onClick={() => cart.updateQuantity(item.product.id, item.quantity - 1)}
+                disabled={item.quantity <= 1}
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="w-7 text-center text-sm font-semibold tabular-nums">{item.quantity}</span>
+              <button
+                className="grid h-9 w-9 place-items-center rounded-lg bg-base-100 press-scale disabled:opacity-40"
+                onClick={() => cart.updateQuantity(item.product.id, item.quantity + 1)}
+                disabled={item.quantity >= item.product.quantity}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <button
+                className="grid h-9 w-9 place-items-center rounded-lg text-error press-scale"
+                onClick={() => cart.removeItem(item.product.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
+  const discountBlock = (
+    <div className="surface-soft space-y-3 p-3">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-base-content/60">Sub-jami</span>
+        <span className="font-semibold">{formatCurrency(subtotal)}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <CurrencyInput
+          label="Chegirma (so'm)"
+          value={cart.discount}
+          onChange={(val) => cart.setDiscount(Math.min(subtotal, Math.max(0, val)))}
+          min={0}
+          max={subtotal}
+          size="sm"
+        />
+        <PercentInput
+          label="Chegirma (%)"
+          value={cart.discountPercent}
+          onChange={(val) => cart.setDiscountPercent(val)}
+          min={0}
+          max={100}
+          size="sm"
+        />
+      </div>
+      {discountSummary && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-base-content/60">Chegirma:</span>
+          <span className="font-semibold text-success">{discountSummary}</span>
+        </div>
+      )}
+    </div>
+  );
+
+  const installationBlock = (
+    <div className="surface-soft space-y-3 p-3">
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          className="checkbox checkbox-primary checkbox-sm"
+          checked={cart.installationEnabled}
+          onChange={(e) => {
+            cart.setInstallationEnabled(e.target.checked);
+            if (!e.target.checked) {
+              cart.clearInstallation();
+            } else if (cart.customer?.installationAddress) {
+              cart.setInstallationAddress(cart.customer.installationAddress);
+            }
+          }}
+        />
+        <div className="flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-primary" />
+          <span className="text-sm font-semibold">O'rnatish kerak</span>
+        </div>
+      </label>
+
+      {cart.installationEnabled && (
+        <div className="space-y-3 pt-1">
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text flex items-center gap-1 text-xs">
+                <Calendar className="h-3 w-3" />
+                Sana va vaqt
+              </span>
+            </label>
+            <input
+              type="datetime-local"
+              className="input input-bordered h-12 w-full"
+              value={cart.installationDate || ''}
+              onChange={(e) => cart.setInstallationDate(e.target.value || null)}
+            />
+          </div>
+
+          <Select
+            label="Texnik"
+            value={cart.technicianId?.toString() || ''}
+            onChange={(val) => cart.setTechnicianId(val ? Number(val) : null)}
+            options={technicians.map((t) => ({
+              value: t.id.toString(),
+              label: t.fullName,
+            }))}
+            placeholder="Texnikni tanlang"
+          />
+
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text flex items-center gap-1 text-xs">
+                <MapPin className="h-3 w-3" />
+                Manzil
+              </span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered h-12 w-full"
+              placeholder="O'rnatish manzili"
+              value={cart.installationAddress}
+              onChange={(e) => cart.setInstallationAddress(e.target.value)}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label py-1">
+              <span className="label-text flex items-center gap-1 text-xs">
+                <FileText className="h-3 w-3" />
+                Izoh
+              </span>
+            </label>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              placeholder="Qo'shimcha ma'lumot..."
+              rows={2}
+              value={cart.installationNotes}
+              onChange={(e) => cart.setInstallationNotes(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const checkoutBar = (
+    <div className="space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="text-base-content/60">Jami:</span>
+        <span className="text-xl font-bold">{formatCurrency(total)}</span>
+      </div>
+      <button
+        className="btn btn-primary btn-block h-12"
+        disabled={cart.items.length === 0}
+        onClick={goToPayment}
+      >
+        To'lovga o'tish
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6">
+      {/* Products Grid */}
+      <section className="surface-card flex flex-col overflow-hidden lg:min-h-[72vh]">
+        <div className="border-b border-base-300/60 p-3 lg:p-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="hidden md:block">
+              <h2 className="text-lg font-semibold">Mahsulotlar</h2>
+              <p className="text-xs text-base-content/60">{products.length} ta mahsulot topildi</p>
             </div>
             <SearchInput
               value={search}
@@ -288,33 +536,31 @@ export function POSPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        <div className="p-3 lg:flex-1 lg:overflow-auto lg:p-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:gap-3 xl:grid-cols-4">
             {products.map((product) => (
               <button
                 key={product.id}
                 className={clsx(
-                  'surface-panel group flex h-full flex-col justify-between rounded-xl p-3 text-left transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]',
+                  'surface-panel group flex h-full flex-col justify-between p-3 text-left press-scale tap-transparent transition hover:border-primary/40',
                   product.quantity === 0 && 'cursor-not-allowed opacity-60'
                 )}
                 disabled={product.quantity === 0}
                 onClick={() => cart.addItem(product)}
               >
                 <div>
-                  <h3 className="text-sm font-semibold line-clamp-2">
-                    {product.name}
-                  </h3>
-                  <p className="mt-1 text-xs text-base-content/60">
+                  <h3 className="line-clamp-2 text-sm font-semibold leading-tight">{product.name}</h3>
+                  <p className="mt-1 text-xs text-base-content/55">
                     {product.color || product.blindType || "Ma'lumot yo'q"}
                   </p>
                 </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-primary">
+                <div className="mt-3 flex items-center justify-between gap-1">
+                  <span className="text-sm font-bold text-primary">
                     {formatCurrency(product.sellingPrice)}
                   </span>
                   <span
                     className={clsx(
-                      'badge badge-sm',
+                      'badge badge-sm shrink-0',
                       product.quantity === 0
                         ? 'badge-error'
                         : product.lowStock
@@ -331,316 +577,96 @@ export function POSPage() {
         </div>
       </section>
 
-      {/* Cart */}
-      <aside className="surface-card flex min-h-[60vh] flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-base-200 p-4">
+      {/* Desktop Cart aside */}
+      <aside className="hidden flex-col overflow-hidden lg:flex lg:min-h-[72vh] surface-card">
+        <div className="flex items-center justify-between border-b border-base-300/60 p-4">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <ShoppingCart className="h-5 w-5" />
               Savat
             </h2>
-            <p className="text-xs text-base-content/60">
-              {itemCount} ta mahsulot
-            </p>
+            <p className="text-xs text-base-content/60">{itemCount} ta mahsulot</p>
           </div>
           {cart.items.length > 0 && (
-            <button
-              className="btn btn-ghost btn-sm text-error"
-              onClick={() => cart.clear()}
-            >
+            <button className="btn btn-ghost btn-sm text-error" onClick={() => cart.clear()}>
               Tozalash
             </button>
           )}
         </div>
 
-        {/* Customer Selection */}
-        <div className="border-b border-base-200 p-4">
-          {cart.customer ? (
-            <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/10 p-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-content">
-                  <User className="h-4 w-4" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">{cart.customer.fullName}</p>
-                  <p className="text-xs text-base-content/60">{cart.customer.phone}</p>
-                </div>
-              </div>
-              <button
-                className="btn btn-ghost btn-sm btn-circle"
-                onClick={handleClearCustomer}
-              >
-                <X className="h-4 w-4" />
+        <div className="border-b border-base-300/60 p-4">{customerSelector}</div>
+        <div className="flex-1 overflow-auto p-4">{itemsList}</div>
+        <div className="border-t border-base-300/60 p-4">{discountBlock}</div>
+        <div className="border-t border-base-300/60 p-4">{installationBlock}</div>
+        <div className="border-t border-base-300/60 p-4">{checkoutBar}</div>
+      </aside>
+
+      {/* Mobile sticky cart bar */}
+      {cart.items.length > 0 && (
+        <button
+          onClick={() => setShowCartSheet(true)}
+          className="fixed left-3 right-3 z-30 flex items-center justify-between gap-3 rounded-2xl bg-primary px-4 py-3 text-primary-content shadow-float press-scale tap-transparent animate-rise-in lg:hidden"
+          style={{ bottom: 'calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 0.5rem)' }}
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <span className="relative grid h-9 w-9 place-items-center rounded-full bg-white/20">
+              <ShoppingCart className="h-5 w-5" />
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-[11px] font-bold text-primary">
+                {itemCount}
+              </span>
+            </span>
+            Savatni ko'rish
+          </span>
+          <span className="flex items-center gap-1 text-base font-bold">
+            {formatCurrency(total)}
+            <ChevronUp className="h-4 w-4" />
+          </span>
+        </button>
+      )}
+
+      {/* Mobile cart BottomSheet */}
+      <BottomSheet
+        isOpen={showCartSheet}
+        onClose={() => setShowCartSheet(false)}
+        title="Savat"
+        subtitle={`${itemCount} ta mahsulot`}
+        footer={checkoutBar}
+      >
+        <div className="space-y-4 py-1">
+          <div className="flex items-center justify-end">
+            {cart.items.length > 0 && (
+              <button className="btn btn-ghost btn-sm text-error" onClick={() => cart.clear()}>
+                <Trash2 className="h-4 w-4" />
+                Tozalash
               </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="flex-1">
-                <CustomerSearchCombobox
-                  value={customerSearch}
-                  onChange={setCustomerSearch}
-                  onSelect={handleSelectCustomer}
-                  placeholder="Mijozni qidirish..."
-                  getSubtitle={(customer) => {
-                    const parts = [];
-                    if (customer.companyName) parts.push(customer.companyName);
-                    if (customer.hasDebt) parts.push('Qarz bor');
-                    return parts.join(' • ') || undefined;
-                  }}
-                  dropdownFooter={
-                    <button
-                      className="w-full px-4 py-3 text-left transition-colors hover:bg-base-200 flex items-center justify-between gap-2 text-sm font-medium text-primary"
-                      onClick={handleOpenModal}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <span>Barchasini ko'rish</span>
-                      </div>
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  }
-                />
-              </div>
-              <button
-                className="btn btn-primary btn-sm h-12"
-                onClick={handleOpenModal}
-                title="Barcha mijozlarni ko'rish"
-              >
-                <Users className="h-5 w-5" />
-                <span className="hidden sm:inline ml-1">Ko'rish</span>
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Cart Items */}
-        <div className="flex-1 overflow-auto p-4">
-          {cart.items.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-base-content/50">
-              <ShoppingCart className="mb-2 h-12 w-12" />
-              <p>Savat bo'sh</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {cart.items.map((item) => (
-                <div
-                  key={item.product.id}
-                  className="surface-soft flex gap-3 rounded-xl p-3"
-                >
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium">{item.product.name}</h4>
-                    <p className="text-xs text-base-content/70">
-                      {formatCurrency(item.product.sellingPrice)} x{' '}
-                      {item.quantity}
-                    </p>
-                    {item.discount > 0 && (
-                      <p className="text-xs text-success">
-                        Chegirma: {formatCurrency(item.discount)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle h-11 w-11"
-                      onClick={() =>
-                        cart.updateQuantity(
-                          item.product.id,
-                          item.quantity - 1
-                        )
-                      }
-                      disabled={item.quantity <= 1}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-8 text-center text-sm">
-                      {item.quantity}
-                    </span>
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle h-11 w-11"
-                      onClick={() =>
-                        cart.updateQuantity(
-                          item.product.id,
-                          item.quantity + 1
-                        )
-                      }
-                      disabled={item.quantity >= item.product.quantity}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                    <button
-                      className="btn btn-ghost btn-sm btn-circle h-11 w-11 text-error"
-                      onClick={() => cart.removeItem(item.product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Discount */}
-        <div className="border-t border-base-200 p-4">
-          <div className="surface-soft space-y-3 rounded-xl p-3">
-            <div className="flex items-center justify-between text-sm">
-              <span>Sub-jami</span>
-              <span className="font-medium">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <CurrencyInput
-                label="Chegirma (so'm)"
-                value={cart.discount}
-                onChange={(val) => cart.setDiscount(Math.min(subtotal, Math.max(0, val)))}
-                min={0}
-                max={subtotal}
-                size="sm"
-              />
-              <PercentInput
-                label="Chegirma (%)"
-                value={cart.discountPercent}
-                onChange={(val) => cart.setDiscountPercent(val)}
-                min={0}
-                max={100}
-                size="sm"
-              />
-            </div>
-            <div className={clsx(
-              'flex items-center justify-between text-sm transition-opacity duration-200',
-              discountSummary ? 'opacity-100' : 'opacity-0'
-            )}>
-              <span className="text-base-content/60">Chegirma:</span>
-              <span className="font-semibold text-success">{discountSummary || '-'}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* O'rnatish xizmati */}
-        <div className="border-t border-base-200 p-4">
-          <div className="surface-soft rounded-xl p-3 space-y-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                className="checkbox checkbox-primary checkbox-sm"
-                checked={cart.installationEnabled}
-                onChange={(e) => {
-                  cart.setInstallationEnabled(e.target.checked);
-                  if (!e.target.checked) {
-                    cart.clearInstallation();
-                  } else if (cart.customer?.installationAddress) {
-                    cart.setInstallationAddress(cart.customer.installationAddress);
-                  }
-                }}
-              />
-              <div className="flex items-center gap-2">
-                <Wrench className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium">O'rnatish kerak</span>
-              </div>
-            </label>
-
-            {cart.installationEnabled && (
-              <div className="space-y-3 pt-2">
-                {/* Sana va vaqt */}
-                <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text text-xs flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Sana va vaqt
-                    </span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    className="input input-bordered input-sm w-full"
-                    value={cart.installationDate || ''}
-                    onChange={(e) => cart.setInstallationDate(e.target.value || null)}
-                  />
-                </div>
-
-                {/* Texnik */}
-                <Select
-                  label="Texnik"
-                  value={cart.technicianId?.toString() || ''}
-                  onChange={(val) => cart.setTechnicianId(val ? Number(val) : null)}
-                  options={technicians.map((t) => ({
-                    value: t.id.toString(),
-                    label: t.fullName,
-                  }))}
-                  placeholder="Texnikni tanlang"
-                />
-
-                {/* Manzil */}
-                <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text text-xs flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      Manzil
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    className="input input-bordered input-sm w-full"
-                    placeholder="O'rnatish manzili"
-                    value={cart.installationAddress}
-                    onChange={(e) => cart.setInstallationAddress(e.target.value)}
-                  />
-                </div>
-
-                {/* Izoh */}
-                <div className="form-control">
-                  <label className="label py-1">
-                    <span className="label-text text-xs flex items-center gap-1">
-                      <FileText className="h-3 w-3" />
-                      Izoh
-                    </span>
-                  </label>
-                  <textarea
-                    className="textarea textarea-bordered textarea-sm w-full"
-                    placeholder="Qo'shimcha ma'lumot..."
-                    rows={2}
-                    value={cart.installationNotes}
-                    onChange={(e) => cart.setInstallationNotes(e.target.value)}
-                  />
-                </div>
-              </div>
             )}
           </div>
+          {customerSelector}
+          {itemsList}
+          {discountBlock}
+          {installationBlock}
         </div>
-
-        {/* Cart Total */}
-        <div className="border-t border-base-200 p-4 space-y-3">
-          <div className="flex items-center justify-between text-lg">
-            <span>Jami:</span>
-            <span className="font-bold">{formatCurrency(total)}</span>
-          </div>
-          <button
-            className="btn btn-primary btn-block"
-            disabled={cart.items.length === 0}
-            onClick={() => {
-              setPaidAmount(total);
-              setShowPayment(true);
-            }}
-          >
-            To'lovga o'tish
-          </button>
-        </div>
-      </aside>
+      </BottomSheet>
 
       {/* Payment Modal */}
       <ModalPortal isOpen={showPayment} onClose={() => setShowPayment(false)}>
-        <div className="w-full max-w-lg bg-base-100 rounded-2xl shadow-2xl relative">
-          <div className="p-4 sm:p-6">
+        <div className="relative w-full max-w-lg rounded-t-3xl bg-base-100 shadow-float lg:rounded-2xl">
+          <div className="flex justify-center pt-2.5 lg:hidden">
+            <span className="h-1.5 w-11 rounded-full bg-base-content/15" />
+          </div>
+          <div className="p-5 sm:p-6">
             <button
-              className="btn btn-circle btn-ghost btn-sm absolute right-4 top-4"
+              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-base-200 press-scale"
               onClick={() => setShowPayment(false)}
             >
               <X className="h-5 w-5" />
             </button>
-            <h3 className="text-lg font-semibold">To'lov</h3>
+            <h3 className="text-lg font-bold">To'lov</h3>
             <p className="text-sm text-base-content/60">
               {itemCount} ta mahsulot · {formatCurrency(total)}
             </p>
 
-            <div className="mt-6 space-y-4">
+            <div className="mt-5 space-y-4">
               <Select
                 label="To'lov usuli"
                 value={paymentMethod}
@@ -660,13 +686,13 @@ export function POSPage() {
                 showQuickButtons
               />
 
-              <div className="surface-soft rounded-xl p-4">
+              <div className="surface-soft p-4">
                 <div className="flex justify-between text-sm">
-                  <span>Sub-jami:</span>
+                  <span className="text-base-content/60">Sub-jami:</span>
                   <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="mt-2 flex justify-between text-sm">
-                  <span>Chegirma:</span>
+                  <span className="text-base-content/60">Chegirma:</span>
                   <span>{discountAmount ? formatCurrency(discountAmount) : '—'}</span>
                 </div>
                 <div className="divider my-3"></div>
@@ -676,35 +702,19 @@ export function POSPage() {
                 </div>
                 <div className="mt-3 flex justify-between text-sm">
                   <span>{isDebt ? 'Qarz:' : 'Qaytim:'}</span>
-                  <span
-                    className={clsx(
-                      'font-semibold',
-                      isDebt ? 'text-error' : 'text-success'
-                    )}
-                  >
+                  <span className={clsx('font-semibold', isDebt ? 'text-error' : 'text-success')}>
                     {formatCurrency(Math.abs(change))}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                className="btn btn-ghost"
-                onClick={() => setShowPayment(false)}
-              >
+            <div className="mt-5 flex gap-2">
+              <button className="btn btn-ghost flex-1" onClick={() => setShowPayment(false)}>
                 Bekor qilish
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleCompleteSale}
-                disabled={loading}
-              >
-                {loading ? (
-                  <span className="loading loading-spinner" />
-                ) : (
-                  'Tasdiqlash'
-                )}
+              <button className="btn btn-primary flex-1" onClick={handleCompleteSale} disabled={loading}>
+                {loading ? <span className="loading loading-spinner" /> : 'Tasdiqlash'}
               </button>
             </div>
           </div>
@@ -712,25 +722,20 @@ export function POSPage() {
       </ModalPortal>
 
       {/* Customer Selection Modal */}
-      <ModalPortal
-        isOpen={showCustomerModal}
-        onClose={() => setShowCustomerModal(false)}
-      >
-        <div className="w-full max-w-5xl bg-base-100 rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <ModalPortal isOpen={showCustomerModal} onClose={() => setShowCustomerModal(false)}>
+        <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-t-3xl bg-base-100 shadow-float lg:max-h-[90vh] lg:rounded-2xl">
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-base-200">
+          <div className="border-b border-base-300/60 p-4 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-xl font-semibold">Mijozlarni tanlash</h3>
-                <p className="text-sm text-base-content/60 mt-1">
-                  Jami {modalTotalElements} ta mijoz
-                </p>
+                <h3 className="text-lg font-bold sm:text-xl">Mijozlarni tanlash</h3>
+                <p className="mt-0.5 text-sm text-base-content/60">Jami {modalTotalElements} ta mijoz</p>
               </div>
               <button
-                className="btn btn-ghost btn-sm"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-base-200 press-scale"
                 onClick={() => setShowCustomerModal(false)}
               >
-                <X className="h-4 w-4" />
+                <X className="h-5 w-5" />
               </button>
             </div>
 
@@ -756,12 +761,7 @@ export function POSPage() {
               keyExtractor={(customer) => customer.id}
               loading={modalLoading}
               onRowClick={handleModalSelectCustomer}
-              rowClassName={(customer) =>
-                clsx(
-                  'cursor-pointer',
-                  customer.hasDebt && 'bg-error/5'
-                )
-              }
+              rowClassName={(customer) => clsx('cursor-pointer', customer.hasDebt && 'bg-error/5')}
               currentPage={modalPage}
               totalPages={modalTotalPages}
               totalElements={modalTotalElements}
@@ -773,10 +773,10 @@ export function POSPage() {
               emptyDescription="Qidiruv so'zini o'zgartiring yoki yangi mijoz qo'shing"
               renderMobileCard={(customer) => (
                 <div
-                  className="p-4 border border-base-200 rounded-lg bg-base-100 cursor-pointer hover:bg-base-200 transition"
+                  className="surface-card cursor-pointer p-4 press-scale"
                   onClick={() => handleModalSelectCustomer(customer)}
                 >
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="mb-2 flex items-center gap-3">
                     <div className="avatar placeholder">
                       <div className="w-10 rounded-full bg-primary/15 text-primary">
                         <span>{customer.fullName.charAt(0).toUpperCase()}</span>
@@ -785,25 +785,23 @@ export function POSPage() {
                     <div className="flex-1">
                       <div className="font-medium">{customer.fullName}</div>
                       {customer.companyName && (
-                        <div className="text-sm text-base-content/70">
-                          {customer.companyName}
-                        </div>
+                        <div className="text-sm text-base-content/70">{customer.companyName}</div>
                       )}
                     </div>
-                    {customer.hasDebt && (
-                      <span className="badge badge-error badge-sm">Qarz</span>
-                    )}
+                    {customer.hasDebt && <span className="badge badge-error badge-sm">Qarz</span>}
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1 text-base-content/70">
                       <Phone className="h-4 w-4" />
                       {customer.phone}
                     </div>
-                    <div className={clsx(
-                      'font-medium',
-                      customer.balance < 0 && 'text-error',
-                      customer.balance > 0 && 'text-success'
-                    )}>
+                    <div
+                      className={clsx(
+                        'font-medium',
+                        customer.balance < 0 && 'text-error',
+                        customer.balance > 0 && 'text-success'
+                      )}
+                    >
                       {formatCurrency(customer.balance)}
                     </div>
                   </div>
@@ -813,7 +811,6 @@ export function POSPage() {
           </div>
         </div>
       </ModalPortal>
-
     </div>
   );
 }
