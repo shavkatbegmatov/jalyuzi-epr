@@ -246,38 +246,39 @@ export function CustomersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Mijozlar</h1>
-          <p className="section-subtitle">Mijozlar bazasi</p>
+          <p className="section-subtitle hidden sm:block">Mijozlar bazasi</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta mijoz</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="pill">{totalElements} ta mijoz</span>
+          <span className="pill hidden sm:inline-flex">{totalElements} ta mijoz</span>
           <PermissionGate permission={PermissionCode.CUSTOMERS_CREATE}>
-            <button className="btn btn-primary" onClick={handleOpenNewModal}>
+            <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenNewModal}>
               <Plus className="h-5 w-5" />
-              Yangi mijoz
+              <span className="hidden sm:inline">Yangi mijoz</span>
+              <span className="sm:hidden">Yangi</span>
             </button>
           </PermissionGate>
         </div>
       </div>
 
       {/* Search */}
-      <div className="surface-card p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">Qidiruv</h2>
-            <p className="text-xs text-base-content/60">
-              {hasSearch ? "Qidiruv natijalari ko'rsatilmoqda" : 'Barcha mijozlar'}
-            </p>
-          </div>
-        </div>
+      <div>
         <SearchInput
           value={search}
           onValueChange={handleSearchChange}
-          className="mt-4 max-w-md"
+          label="Qidirish"
+          hideLabel
+          placeholder="Ism yoki telefon bo'yicha qidirish..."
+          className="lg:max-w-md"
         />
+        <p className="mt-1.5 px-1 text-xs text-base-content/55">
+          {hasSearch ? "Qidiruv natijalari ko'rsatilmoqda" : 'Barcha mijozlar'}
+        </p>
       </div>
 
       {/* Customers Table */}
@@ -309,13 +310,20 @@ export function CustomersPage() {
         onPageChange={setPage}
         onPageSizeChange={handlePageSizeChange}
         renderMobileCard={(customer) => (
-          <div className="surface-panel flex flex-col gap-3 rounded-xl p-4">
+          <div className="surface-card flex flex-col gap-3 p-3.5">
             <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold">{customer.fullName}</p>
-                <p className="text-xs text-base-content/60">{customer.companyName || 'Jismoniy shaxs'}</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="avatar placeholder shrink-0">
+                  <div className="w-10 rounded-full bg-primary/15 text-primary">
+                    <span>{customer.fullName.charAt(0).toUpperCase()}</span>
+                  </div>
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold">{customer.fullName}</p>
+                  <p className="truncate text-xs text-base-content/60">{customer.companyName || 'Jismoniy shaxs'}</p>
+                </div>
               </div>
-              <span className={clsx('badge badge-sm', customer.hasDebt ? 'badge-error' : 'badge-success')}>
+              <span className={clsx('badge badge-sm shrink-0', customer.hasDebt ? 'badge-error' : 'badge-success')}>
                 {customer.hasDebt ? 'Qarz' : 'Toza'}
               </span>
             </div>
@@ -324,11 +332,18 @@ export function CustomersPage() {
               {customer.phone}
             </div>
             {customer.address && <p className="text-xs text-base-content/60">{customer.address}</p>}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold">{formatCurrency(customer.balance)}</span>
-              <button className="btn btn-ghost btn-sm min-h-[44px]" onClick={() => handleOpenEditModal(customer)}>
-                Tahrirlash
-              </button>
+            <div className="flex items-center justify-between border-t border-base-300/60 pt-2.5">
+              <span className={clsx('text-sm font-semibold', customer.balance < 0 && 'text-error', customer.balance > 0 && 'text-success')}>
+                {formatCurrency(customer.balance)}
+              </span>
+              <PermissionGate permission={PermissionCode.CUSTOMERS_UPDATE}>
+                <button
+                  className="btn btn-ghost btn-sm min-h-[44px]"
+                  onClick={(e) => { e.stopPropagation(); handleOpenEditModal(customer); }}
+                >
+                  Tahrirlash
+                </button>
+              </PermissionGate>
             </div>
           </div>
         )}

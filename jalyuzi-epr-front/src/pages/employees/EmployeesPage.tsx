@@ -31,6 +31,7 @@ import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { Select } from '../../components/ui/Select';
 import { SearchInput } from '../../components/ui/SearchInput';
+import { MetricCard } from '../../components/mobile';
 import { CredentialsModal } from './components/CredentialsModal';
 import { useHighlight } from '../../hooks/useHighlight';
 import { PermissionGate } from '../../components/common/PermissionGate';
@@ -104,7 +105,6 @@ export function EmployeesPage() {
 
   const { highlightId, clearHighlight } = useHighlight();
   const { hasPermission } = usePermission();
-  const hasSearch = useMemo(() => search.trim().length > 0, [search]);
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
@@ -495,100 +495,48 @@ export function EmployeesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="section-title">Xodimlar</h1>
-          <p className="section-subtitle">Xodimlar boshqaruvi</p>
+          <p className="section-subtitle hidden sm:block">Xodimlar boshqaruvi</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta xodim</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="pill">{totalElements} ta xodim</span>
-          <PermissionGate permission={PermissionCode.EMPLOYEES_CREATE}>
-            <button className="btn btn-primary" onClick={handleOpenNewModal}>
-              <Plus className="h-5 w-5" />
-              Yangi xodim
-            </button>
-          </PermissionGate>
-        </div>
+        <PermissionGate permission={PermissionCode.EMPLOYEES_CREATE}>
+          <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenNewModal}>
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Yangi xodim</span>
+            <span className="sm:hidden">Yangi</span>
+          </button>
+        </PermissionGate>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2.5">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Jami xodimlar</p>
-              <p className="text-xl font-bold">{totalElements}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-success/10 p-2.5">
-              <UserCheck className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Faol</p>
-              <p className="text-xl font-bold text-success">{activeCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-warning/10 p-2.5">
-              <Clock className="h-5 w-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Ta'tilda</p>
-              <p className="text-xl font-bold text-warning">{onLeaveCount}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-info/10 p-2.5">
-              <Shield className="h-5 w-5 text-info" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Tizim foydalanuvchilari</p>
-              <p className="text-xl font-bold text-info">
-                {employees.filter(e => e.hasUserAccount).length}
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <MetricCard title="Jami xodimlar" value={totalElements} icon={Users} color="primary" />
+        <MetricCard title="Faol" value={activeCount} icon={UserCheck} color="success" />
+        <MetricCard title="Ta'tilda" value={onLeaveCount} icon={Clock} color="warning" />
+        <MetricCard
+          title="Tizim foydalanuvchilari"
+          value={employees.filter((e) => e.hasUserAccount).length}
+          icon={Shield}
+          color="info"
+        />
       </div>
 
       {/* Search */}
-      <div className="surface-card p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
-              Qidiruv
-            </h2>
-            <p className="text-xs text-base-content/60">
-              {hasSearch ? "Qidiruv natijalari ko'rsatilmoqda" : 'Barcha xodimlar'}
-            </p>
-          </div>
-        </div>
-        <SearchInput
-          value={search}
-          onValueChange={(value) => {
-            setSearch(value);
-            setPage(0);
-          }}
-          label="Ism, telefon yoki lavozim"
-          placeholder="Qidirish..."
-          className="mt-4 max-w-md"
-        />
-      </div>
+      <SearchInput
+        value={search}
+        onValueChange={(value) => {
+          setSearch(value);
+          setPage(0);
+        }}
+        label="Qidirish"
+        hideLabel
+        placeholder="Ism, telefon yoki lavozim bo'yicha qidirish..."
+        className="w-full lg:max-w-md"
+      />
 
       {/* Employees Table */}
       <div className="relative">
@@ -618,17 +566,17 @@ export function EmployeesPage() {
           onPageChange={setPage}
           onPageSizeChange={handlePageSizeChange}
           renderMobileCard={(employee) => (
-            <div className="surface-panel flex flex-col gap-3 rounded-xl p-4">
+            <div className="surface-card flex flex-col gap-3 p-3.5">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="avatar placeholder">
                     <div className="w-10 rounded-full bg-primary/15 text-primary">
                       <span>{employee.fullName.charAt(0).toUpperCase()}</span>
                     </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">{employee.fullName}</p>
-                    <p className="text-xs text-base-content/60">{employee.position}</p>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{employee.fullName}</p>
+                    <p className="truncate text-xs text-base-content/60">{employee.position}</p>
                   </div>
                 </div>
                 <span className={clsx('badge badge-sm', EMPLOYEE_STATUSES[employee.status]?.color)}>
@@ -647,18 +595,26 @@ export function EmployeesPage() {
                     {employee.department}
                   </div>
                 )}
+                {employee.hasUserAccount && (
+                  <div className="flex items-center gap-2 text-sm text-success">
+                    <Shield className="h-4 w-4" />
+                    {employee.username}
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-base-200">
+              <div className="flex items-center justify-between border-t border-base-300/60 pt-2.5">
                 <span className="font-semibold">
                   {employee.salary ? formatCurrency(employee.salary) : '—'}
                 </span>
-                <button
-                  className="btn btn-ghost btn-sm min-h-[44px]"
-                  onClick={() => handleOpenEditModal(employee)}
-                >
-                  Tahrirlash
-                </button>
+                <PermissionGate permission={PermissionCode.EMPLOYEES_UPDATE}>
+                  <button
+                    className="btn btn-ghost btn-sm min-h-[44px]"
+                    onClick={() => handleOpenEditModal(employee)}
+                  >
+                    Tahrirlash
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           )}

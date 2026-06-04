@@ -14,6 +14,8 @@ import {
   RotateCcw,
   FileText,
   Hash,
+  SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { purchasesApi, type PurchaseFilters } from '../../api/purchases.api';
@@ -38,6 +40,7 @@ import { useNotificationsStore } from '../../store/notificationsStore';
 import { useHighlight } from '../../hooks/useHighlight';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
+import { MetricCard } from '../../components/mobile';
 import type {
   Supplier,
   PurchaseOrder,
@@ -77,6 +80,9 @@ export function PurchasesPage() {
 
   // Suppliers for filter dropdown
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+
+  // Mobile filter toggle
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Purchase modal state
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
@@ -467,91 +473,41 @@ export function PurchasesPage() {
   ], []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Xaridlar</h1>
-          <p className="section-subtitle">Ta'minotchilardan mahsulot xaridlari</p>
+          <p className="section-subtitle hidden sm:block">Ta'minotchilardan mahsulot xaridlari</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta xarid</p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="pill">{totalElements} ta xarid</span>
-          <ExportButtons
-            onExportExcel={() => handleExport('excel')}
-            onExportPdf={() => handleExport('pdf')}
-            disabled={purchases.length === 0}
-            loading={refreshing}
-          />
+          <span className="pill hidden sm:inline-flex">{totalElements} ta xarid</span>
+          <div className="hidden sm:block">
+            <ExportButtons
+              onExportExcel={() => handleExport('excel')}
+              onExportPdf={() => handleExport('pdf')}
+              disabled={purchases.length === 0}
+              loading={refreshing}
+            />
+          </div>
           <PermissionGate permission={PermissionCode.PURCHASES_CREATE}>
-            <button className="btn btn-primary" onClick={handleOpenPurchaseModal}>
+            <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenPurchaseModal}>
               <Plus className="h-5 w-5" />
-              Yangi xarid
+              <span className="hidden sm:inline">Yangi xarid</span>
+              <span className="sm:hidden">Yangi</span>
             </button>
           </PermissionGate>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-2.5">
-              <ShoppingCart className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Jami xaridlar</p>
-              <p className="text-xl font-bold">{purchaseStats?.totalPurchases || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-info/10 p-2.5">
-              <Calendar className="h-5 w-5 text-info" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Bugungi</p>
-              <p className="text-xl font-bold">{purchaseStats?.todayPurchases || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-secondary/10 p-2.5">
-              <FileText className="h-5 w-5 text-secondary" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Oylik</p>
-              <p className="text-xl font-bold">{purchaseStats?.monthPurchases || 0}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-success/10 p-2.5">
-              <TrendingUp className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Jami summa</p>
-              <p className="text-lg font-bold">{formatCurrency(purchaseStats?.totalAmount || 0)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="surface-card p-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-error/10 p-2.5">
-              <Wallet className="h-5 w-5 text-error" />
-            </div>
-            <div>
-              <p className="text-xs text-base-content/60">Jami qarz</p>
-              <p className="text-lg font-bold text-error">{formatCurrency(purchaseStats?.totalDebt || 0)}</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
+        <MetricCard title="Jami xaridlar" value={purchaseStats?.totalPurchases || 0} icon={ShoppingCart} color="primary" />
+        <MetricCard title="Bugungi" value={purchaseStats?.todayPurchases || 0} icon={Calendar} color="info" />
+        <MetricCard title="Oylik" value={purchaseStats?.monthPurchases || 0} icon={FileText} color="secondary" />
+        <MetricCard title="Jami summa" value={formatCurrency(purchaseStats?.totalAmount || 0)} icon={TrendingUp} color="success" />
+        <MetricCard title="Jami qarz" value={formatCurrency(purchaseStats?.totalDebt || 0)} icon={Wallet} color="error" />
       </div>
 
       {/* Pending Returns Info */}
@@ -564,12 +520,33 @@ export function PurchasesPage() {
         </div>
       )}
 
-      {/* Filters */}
-      <div className="surface-card p-4">
+      {/* Filter toggle + Yangilash (mobile) */}
+      <div className="flex items-center gap-2 lg:hidden">
+        <button
+          onClick={() => setShowMobileFilters((s) => !s)}
+          className="btn btn-sm flex-1 justify-between border-base-300 bg-base-100"
+        >
+          <span className="flex items-center gap-1.5">
+            <SlidersHorizontal className="h-4 w-4" />
+            Filtrlar
+            {hasActiveFilters && <span className="badge badge-primary badge-sm">!</span>}
+          </span>
+          <ChevronDown className={clsx('h-4 w-4 transition-transform', showMobileFilters && 'rotate-180')} />
+        </button>
+        <button
+          className="btn btn-sm border-base-300 bg-base-100"
+          onClick={() => loadPurchases()}
+        >
+          <RefreshCw className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Filters — mobile'da yig'iladi, desktop'da doim ochiq */}
+      <div className={clsx('surface-card p-4', !showMobileFilters && 'hidden lg:block')}>
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex flex-wrap items-end gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:flex lg:flex-wrap lg:items-end">
             {/* Date Range */}
-            <div>
+            <div className="col-span-2 sm:col-span-1">
               <span className="block mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
                 Davr
               </span>
@@ -593,7 +570,7 @@ export function PurchasesPage() {
                 value: supplier.id,
                 label: supplier.name,
               }))}
-              className="w-44"
+              className="lg:w-44"
             />
 
             {/* Status Filter */}
@@ -610,7 +587,7 @@ export function PurchasesPage() {
                 { value: 'DRAFT', label: 'Qoralama' },
                 { value: 'CANCELLED', label: 'Bekor qilingan' },
               ]}
-              className="w-36"
+              className="lg:w-36"
             />
 
             {/* Payment Status Filter */}
@@ -627,14 +604,14 @@ export function PurchasesPage() {
                 { value: 'PARTIAL', label: 'Qisman' },
                 { value: 'UNPAID', label: "To'lanmagan" },
               ]}
-              className="w-36"
+              className="lg:w-36"
             />
           </div>
 
           <div className="flex items-center gap-2">
             {hasActiveFilters && (
               <button
-                className="btn btn-ghost btn-sm"
+                className="btn btn-ghost btn-sm flex-1 lg:flex-none"
                 onClick={handleClearFilters}
               >
                 <X className="h-4 w-4" />
@@ -642,7 +619,7 @@ export function PurchasesPage() {
               </button>
             )}
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm hidden lg:inline-flex"
               onClick={() => loadPurchases()}
             >
               <RefreshCw className="h-4 w-4" />
@@ -685,7 +662,7 @@ export function PurchasesPage() {
         onPageSizeChange={handlePageSizeChange}
         renderMobileCard={(purchase) => (
           <div
-            className="surface-panel flex flex-col gap-3 rounded-xl p-4 cursor-pointer"
+            className="surface-card press-scale tap-transparent flex flex-col gap-3 p-3.5 cursor-pointer"
             onClick={() => handleRowClick(purchase)}
           >
             <div className="flex items-start justify-between gap-3">

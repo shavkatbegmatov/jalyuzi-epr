@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, Receipt, Eye, XCircle, Calendar, User, X, CreditCard, Banknote, ArrowRightLeft, Layers } from 'lucide-react';
+import { ShoppingCart, Receipt, Eye, XCircle, Calendar, User, X, CreditCard, Banknote, ArrowRightLeft, Layers, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { salesApi } from '../../api/sales.api';
@@ -52,9 +52,18 @@ export function SalesPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
   const { notifications } = useNotificationsStore();
   const { highlightId, clearHighlight } = useHighlight();
   const { hasPermission } = usePermission();
+
+  const activeFilters = useMemo(() => {
+    let count = 0;
+    if (paymentStatusFilter !== '') count += 1;
+    if (statusFilter !== '') count += 1;
+    if (dateRangePreset !== 'all') count += 1;
+    return count;
+  }, [paymentStatusFilter, statusFilter, dateRangePreset]);
 
   const hasFilters = useMemo(
     () => (
@@ -331,32 +340,56 @@ export function SalesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Sotuvlar</h1>
-          <p className="section-subtitle">Sotuvlar tarixi</p>
+          <p className="section-subtitle hidden sm:block">Sotuvlar tarixi</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta sotuv</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="pill">{totalElements} ta sotuv</span>
-          <ExportButtons
-            onExportExcel={() => handleExport('excel')}
-            onExportPdf={() => handleExport('pdf')}
-            disabled={sales.length === 0}
-            loading={refreshing}
-          />
+        <div className="flex items-center gap-2">
+          <span className="pill hidden lg:inline-flex">{totalElements} ta sotuv</span>
+          <div className="hidden sm:block">
+            <ExportButtons
+              onExportExcel={() => handleExport('excel')}
+              onExportPdf={() => handleExport('pdf')}
+              disabled={sales.length === 0}
+              loading={refreshing}
+            />
+          </div>
           <PermissionGate permission={PermissionCode.SALES_CREATE}>
-            <Link to="/pos" className="btn btn-primary">
+            <Link to="/pos" className="btn btn-primary btn-sm lg:btn-md">
               <ShoppingCart className="h-5 w-5" />
-              Kassa (POS)
+              <span className="hidden sm:inline">Kassa (POS)</span>
+              <span className="sm:hidden">Kassa</span>
             </Link>
           </PermissionGate>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="surface-card p-4">
+      {/* Search + filter toggle */}
+      <div className="flex gap-2">
+        <SearchInput
+          value={search}
+          onValueChange={setSearch}
+          label="Faktura raqami"
+          hideLabel
+          placeholder="Faktura raqami bo'yicha qidirish..."
+          className="flex-1"
+        />
+        <button
+          onClick={() => setShowMobileFilters((s) => !s)}
+          className="btn h-12 gap-1.5 border-base-300 bg-base-100 lg:hidden"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {activeFilters > 0 && <span className="badge badge-primary badge-sm">{activeFilters}</span>}
+          <ChevronDown className={clsx('h-4 w-4 transition-transform', showMobileFilters && 'rotate-180')} />
+        </button>
+      </div>
+
+      {/* Filters — mobile'da yig'iladi, desktop'da doim ochiq */}
+      <div className={clsx('surface-card p-4', !showMobileFilters && 'hidden lg:block')}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">Filtrlar</h2>
@@ -369,7 +402,7 @@ export function SalesPage() {
             </button>
           )}
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <span className="block mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
               Davr
@@ -380,12 +413,6 @@ export function SalesPage() {
               onChange={handleDateRangeChange}
             />
           </div>
-          <SearchInput
-            value={search}
-            onValueChange={setSearch}
-            label="Faktura raqami"
-            placeholder="INV... bo'yicha qidirish"
-          />
           <Select
             label="To'lov holati"
             value={paymentStatusFilter || undefined}
@@ -443,39 +470,41 @@ export function SalesPage() {
         onPageChange={setPage}
         onPageSizeChange={handlePageSizeChange}
         renderMobileCard={(sale) => (
-          <div className={clsx('surface-panel flex flex-col gap-3 rounded-xl p-4', sale.status === 'CANCELLED' && 'opacity-60')}>
+          <div className={clsx('surface-card flex flex-col gap-3 p-3.5', sale.status === 'CANCELLED' && 'opacity-60')}>
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <Receipt className="h-4 w-4 text-primary" />
-                  <span className="font-mono text-sm font-medium">{sale.invoiceNumber}</span>
+                  <Receipt className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate font-mono text-sm font-medium">{sale.invoiceNumber}</span>
                 </div>
                 <p className="mt-1 text-xs text-base-content/60">{formatDateTime(sale.saleDate)}</p>
               </div>
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex shrink-0 flex-col items-end gap-1">
                 {getPaymentStatusBadge(sale.paymentStatus)}
                 {getSaleStatusBadge(sale.status)}
               </div>
             </div>
             {sale.customerName && (
               <div className="flex items-center gap-2 text-sm text-base-content/70">
-                <User className="h-4 w-4" />
-                {sale.customerName}
+                <User className="h-4 w-4 shrink-0" />
+                <span className="truncate">{sale.customerName}</span>
               </div>
             )}
-            <div className="flex items-center justify-between border-t border-base-200 pt-3">
+            <div className="flex items-center justify-between border-t border-base-300/60 pt-2.5">
               <div>
                 <div className="font-semibold">{formatCurrency(sale.totalAmount)}</div>
                 {sale.debtAmount > 0 && <div className="text-xs text-error">Qarz: {formatCurrency(sale.debtAmount)}</div>}
               </div>
               <div className="flex items-center gap-1">
-                <button className="btn btn-ghost btn-sm" onClick={() => handleViewSale(sale)}>
-                  <Eye className="h-4 w-4" />
-                  Ko'rish
-                </button>
+                <PermissionGate permission={PermissionCode.SALES_VIEW}>
+                  <button className="btn btn-ghost btn-sm min-h-[44px]" onClick={() => handleViewSale(sale)}>
+                    <Eye className="h-4 w-4" />
+                    Ko'rish
+                  </button>
+                </PermissionGate>
                 {sale.status === 'COMPLETED' && (
                   <PermissionGate permission={PermissionCode.SALES_REFUND}>
-                    <button className="btn btn-ghost btn-sm text-error" onClick={() => handleOpenCancelModal(sale)}>
+                    <button className="btn btn-ghost btn-sm min-h-[44px] min-w-[44px] text-error" onClick={() => handleOpenCancelModal(sale)}>
                       <XCircle className="h-4 w-4" />
                     </button>
                   </PermissionGate>

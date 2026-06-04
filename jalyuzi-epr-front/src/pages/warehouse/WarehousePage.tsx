@@ -13,6 +13,8 @@ import {
   RefreshCw,
   Truck,
   ExternalLink,
+  SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { warehouseApi } from '../../api/warehouse.api';
@@ -27,6 +29,7 @@ import { ExportButtons } from '../../components/common/ExportButtons';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
+import { MetricCard, FilterChipBar, type FilterChip } from '../../components/mobile';
 import {
   formatNumber,
   formatCurrency,
@@ -58,6 +61,7 @@ export function WarehousePage() {
   // Filters
   const [movementTypeFilter, setMovementTypeFilter] = useState<MovementType | ''>('');
   const [referenceTypeFilter, setReferenceTypeFilter] = useState('');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Adjustment modal
   const [showAdjustmentModal, setShowAdjustmentModal] = useState(false);
@@ -161,6 +165,22 @@ export function WarehousePage() {
       ),
     },
   ], []);
+
+  // Harakat turi chiplari (mobile filter)
+  const movementChips: FilterChip[] = useMemo(
+    () => [
+      { key: '', label: 'Barchasi' },
+      ...Object.entries(MOVEMENT_TYPES).map(([key, { label }]) => ({ key, label })),
+    ],
+    []
+  );
+
+  const activeFilters = useMemo(() => {
+    let count = 0;
+    if (movementTypeFilter) count += 1;
+    if (referenceTypeFilter) count += 1;
+    return count;
+  }, [movementTypeFilter, referenceTypeFilter]);
 
   const handlePageSizeChange = (newSize: number) => {
     setPageSize(newSize);
@@ -332,23 +352,25 @@ export function WarehousePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div>
           <h1 className="section-title">Ombor</h1>
-          <p className="section-subtitle">Zaxira nazorati va kirim-chiqim</p>
+          <p className="section-subtitle hidden sm:block">Zaxira nazorati va kirim-chiqim</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ExportButtons
-            onExportExcel={() => handleExport('excel')}
-            onExportPdf={() => handleExport('pdf')}
-            disabled={movements.length === 0}
-            loading={refreshingMovements}
-          />
+          <div className="hidden sm:block">
+            <ExportButtons
+              onExportExcel={() => handleExport('excel')}
+              onExportPdf={() => handleExport('pdf')}
+              disabled={movements.length === 0}
+              loading={refreshingMovements}
+            />
+          </div>
           <PermissionGate permission={PermissionCode.WAREHOUSE_ADJUST}>
             <button
-              className="btn btn-success"
+              className="btn btn-success btn-sm flex-1 sm:flex-none lg:btn-md"
               onClick={() => handleOpenAdjustmentModal('IN')}
             >
               <Plus className="h-5 w-5" />
@@ -357,7 +379,7 @@ export function WarehousePage() {
           </PermissionGate>
           <PermissionGate permission={PermissionCode.WAREHOUSE_ADJUST}>
             <button
-              className="btn btn-error"
+              className="btn btn-error btn-sm flex-1 sm:flex-none lg:btn-md"
               onClick={() => handleOpenAdjustmentModal('OUT')}
             >
               <Minus className="h-5 w-5" />
@@ -366,7 +388,7 @@ export function WarehousePage() {
           </PermissionGate>
           <PermissionGate permission={PermissionCode.WAREHOUSE_ADJUST}>
             <button
-              className="btn btn-info btn-outline"
+              className="btn btn-info btn-outline btn-sm flex-1 sm:flex-none lg:btn-md"
               onClick={() => handleOpenAdjustmentModal('ADJUSTMENT')}
             >
               <Settings className="h-5 w-5" />
@@ -378,98 +400,77 @@ export function WarehousePage() {
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <div className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2">
-                <Package className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-base-content/60">Jami mahsulotlar</p>
-                <p className="text-xl font-bold">{formatNumber(stats.totalProducts)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-success/10 p-2">
-                <TrendingUp className="h-5 w-5 text-success" />
-              </div>
-              <div>
-                <p className="text-xs text-base-content/60">Jami zaxira</p>
-                <p className="text-xl font-bold">{formatNumber(stats.totalStock)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-info/10 p-2">
-                <ArrowDownCircle className="h-5 w-5 text-info" />
-              </div>
-              <div>
-                <p className="text-xs text-base-content/60">Bugungi kirim</p>
-                <p className="text-xl font-bold text-success">+{formatNumber(stats.todayIncoming)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-error/10 p-2">
-                <ArrowUpCircle className="h-5 w-5 text-error" />
-              </div>
-              <div>
-                <p className="text-xs text-base-content/60">Bugungi chiqim</p>
-                <p className="text-xl font-bold text-error">-{formatNumber(stats.todayOutgoing)}</p>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          <MetricCard title="Jami mahsulotlar" value={formatNumber(stats.totalProducts)} icon={Package} color="primary" />
+          <MetricCard title="Jami zaxira" value={formatNumber(stats.totalStock)} icon={TrendingUp} color="success" />
+          <MetricCard title="Bugungi kirim" value={`+${formatNumber(stats.todayIncoming)}`} icon={ArrowDownCircle} color="info" />
+          <MetricCard title="Bugungi chiqim" value={`-${formatNumber(stats.todayOutgoing)}`} icon={ArrowUpCircle} color="error" />
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Movements Table */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Filters */}
-          <div className="surface-card p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
-                Kirim-chiqim tarixi
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <Select
-                  value={movementTypeFilter || undefined}
-                  onChange={(val) => {
-                    setMovementTypeFilter((val as MovementType | '') || '');
-                    setPage(0);
-                  }}
-                  options={[
-                    { value: '', label: 'Barcha turlar' },
-                    ...Object.entries(MOVEMENT_TYPES).map(([key, { label }]) => ({
-                      value: key,
-                      label,
-                    })),
-                  ]}
-                  placeholder="Barcha turlar"
-                />
-                <Select
-                  value={referenceTypeFilter || undefined}
-                  onChange={(val) => {
-                    setReferenceTypeFilter((val as string) || '');
-                    setPage(0);
-                  }}
-                  options={[
-                    { value: '', label: 'Barcha manbalar' },
-                    ...Object.entries(REFERENCE_TYPES).map(([key, { label }]) => ({
-                      value: key,
-                      label,
-                    })),
-                  ]}
-                  placeholder="Barcha manbalar"
-                />
-              </div>
+          {/* Section title + mobile filter toggle */}
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
+              Kirim-chiqim tarixi
+            </h2>
+            <button
+              onClick={() => setShowMobileFilters((s) => !s)}
+              className="btn btn-sm gap-1.5 border-base-300 bg-base-100 lg:hidden"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {activeFilters > 0 && <span className="badge badge-primary badge-sm">{activeFilters}</span>}
+              <ChevronDown className={clsx('h-4 w-4 transition-transform', showMobileFilters && 'rotate-180')} />
+            </button>
+          </div>
+
+          {/* Movement type chips — mobile'da doim ko'rinadi */}
+          <FilterChipBar
+            chips={movementChips}
+            value={movementTypeFilter}
+            onChange={(key) => {
+              setMovementTypeFilter(key as MovementType | '');
+              setPage(0);
+            }}
+            className="lg:hidden"
+          />
+
+          {/* Filters — mobile'da yig'iladi, desktop'da doim ochiq */}
+          <div className={clsx('surface-card p-4', !showMobileFilters && 'hidden lg:block')}>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center lg:justify-end">
+              <Select
+                value={movementTypeFilter || undefined}
+                onChange={(val) => {
+                  setMovementTypeFilter((val as MovementType | '') || '');
+                  setPage(0);
+                }}
+                options={[
+                  { value: '', label: 'Barcha turlar' },
+                  ...Object.entries(MOVEMENT_TYPES).map(([key, { label }]) => ({
+                    value: key,
+                    label,
+                  })),
+                ]}
+                placeholder="Barcha turlar"
+                className="hidden lg:block"
+              />
+              <Select
+                value={referenceTypeFilter || undefined}
+                onChange={(val) => {
+                  setReferenceTypeFilter((val as string) || '');
+                  setPage(0);
+                }}
+                options={[
+                  { value: '', label: 'Barcha manbalar' },
+                  ...Object.entries(REFERENCE_TYPES).map(([key, { label }]) => ({
+                    value: key,
+                    label,
+                  })),
+                ]}
+                placeholder="Barcha manbalar"
+              />
             </div>
           </div>
 
@@ -497,7 +498,7 @@ export function WarehousePage() {
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}
             renderMobileCard={(movement) => (
-              <div className="surface-panel flex flex-col gap-2 rounded-xl p-4">
+              <div className="surface-card flex flex-col gap-2 p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{movement.productName}</p>
@@ -515,6 +516,14 @@ export function WarehousePage() {
                       {movement.quantity > 0 ? '+' : ''}{movement.quantity}
                     </span>
                   </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="badge badge-outline badge-sm">
+                    {MOVEMENT_TYPES[movement.movementType]?.label}
+                  </span>
+                  <span className="badge badge-ghost badge-sm">
+                    {REFERENCE_TYPES[movement.referenceType as keyof typeof REFERENCE_TYPES]?.label || movement.referenceType}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-base-content/60">

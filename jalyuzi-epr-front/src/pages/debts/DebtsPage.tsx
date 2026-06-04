@@ -25,6 +25,7 @@ import { Select } from '../../components/ui/Select';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ModalPortal } from '../../components/common/Modal';
 import { ExportButtons } from '../../components/common/ExportButtons';
+import { FilterChipBar, type FilterChip, MetricCard, EmptyState } from '../../components/mobile';
 import type { Debt, DebtStatus, Payment, PaymentMethod } from '../../types';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { useHighlight } from '../../hooks/useHighlight';
@@ -526,46 +527,71 @@ export function DebtsPage() {
     </div>
   );
 
+  const tabChips: FilterChip[] = tabs.map((tab) => ({
+    key: tab.id,
+    label: tab.label,
+    icon: tab.icon,
+    count: tab.id === 'overdue' ? stats.overdueCount : undefined,
+    activeClassName: tab.id === 'overdue' && stats.overdueCount > 0
+      ? 'bg-error text-error-content shadow-card'
+      : undefined,
+  }));
+
+  const handleTabChange = (id: TabType) => {
+    setActiveTab(id);
+    setSelectedDebt(null);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Qarzlar</h1>
-          <p className="section-subtitle">Qarzlar nazorati va to'lovlar</p>
+          <p className="section-subtitle hidden sm:block">Qarzlar nazorati va to'lovlar</p>
+          <p className="text-sm font-semibold text-error sm:hidden">
+            Jami: {formatCurrency(stats.totalActiveDebt)}
+          </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="pill">{stats.totalDebtsCount} ta faol qarz</span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <span className="pill hidden lg:inline-flex">{stats.totalDebtsCount} ta faol qarz</span>
           {stats.overdueCount > 0 && (
-            <span className="pill bg-error/10 text-error">
+            <span className="pill hidden bg-error/10 text-error lg:inline-flex">
               {stats.overdueCount} ta muddati o'tgan
             </span>
           )}
-          <span className="pill bg-error/10 text-error font-semibold">
+          <span className="pill hidden bg-error/10 font-semibold text-error lg:inline-flex">
             Jami: {formatCurrency(stats.totalActiveDebt)}
           </span>
-          <ExportButtons
-            onExportExcel={() => handleExport('excel')}
-            onExportPdf={() => handleExport('pdf')}
-            disabled={debts.length === 0}
-            loading={refreshing}
-          />
+          <div className="hidden sm:block">
+            <ExportButtons
+              onExportExcel={() => handleExport('excel')}
+              onExportPdf={() => handleExport('pdf')}
+              disabled={debts.length === 0}
+              loading={refreshing}
+            />
+          </div>
         </div>
       </div>
 
+      {/* Tabs — mobile chip bar */}
+      <FilterChipBar
+        chips={tabChips}
+        value={activeTab}
+        onChange={(key) => handleTabChange(key as TabType)}
+        className="lg:hidden"
+      />
+
       {/* Tabs */}
       <div className="surface-card">
-        <div className="flex overflow-x-auto border-b border-base-200">
+        <div className="hidden overflow-x-auto border-b border-base-200 lg:flex">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  setSelectedDebt(null);
-                }}
+                onClick={() => handleTabChange(tab.id)}
                 className={clsx(
                   'flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors',
                   isActive
@@ -584,21 +610,21 @@ export function DebtsPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* Tab 1: Umumiy ro'yxat */}
           {activeTab === 'all' && (
             <div className="space-y-4">
               {/* Filters */}
               <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                   <SearchInput
                     value={searchQuery}
                     onValueChange={setSearchQuery}
-                    placeholder="Qidirish..."
+                    placeholder="Mijoz, telefon yoki faktura..."
                     hideLabel
                     ariaLabel="Qidirish"
                     leadingIcon={<Phone className="h-5 w-5" />}
-                    className="w-48"
+                    className="w-full sm:w-56"
                   />
                   <Select
                     value={statusFilter || undefined}
@@ -656,21 +682,21 @@ export function DebtsPage() {
                     renderMobileCard={(debt) => (
                       <div
                         className={clsx(
-                          'surface-panel flex flex-col gap-3 rounded-xl p-4 cursor-pointer transition',
+                          'surface-card flex flex-col gap-3 p-3.5 transition',
                           debt.overdue && 'border-error/30',
                           selectedDebt?.id === debt.id && 'ring-2 ring-primary'
                         )}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-semibold">{debt.customerName}</p>
-                            <p className="text-xs text-base-content/60">
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold">{debt.customerName}</p>
+                            <p className="truncate text-xs text-base-content/60">
                               {debt.invoiceNumber || 'Fakturasiz'}
                             </p>
                           </div>
                           <span
                             className={clsx(
-                              'badge badge-sm',
+                              'badge badge-sm shrink-0',
                               debt.status === 'PAID' && 'badge-success',
                               debt.status === 'ACTIVE' && !debt.overdue && 'badge-warning',
                               (debt.status === 'OVERDUE' || debt.overdue) && 'badge-error'
@@ -679,7 +705,7 @@ export function DebtsPage() {
                             {debt.overdue ? "Muddati o'tgan" : DEBT_STATUSES[debt.status]?.label}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between border-t border-base-300/60 pt-2.5">
                           <div className="text-sm text-base-content/70">
                             Qoldiq: <span className="font-semibold text-error">{formatCurrency(debt.remainingAmount)}</span>
                           </div>
@@ -710,9 +736,8 @@ export function DebtsPage() {
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-3">
                   {customerDebtSummaries.length === 0 ? (
-                    <div className="surface-soft rounded-xl p-8 text-center">
-                      <Users className="h-12 w-12 mx-auto mb-3 text-base-content/30" />
-                      <p className="text-base-content/60">Qarzdor mijozlar yo'q</p>
+                    <div className="surface-card">
+                      <EmptyState icon={Users} title="Qarzdor mijozlar yo'q" />
                     </div>
                   ) : (
                     customerDebtSummaries.map((customer) => (
@@ -832,9 +857,8 @@ export function DebtsPage() {
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-2">
                   {overdueDebts.length === 0 ? (
-                    <div className="surface-soft rounded-xl p-8 text-center">
-                      <CheckCircle className="h-12 w-12 mx-auto mb-3 text-success" />
-                      <p className="text-base-content/60">Muddati o'tgan qarzlar yo'q</p>
+                    <div className="surface-card">
+                      <EmptyState icon={CheckCircle} title="Muddati o'tgan qarzlar yo'q" description="Barcha qarzlar muddatida" />
                     </div>
                   ) : (
                     overdueDebts.map((debt) => {
@@ -899,62 +923,11 @@ export function DebtsPage() {
           {activeTab === 'stats' && (
             <div className="space-y-6">
               {/* Summary Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="surface-soft rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-error/10 flex items-center justify-center">
-                      <Wallet className="h-5 w-5 text-error" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-base-content/60">Jami qarz</p>
-                      <p className="text-lg font-bold text-error">
-                        {formatCurrency(stats.totalActiveDebt)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="surface-soft rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-success" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-base-content/60">Bugun to'langan</p>
-                      <p className="text-lg font-bold text-success">
-                        {formatCurrency(stats.paidToday)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="surface-soft rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <TrendingUp className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-base-content/60">Bu hafta</p>
-                      <p className="text-lg font-bold">
-                        {formatCurrency(stats.paidThisWeek)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="surface-soft rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-info/10 flex items-center justify-center">
-                      <TrendingDown className="h-5 w-5 text-info" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-base-content/60">Bu oy</p>
-                      <p className="text-lg font-bold">
-                        {formatCurrency(stats.paidThisMonth)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+                <MetricCard title="Jami qarz" value={formatCurrency(stats.totalActiveDebt)} icon={Wallet} color="error" />
+                <MetricCard title="Bugun to'langan" value={formatCurrency(stats.paidToday)} icon={TrendingUp} color="success" />
+                <MetricCard title="Bu hafta" value={formatCurrency(stats.paidThisWeek)} icon={TrendingUp} color="primary" />
+                <MetricCard title="Bu oy" value={formatCurrency(stats.paidThisMonth)} icon={TrendingDown} color="info" />
               </div>
 
               {/* Overdue Summary */}

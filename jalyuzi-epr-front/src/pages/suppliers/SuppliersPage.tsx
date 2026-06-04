@@ -31,6 +31,7 @@ import { useNotificationsStore } from '../../store/notificationsStore';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { useHighlight } from '../../hooks/useHighlight';
+import { MetricCard, SegmentedControl, type SegmentOption } from '../../components/mobile';
 import type {
   Supplier,
   SupplierRequest,
@@ -117,6 +118,15 @@ export function SuppliersPage() {
   const { highlightId, clearHighlight } = useHighlight();
 
   const hasSearch = useMemo(() => search.trim().length > 0, [search]);
+
+  // Tab segmentlari (mobile + desktop)
+  const tabOptions: SegmentOption<TabType>[] = useMemo(
+    () => [
+      { value: 'suppliers', label: "Ta'minotchilar", icon: Truck },
+      { value: 'purchases', label: 'Xaridlar', icon: ShoppingCart },
+    ],
+    []
+  );
 
   // Calculate totals
   const cartTotal = useMemo(() =>
@@ -594,31 +604,38 @@ export function SuppliersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Ta'minotchilar</h1>
-          <p className="section-subtitle">Hamkorlar va yetkazib beruvchilar</p>
+          <p className="section-subtitle hidden sm:block">Hamkorlar va yetkazib beruvchilar</p>
+          <p className="text-sm text-base-content/55 sm:hidden">
+            {activeTab === 'suppliers'
+              ? `${totalElements} ta ta'minotchi`
+              : `${purchasesTotalElements} ta xarid`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           {activeTab === 'suppliers' ? (
             <>
-              <span className="pill">{totalElements} ta ta'minotchi</span>
+              <span className="pill hidden sm:inline-flex">{totalElements} ta ta'minotchi</span>
               <PermissionGate permission={PermissionCode.SUPPLIERS_CREATE}>
-                <button className="btn btn-primary" onClick={handleOpenNewModal}>
+                <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenNewModal}>
                   <Plus className="h-5 w-5" />
-                  Yangi ta'minotchi
+                  <span className="hidden sm:inline">Yangi ta'minotchi</span>
+                  <span className="sm:hidden">Yangi</span>
                 </button>
               </PermissionGate>
             </>
           ) : (
             <>
-              <span className="pill">{purchasesTotalElements} ta xarid</span>
+              <span className="pill hidden sm:inline-flex">{purchasesTotalElements} ta xarid</span>
               <PermissionGate permission={PermissionCode.PURCHASES_CREATE}>
-                <button className="btn btn-primary" onClick={handleOpenPurchaseModal}>
+                <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenPurchaseModal}>
                   <Plus className="h-5 w-5" />
-                  Yangi xarid
+                  <span className="hidden sm:inline">Yangi xarid</span>
+                  <span className="sm:hidden">Yangi</span>
                 </button>
               </PermissionGate>
             </>
@@ -626,97 +643,38 @@ export function SuppliersPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="tabs tabs-boxed bg-base-200 p-1 w-fit">
-        <button
-          className={clsx('tab', activeTab === 'suppliers' && 'tab-active')}
-          onClick={() => setActiveTab('suppliers')}
-        >
-          <Truck className="h-4 w-4 mr-2" />
-          Ta'minotchilar
-        </button>
-        <button
-          className={clsx('tab', activeTab === 'purchases' && 'tab-active')}
-          onClick={() => setActiveTab('purchases')}
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Xaridlar
-        </button>
-      </div>
+      {/* Tabs — segment almashtirgich */}
+      <SegmentedControl
+        options={tabOptions}
+        value={activeTab}
+        onChange={setActiveTab}
+        className="lg:w-fit"
+      />
 
       {/* Tab Content */}
       {activeTab === 'suppliers' ? (
         <>
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2.5">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Jami ta'minotchilar</p>
-                  <p className="text-xl font-bold">{totalElements}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-warning/10 p-2.5">
-                  <AlertTriangle className="h-5 w-5 text-warning" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Qarzli ta'minotchilar</p>
-                  <p className="text-xl font-bold">{suppliersWithDebt.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-error/10 p-2.5">
-                  <Wallet className="h-5 w-5 text-error" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Jami qarz</p>
-                  <p className="text-xl font-bold text-error">{formatCurrency(totalDebt)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-success/10 p-2.5">
-                  <CreditCard className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Faol hamkorlar</p>
-                  <p className="text-xl font-bold text-success">{totalElements - suppliersWithDebt.length}</p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+            <MetricCard title="Jami ta'minotchilar" value={totalElements} icon={Users} color="primary" />
+            <MetricCard title="Qarzli ta'minotchilar" value={suppliersWithDebt.length} icon={AlertTriangle} color="warning" />
+            <MetricCard title="Jami qarz" value={formatCurrency(totalDebt)} icon={Wallet} color="error" />
+            <MetricCard title="Faol hamkorlar" value={totalElements - suppliersWithDebt.length} icon={CreditCard} color="success" />
           </div>
 
           {/* Search */}
-          <div className="surface-card p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
-                  Qidiruv
-                </h2>
-                <p className="text-xs text-base-content/60">
-                  {hasSearch ? "Qidiruv natijalari ko'rsatilmoqda" : "Barcha ta'minotchilar"}
-                </p>
-              </div>
-            </div>
+          <div>
             <SearchInput
               value={search}
               onValueChange={handleSearchChange}
               label="Nom, telefon yoki email"
-              placeholder="Qidirish..."
-              className="mt-4 max-w-md"
+              hideLabel
+              placeholder="Nom, telefon yoki email bo'yicha qidirish..."
+              className="lg:max-w-md"
             />
+            {hasSearch && (
+              <p className="mt-2 text-xs text-base-content/55">Qidiruv natijalari ko'rsatilmoqda</p>
+            )}
           </div>
 
           {/* Suppliers Table */}
@@ -747,7 +705,7 @@ export function SuppliersPage() {
             onPageChange={setPage}
             onPageSizeChange={handlePageSizeChange}
             renderMobileCard={(supplier) => (
-              <div className="surface-panel flex flex-col gap-3 rounded-xl p-4">
+              <div className="surface-card flex flex-col gap-3 p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="avatar placeholder">
@@ -811,54 +769,11 @@ export function SuppliersPage() {
       ) : (
         <>
           {/* Purchase Stats */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2.5">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Jami xaridlar</p>
-                  <p className="text-xl font-bold">{purchaseStats?.totalPurchases || 0}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-info/10 p-2.5">
-                  <Calendar className="h-5 w-5 text-info" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Bugungi xaridlar</p>
-                  <p className="text-xl font-bold">{purchaseStats?.todayPurchases || 0}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-success/10 p-2.5">
-                  <TrendingUp className="h-5 w-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Jami summa</p>
-                  <p className="text-xl font-bold">{formatCurrency(purchaseStats?.totalAmount || 0)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="surface-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-error/10 p-2.5">
-                  <Wallet className="h-5 w-5 text-error" />
-                </div>
-                <div>
-                  <p className="text-xs text-base-content/60">Jami qarz</p>
-                  <p className="text-xl font-bold text-error">{formatCurrency(purchaseStats?.totalDebt || 0)}</p>
-                </div>
-              </div>
-            </div>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+            <MetricCard title="Jami xaridlar" value={purchaseStats?.totalPurchases || 0} icon={ShoppingCart} color="primary" />
+            <MetricCard title="Bugungi xaridlar" value={purchaseStats?.todayPurchases || 0} icon={Calendar} color="info" />
+            <MetricCard title="Jami summa" value={formatCurrency(purchaseStats?.totalAmount || 0)} icon={TrendingUp} color="success" />
+            <MetricCard title="Jami qarz" value={formatCurrency(purchaseStats?.totalDebt || 0)} icon={Wallet} color="error" />
           </div>
 
           {/* Purchases Table */}
@@ -886,7 +801,7 @@ export function SuppliersPage() {
             onPageChange={setPurchasesPage}
             onPageSizeChange={handlePurchasesPageSizeChange}
             renderMobileCard={(purchase) => (
-              <div className="surface-panel flex flex-col gap-3 rounded-xl p-4">
+              <div className="surface-card flex flex-col gap-3 p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold">{purchase.supplierName}</p>

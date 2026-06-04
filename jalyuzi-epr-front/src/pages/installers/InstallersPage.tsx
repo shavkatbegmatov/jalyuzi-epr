@@ -20,6 +20,7 @@ import { formatCurrency } from '../../config/constants';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { ModalPortal } from '../../components/common/Modal';
 import { SearchInput } from '../../components/ui/SearchInput';
+import { MetricCard } from '../../components/mobile';
 import { PermissionGate } from '../../components/common/PermissionGate';
 import { usePermission, PermissionCode } from '../../hooks/usePermission';
 import type {
@@ -365,53 +366,53 @@ export function InstallersPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="section-title flex items-center gap-2">
-          <HardHat className="h-6 w-6" />
-          O'rnatuvchilar
-        </h1>
-        <p className="section-subtitle">
-          O'rnatuvchilar ro'yxati va boshqaruvi
-        </p>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card) => (
-          <div key={card.label} className="surface-card p-4">
-            <div className="flex items-center gap-3">
-              <div className={`rounded-lg bg-${card.color}/10 p-2.5`}>
-                <card.icon className={`h-5 w-5 text-${card.color}`} />
-              </div>
-              <div>
-                <p className="text-xs text-base-content/60">{card.label}</p>
-                <p className="text-xl font-bold">{card.value}</p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Search + Add button */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SearchInput
-          value={search}
-          onValueChange={(val) => {
-            setSearch(val);
-            setPage(0);
-          }}
-          placeholder="Ism yoki telefon bo'yicha qidirish..."
-          className="w-full sm:max-w-xs"
-        />
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="section-title flex items-center gap-2">
+            <HardHat className="h-5 w-5 lg:h-6 lg:w-6" />
+            O'rnatuvchilar
+          </h1>
+          <p className="section-subtitle hidden sm:block">
+            O'rnatuvchilar ro'yxati va boshqaruvi
+          </p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta o'rnatuvchi</p>
+        </div>
         <PermissionGate permission={PermissionCode.INSTALLERS_CREATE}>
-          <button className="btn btn-primary btn-sm gap-2" onClick={handleOpenNewModal}>
-            <Plus className="h-4 w-4" />
-            Yangi o'rnatuvchi
+          <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenNewModal}>
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Yangi o'rnatuvchi</span>
+            <span className="sm:hidden">Yangi</span>
           </button>
         </PermissionGate>
       </div>
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        {statCards.map((card) => (
+          <MetricCard
+            key={card.label}
+            title={card.label}
+            value={card.value}
+            icon={card.icon}
+            color={card.color}
+          />
+        ))}
+      </div>
+
+      {/* Search */}
+      <SearchInput
+        value={search}
+        onValueChange={(val) => {
+          setSearch(val);
+          setPage(0);
+        }}
+        label="Qidirish"
+        hideLabel
+        placeholder="Ism yoki telefon bo'yicha qidirish..."
+        className="w-full lg:max-w-md"
+      />
 
       {/* Data table */}
       <DataTable
@@ -429,6 +430,83 @@ export function InstallersPage() {
         emptyIcon={<HardHat className="h-12 w-12 text-base-content/30" />}
         emptyTitle="O'rnatuvchilar topilmadi"
         emptyDescription="Hozircha hech qanday o'rnatuvchi qo'shilmagan"
+        renderMobileCard={(installer) => {
+          const initials = installer.fullName
+            .split(' ')
+            .map((n) => n.charAt(0))
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+          return (
+            <div className="surface-card flex flex-col gap-3 p-3.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="avatar placeholder">
+                    <div className="w-10 rounded-full bg-primary/15 text-primary">
+                      <span className="text-sm">{initials}</span>
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{installer.fullName}</p>
+                    <p className="truncate text-xs text-base-content/60">@{installer.username}</p>
+                  </div>
+                </div>
+                <span
+                  className={clsx(
+                    'badge badge-sm',
+                    installer.active ? 'badge-success' : 'badge-error'
+                  )}
+                >
+                  {installer.active ? 'Faol' : 'Nofaol'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-sm text-base-content/70">
+                <Phone className="h-4 w-4" />
+                {installer.phone}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+                <span className="pill">Bajarilgan: {installer.completedOrdersCount}</span>
+                {installer.currentOrderNumber && (
+                  <span className="pill">Joriy: {installer.currentOrderNumber}</span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-base-200 pt-2.5">
+                <span className="font-semibold">
+                  {formatCurrency(installer.totalCollectedAmount)}
+                </span>
+                <div className="flex items-center gap-1">
+                  <PermissionGate permission={PermissionCode.INSTALLERS_UPDATE}>
+                    <button
+                      className="btn btn-ghost btn-sm btn-square min-h-[44px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditModal(installer);
+                      }}
+                      title="Tahrirlash"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                  </PermissionGate>
+                  <PermissionGate permission={PermissionCode.INSTALLERS_TOGGLE}>
+                    <button
+                      className={clsx(
+                        'btn btn-ghost btn-sm btn-square min-h-[44px]',
+                        installer.active ? 'text-error' : 'text-success'
+                      )}
+                      onClick={(e) => handleToggleActive(installer, e)}
+                      title={installer.active ? 'Nofaol qilish' : 'Faollashtirish'}
+                    >
+                      <Power className="h-4 w-4" />
+                    </button>
+                  </PermissionGate>
+                </div>
+              </div>
+            </div>
+          );
+        }}
       />
 
       {/* Create/Edit Modal */}

@@ -41,6 +41,7 @@ import {
   exportDebtsReportToPDF,
 } from '../../utils/exportUtils';
 import { DateRangePicker, type DateRangePreset, type DateRange } from '../../components/common/DateRangePicker';
+import { SegmentedControl, type SegmentOption } from '../../components/mobile';
 import type { SalesReport, WarehouseReport, DebtsReport } from '../../types';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { PermissionCode } from '../../hooks/usePermission';
@@ -184,7 +185,7 @@ export function ReportsPage() {
             <div className="skeleton mt-2 h-4 w-52" />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="surface-card p-4">
               <div className="skeleton h-4 w-24" />
@@ -196,16 +197,22 @@ export function ReportsPage() {
     );
   }
 
+  const tabOptions: SegmentOption<ReportTab>[] = [
+    { value: 'sales', label: 'Sotuvlar', icon: ShoppingCart },
+    { value: 'warehouse', label: 'Ombor', icon: Warehouse },
+    { value: 'debts', label: 'Qarzlar', icon: Receipt },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
         <div>
           <h1 className="section-title">Hisobotlar</h1>
-          <p className="section-subtitle">Sotuvlar, ombor va qarzlar hisobotlari</p>
+          <p className="section-subtitle hidden sm:block">Sotuvlar, ombor va qarzlar hisobotlari</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 lg:gap-3">
           <DateRangePicker
             value={dateRangePreset}
             customRange={customRange}
@@ -223,12 +230,12 @@ export function ReportsPage() {
             {refreshSuccess ? (
               <>
                 <Check className="h-4 w-4" />
-                Yangilandi
+                <span className="hidden sm:inline">Yangilandi</span>
               </>
             ) : (
               <>
                 <RefreshCw className={clsx('h-4 w-4', refreshing && 'animate-spin')} />
-                {refreshing ? 'Yangilanmoqda...' : 'Yangilash'}
+                <span className="hidden sm:inline">{refreshing ? 'Yangilanmoqda...' : 'Yangilash'}</span>
               </>
             )}
           </button>
@@ -251,29 +258,12 @@ export function ReportsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="tabs tabs-boxed w-fit">
-        <button
-          className={clsx('tab gap-2', activeTab === 'sales' && 'tab-active')}
-          onClick={() => setActiveTab('sales')}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Sotuvlar
-        </button>
-        <button
-          className={clsx('tab gap-2', activeTab === 'warehouse' && 'tab-active')}
-          onClick={() => setActiveTab('warehouse')}
-        >
-          <Warehouse className="h-4 w-4" />
-          Ombor
-        </button>
-        <button
-          className={clsx('tab gap-2', activeTab === 'debts' && 'tab-active')}
-          onClick={() => setActiveTab('debts')}
-        >
-          <Receipt className="h-4 w-4" />
-          Qarzlar
-        </button>
-      </div>
+      <SegmentedControl
+        options={tabOptions}
+        value={activeTab}
+        onChange={setActiveTab}
+        className="lg:max-w-md"
+      />
 
       {error && (
         <div className="alert alert-error">
@@ -313,7 +303,7 @@ export function ReportsPage() {
 function SalesReportView({ report }: { report: SalesReport }) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Jami daromad"
           value={formatCurrency(report.totalRevenue)}
@@ -341,9 +331,9 @@ function SalesReportView({ report }: { report: SalesReport }) {
         />
       </div>
 
-      <div className="surface-card p-6">
+      <div className="surface-card p-4 lg:p-6">
         <h2 className="mb-4 text-lg font-semibold">To'lov usullari bo'yicha</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           <PaymentMethodCard icon={Banknote} label="Naqd" amount={report.cashTotal} color="bg-green-500" />
           <PaymentMethodCard icon={CreditCard} label="Karta" amount={report.cardTotal} color="bg-blue-500" />
           <PaymentMethodCard icon={Building2} label="O'tkazma" amount={report.transferTotal} color="bg-purple-500" />
@@ -352,7 +342,7 @@ function SalesReportView({ report }: { report: SalesReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 text-lg font-semibold">Kunlik sotuvlar</h2>
           {report.dailyData.length > 0 ? (
             <div className="overflow-x-auto">
@@ -380,10 +370,10 @@ function SalesReportView({ report }: { report: SalesReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 text-lg font-semibold">Daromad grafigi</h2>
           {report.dailyData.length > 0 ? (
-            <div className="h-64">
+            <div className="h-56 lg:h-64">
               <SimpleBarChart data={report.dailyData.slice(-14)} />
             </div>
           ) : (
@@ -393,7 +383,7 @@ function SalesReportView({ report }: { report: SalesReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Package className="h-5 w-5" />
             Top mahsulotlar
@@ -429,7 +419,7 @@ function SalesReportView({ report }: { report: SalesReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Users className="h-5 w-5" />
             Top mijozlar
@@ -473,7 +463,7 @@ function SalesReportView({ report }: { report: SalesReport }) {
 function WarehouseReportView({ report }: { report: WarehouseReport }) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Jami mahsulotlar"
           value={formatNumber(report.totalProducts)}
@@ -505,7 +495,7 @@ function WarehouseReportView({ report }: { report: WarehouseReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Tag className="h-5 w-5" />
             Kategoriya bo'yicha
@@ -538,7 +528,7 @@ function WarehouseReportView({ report }: { report: WarehouseReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Package className="h-5 w-5" />
             Brend bo'yicha
@@ -573,7 +563,7 @@ function WarehouseReportView({ report }: { report: WarehouseReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <AlertTriangle className="h-5 w-5 text-warning" />
             Kam qolgan mahsulotlar
@@ -609,7 +599,7 @@ function WarehouseReportView({ report }: { report: WarehouseReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <ArrowUpFromLine className="h-5 w-5" />
             Kunlik harakatlar
@@ -652,7 +642,7 @@ function WarehouseReportView({ report }: { report: WarehouseReport }) {
 function DebtsReportView({ report }: { report: DebtsReport }) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Faol qarzlar"
           value={formatCurrency(report.totalActiveDebt)}
@@ -683,9 +673,9 @@ function DebtsReportView({ report }: { report: DebtsReport }) {
         />
       </div>
 
-      <div className="surface-card p-6">
+      <div className="surface-card p-4 lg:p-6">
         <h2 className="mb-4 text-lg font-semibold">Qarz davrlari (Aging)</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
           {report.debtAging.map((aging) => (
             <div key={aging.period} className="rounded-xl bg-base-200/50 p-4 text-center">
               <p className="text-sm text-base-content/60">{aging.period}</p>
@@ -697,7 +687,7 @@ function DebtsReportView({ report }: { report: DebtsReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <UserX className="h-5 w-5 text-error" />
             Top qarzdorlar
@@ -741,7 +731,7 @@ function DebtsReportView({ report }: { report: DebtsReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Clock className="h-5 w-5 text-warning" />
             Muddati o'tgan qarzlar
@@ -779,7 +769,7 @@ function DebtsReportView({ report }: { report: DebtsReport }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
             <Banknote className="h-5 w-5 text-success" />
             So'nggi to'lovlar
@@ -810,7 +800,7 @@ function DebtsReportView({ report }: { report: DebtsReport }) {
           )}
         </div>
 
-        <div className="surface-card p-6">
+        <div className="surface-card p-4 lg:p-6">
           <h2 className="mb-4 text-lg font-semibold">Qarzlar statistikasi</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg bg-base-200/50 p-4">
@@ -860,15 +850,15 @@ function StatCard({
   };
 
   return (
-    <div className="surface-card p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-base-content/60">{title}</p>
-          <p className="mt-2 text-2xl font-bold">{value}</p>
-          {subtext && <p className="mt-1 text-xs text-base-content/60">{subtext}</p>}
+    <div className="surface-card p-4 lg:p-5">
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between lg:gap-4">
+        <div className={clsx('order-1 grid h-10 w-10 shrink-0 place-items-center rounded-xl lg:order-2 lg:h-12 lg:w-12 lg:rounded-2xl', colorClasses[color])}>
+          <Icon className="h-5 w-5 lg:h-6 lg:w-6" />
         </div>
-        <div className={clsx('rounded-xl p-3', colorClasses[color])}>
-          <Icon className="h-5 w-5" />
+        <div className="order-2 min-w-0 flex-1 lg:order-1">
+          <p className="text-[13px] font-medium text-base-content/55 lg:text-sm">{title}</p>
+          <p className="mt-1 truncate text-xl font-bold tracking-tight lg:mt-2 lg:text-2xl">{value}</p>
+          {subtext && <p className="mt-1 text-xs text-base-content/60">{subtext}</p>}
         </div>
       </div>
     </div>

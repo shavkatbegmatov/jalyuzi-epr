@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Plus, Package, BadgeCheck, AlertTriangle, X, Blinds, Layers, Wrench, Check } from 'lucide-react';
+import { Plus, Package, BadgeCheck, AlertTriangle, X, Blinds, Layers, Wrench, Check, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import clsx from 'clsx';
 import { productsApi, brandsApi, categoriesApi } from '../../api/products.api';
 import { productTypesApi } from '../../api/product-types.api';
@@ -52,6 +52,7 @@ export function ProductsPage() {
   const [formData, setFormData] = useState<ProductRequest>(emptyFormData);
   const [customAttributes, setCustomAttributes] = useState<Record<string, unknown>>({});
   const [saving, setSaving] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const { notifications } = useNotificationsStore();
   const { highlightId, clearHighlight } = useHighlight();
@@ -351,108 +352,108 @@ export function ProductsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 lg:space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="section-title">Jalyuzi Mahsulotlari</h1>
-          <p className="section-subtitle">Mahsulot katalogi</p>
+          <h1 className="section-title">Mahsulotlar</h1>
+          <p className="section-subtitle hidden sm:block">Mahsulot katalogi</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta mahsulot</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {activeFilters > 0 && (
-            <button className="btn btn-ghost btn-sm" onClick={handleResetFilters}>
-              <X className="h-4 w-4" />
-              Filtrlarni tozalash
-            </button>
-          )}
-          <ExportButtons
-            onExportExcel={() => handleExport('excel')}
-            onExportPdf={() => handleExport('pdf')}
-            disabled={products.length === 0}
-            loading={refreshing}
-          />
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:block">
+            <ExportButtons
+              onExportExcel={() => handleExport('excel')}
+              onExportPdf={() => handleExport('pdf')}
+              disabled={products.length === 0}
+              loading={refreshing}
+            />
+          </div>
           <PermissionGate permission={PermissionCode.PRODUCTS_CREATE}>
-            <Link to="/products/new" className="btn btn-primary">
+            <Link to="/products/new" className="btn btn-primary btn-sm lg:btn-md">
               <Plus className="h-5 w-5" />
-              Yangi mahsulot
+              <span className="hidden sm:inline">Yangi mahsulot</span>
+              <span className="sm:hidden">Yangi</span>
             </Link>
           </PermissionGate>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="surface-card p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-base-content/50">
-              Filtrlar
-            </h2>
-            <p className="text-xs text-base-content/60">
-              {activeFilters > 0 ? `${activeFilters} ta filter tanlangan` : "Barcha mahsulotlar ko'rsatilmoqda"}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-base-content/60">
-            <span className="pill">{totalElements} ta mahsulot</span>
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-7">
-          <SearchInput
-            value={search}
-            onValueChange={(value) => {
-              setSearch(value);
-              setPage(0);
-            }}
-            label="Qidirish"
-            placeholder="SKU, nom..."
-          />
+      {/* Search + filter toggle */}
+      <div className="flex gap-2">
+        <SearchInput
+          value={search}
+          onValueChange={(value) => {
+            setSearch(value);
+            setPage(0);
+          }}
+          label="Qidirish"
+          hideLabel
+          placeholder="SKU yoki nom bo'yicha qidirish..."
+          className="flex-1"
+        />
+        <button
+          onClick={() => setShowMobileFilters((s) => !s)}
+          className="btn h-12 gap-1.5 border-base-300 bg-base-100 lg:hidden"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {activeFilters > 0 && <span className="badge badge-primary badge-sm">{activeFilters}</span>}
+          <ChevronDown className={clsx('h-4 w-4 transition-transform', showMobileFilters && 'rotate-180')} />
+        </button>
+      </div>
 
+      {/* Filters — mobile'da yig'iladi, desktop'da doim ochiq */}
+      <div className={clsx('surface-card p-4', !showMobileFilters && 'hidden lg:block')}>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           <Select
             label="Mahsulot turi"
             value={productTypeFilter}
             onChange={(value) => { setProductTypeFilter(value as ProductType | ''); setPage(0); }}
-            placeholder="Barcha turlar"
+            placeholder="Barchasi"
             options={Object.entries(PRODUCT_TYPES).map(([key, { label }]) => ({ value: key, label }))}
           />
-
           <Select
             label="Jalyuzi turi"
             value={blindTypeFilter}
             onChange={(value) => { setBlindTypeFilter(value as BlindType | ''); setPage(0); }}
-            placeholder="Barcha turlar"
+            placeholder="Barchasi"
             options={Object.entries(BLIND_TYPES).map(([key, { label }]) => ({ value: key, label }))}
           />
-
           <Select
             label="Material"
             value={materialFilter}
             onChange={(value) => { setMaterialFilter(value as BlindMaterial | ''); setPage(0); }}
-            placeholder="Barcha materiallar"
+            placeholder="Barchasi"
             options={Object.entries(BLIND_MATERIALS).map(([key, { label }]) => ({ value: key, label }))}
           />
-
           <Select
             label="Boshqaruv"
             value={controlTypeFilter}
             onChange={(value) => { setControlTypeFilter(value as ControlType | ''); setPage(0); }}
-            placeholder="Barcha turlari"
+            placeholder="Barchasi"
             options={Object.entries(CONTROL_TYPES).map(([key, { label }]) => ({ value: key, label }))}
           />
-
           <Select
             label="Brend"
             value={brandFilter}
             onChange={(value) => { setBrandFilter(value ? Number(value) : ''); setPage(0); }}
-            placeholder="Barcha brendlar"
+            placeholder="Barchasi"
             options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
           />
-
           <Select
             label="Kategoriya"
             value={categoryFilter}
             onChange={(value) => { setCategoryFilter(value ? Number(value) : ''); setPage(0); }}
-            placeholder="Barcha kategoriyalar"
+            placeholder="Barchasi"
             options={categories.map((category) => ({ value: category.id, label: category.name }))}
           />
         </div>
+        {activeFilters > 0 && (
+          <button className="btn btn-ghost btn-sm mt-3" onClick={handleResetFilters}>
+            <X className="h-4 w-4" />
+            Filtrlarni tozalash
+          </button>
+        )}
       </div>
 
       {/* Products Table */}
@@ -483,7 +484,7 @@ export function ProductsPage() {
           onPageChange={setPage}
           onPageSizeChange={handlePageSizeChange}
           renderMobileCard={(product) => (
-            <div className="surface-panel flex flex-col gap-3 rounded-xl p-4">
+            <div className="surface-card flex flex-col gap-3 p-3.5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold">{product.name}</p>

@@ -278,7 +278,7 @@ export function SettingsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="tabs tabs-bordered">
+      <div className="tabs tabs-bordered flex-nowrap overflow-x-auto scrollbar-none">
         <button
           className={clsx('tab gap-2', activeTab === 'appearance' && 'tab-active')}
           onClick={() => setActiveTab('appearance')}
@@ -313,7 +313,7 @@ export function SettingsPage() {
       {activeTab === 'appearance' && (
         <div className="space-y-6">
           {/* Theme Settings */}
-          <div className="surface-card p-6">
+          <div className="surface-card p-4 lg:p-6">
             <h2 className="text-lg font-semibold mb-4">Mavzu</h2>
             <p className="text-sm text-base-content/60 mb-6">
               Interfeys ranglarini tanlang. Tizim rejimi qurilmangiz sozlamalariga mos keladi.
@@ -627,7 +627,7 @@ export function SettingsPage() {
       {/* Debts Tab */}
       {activeTab === 'debts' && (
         <div className="space-y-4">
-          <div className="surface-card p-6">
+          <div className="surface-card p-4 lg:p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Qarz sozlamalari</h2>
