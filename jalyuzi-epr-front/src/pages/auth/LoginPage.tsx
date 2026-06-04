@@ -252,6 +252,8 @@ export function LoginPage() {
               <Link to="/privacy" className="link link-hover">
                 Maxfiylik siyosati
               </Link>
+              <span className="mx-1.5">·</span>
+              <span>v{__APP_VERSION__}</span>
             </p>
           </div>
         </div>

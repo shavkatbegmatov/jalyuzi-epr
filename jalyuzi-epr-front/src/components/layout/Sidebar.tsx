@@ -293,6 +293,15 @@ export function Sidebar() {
           </ul>
         </nav>
 
+        {/* Ilova versiyasi — mobil "Ko'proq" menyusida ham ko'rinadi */}
+        {!sidebarCollapsed && (
+          <div className="shrink-0 border-t border-base-200/60 px-4 py-2.5">
+            <p className="text-center text-[11px] text-base-content/40">
+              Jalyuzi ERP · <span className="font-semibold text-base-content/55">v{__APP_VERSION__}</span>
+            </p>
+          </div>
+        )}
+
         {/* Collapse toggle — faqat desktop */}
         <div className="hidden shrink-0 border-t border-base-200 p-3 lg:block">
           <button

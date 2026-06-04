@@ -27,7 +27,7 @@ export function Footer() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[10px] tabular-nums text-base-content/40">{formatTime(currentTime)}</span>
-          <span className="rounded bg-base-200/80 px-1.5 py-0.5 text-[10px] font-medium text-primary">v1.0</span>
+          <span className="rounded bg-base-200/80 px-1.5 py-0.5 text-[10px] font-medium text-primary">v{__APP_VERSION__}</span>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ export function Footer() {
             <div className="h-3 w-px bg-base-300" />
             <div className="flex items-center gap-1 rounded-full bg-base-200/50 px-2 py-0.5">
               <span className="text-[9px] font-medium uppercase tracking-wider text-base-content/40">v</span>
-              <span className="text-[11px] font-semibold text-primary">1.0.0</span>
+              <span className="text-[11px] font-semibold text-primary">{__APP_VERSION__}</span>
             </div>
           </div>
         </div>

@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import { VitePWA } from 'vite-plugin-pwa'
+import { readFileSync } from 'node:fs'
+
+// Ilova versiyasi yagona manbadan — package.json
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
 
 export default defineConfig({
   plugins: [
@@ -101,6 +105,8 @@ export default defineConfig({
   define: {
     // SockJS uchun global polyfill
     global: 'globalThis',
+    // Ilova versiyasi (package.json'dan) — UI'da ko'rsatish uchun
+    __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
     rollupOptions: {
