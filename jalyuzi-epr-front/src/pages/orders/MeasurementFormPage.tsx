@@ -209,7 +209,7 @@ export function MeasurementFormPage() {
                   <label className="label py-1"><span className="label-text text-xs">Xona nomi</span></label>
                   <input
                     type="text"
-                    className="input input-bordered input-sm w-full"
+                    className="input input-bordered h-11 w-full"
                     placeholder="Masalan: Yotoqxona"
                     value={row.roomName}
                     onChange={e => updateRow(index, 'roomName', e.target.value)}
@@ -219,7 +219,7 @@ export function MeasurementFormPage() {
                   <label className="label py-1"><span className="label-text text-xs">Kenglik (mm)</span></label>
                   <input
                     type="number"
-                    className="input input-bordered input-sm w-full"
+                    className="input input-bordered h-11 w-full"
                     placeholder="mm"
                     value={row.widthMm}
                     onChange={e => updateRow(index, 'widthMm', e.target.value ? Number(e.target.value) : '')}
@@ -229,7 +229,7 @@ export function MeasurementFormPage() {
                   <label className="label py-1"><span className="label-text text-xs">Balandlik (mm)</span></label>
                   <input
                     type="number"
-                    className="input input-bordered input-sm w-full"
+                    className="input input-bordered h-11 w-full"
                     placeholder="mm"
                     value={row.heightMm}
                     onChange={e => updateRow(index, 'heightMm', e.target.value ? Number(e.target.value) : '')}
@@ -239,7 +239,7 @@ export function MeasurementFormPage() {
                   <label className="label py-1"><span className="label-text text-xs">Chuqurlik (mm)</span></label>
                   <input
                     type="number"
-                    className="input input-bordered input-sm w-full"
+                    className="input input-bordered h-11 w-full"
                     placeholder="mm"
                     value={row.depthMm}
                     onChange={e => updateRow(index, 'depthMm', e.target.value ? Number(e.target.value) : '')}
@@ -249,7 +249,7 @@ export function MeasurementFormPage() {
                   <label className="label py-1"><span className="label-text text-xs">Soni</span></label>
                   <input
                     type="number"
-                    className="input input-bordered input-sm w-full"
+                    className="input input-bordered h-11 w-full"
                     min={1}
                     value={row.quantity}
                     onChange={e => updateRow(index, 'quantity', Math.max(1, Number(e.target.value)))}

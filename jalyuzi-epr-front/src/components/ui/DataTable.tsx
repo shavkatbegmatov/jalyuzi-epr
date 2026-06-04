@@ -276,7 +276,13 @@ export function DataTable<T>({
   }
 
   return (
-    <div ref={tableRef} className={clsx('surface-card', containerClassName)}>
+    <div
+      ref={tableRef}
+      className={clsx(
+        'lg:rounded-2xl lg:border lg:border-base-300/70 lg:bg-base-100 lg:shadow-card',
+        containerClassName
+      )}
+    >
       {/* Desktop Table */}
       <div className={clsx('hidden lg:block', className)}>
         <table className="table table-zebra w-full">
@@ -334,7 +340,7 @@ export function DataTable<T>({
 
       {/* Mobile Cards */}
       {renderMobileCard && (
-        <div className="space-y-3 p-4 lg:hidden">
+        <div className="space-y-2.5 lg:hidden">
           {sortedData.map((item, index) => {
             const itemId = keyExtractor(item);
             const isHighlighted = activeHighlight === itemId;
@@ -343,7 +349,7 @@ export function DataTable<T>({
               <div
                 key={itemId}
                 data-highlight-id={itemId}
-                className={clsx(isHighlighted && 'animate-highlight-row rounded-xl')}
+                className={clsx(isHighlighted && 'animate-highlight-row rounded-2xl')}
                 onClick={() => onRowClick?.(item)}
               >
                 {renderMobileCard(item, index)}
@@ -355,21 +361,22 @@ export function DataTable<T>({
 
       {/* Pagination */}
       {(totalPages > 1 || totalElements > 0) && onPageChange && (
-        <div className="flex flex-col gap-3 border-t border-base-200 bg-base-100/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-base-300/60 px-1 py-3 lg:mt-0 lg:bg-base-100/50 lg:px-4">
           {/* Left side - Info & Page size */}
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 text-sm sm:gap-3">
             {totalElements > 0 && (
-              <div className="text-base-content/60">
+              <div className="whitespace-nowrap text-base-content/60">
                 <span className="font-medium text-base-content">{startItem}-{endItem}</span>
-                {' / '}
-                <span className="font-medium text-base-content">{totalElements.toLocaleString()}</span>
-                {' '}ta
+                <span className="hidden sm:inline">{' / '}
+                  <span className="font-medium text-base-content">{totalElements.toLocaleString()}</span>
+                  {' '}ta
+                </span>
               </div>
             )}
 
             {onPageSizeChange && (
-              <div className="flex items-center gap-2">
-                <span className="text-base-content/50 text-xs hidden sm:inline">Ko'rsatish:</span>
+              <div className="hidden items-center gap-2 sm:flex">
+                <span className="hidden text-xs text-base-content/50 sm:inline">Ko'rsatish:</span>
                 <Select
                   value={pageSize}
                   onChange={(val) => onPageSizeChange(Number(val))}
@@ -387,21 +394,27 @@ export function DataTable<T>({
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
-                className={clsx('btn btn-ghost btn-sm btn-square', currentPage === 0 && 'btn-disabled opacity-40')}
+                className={clsx('hidden btn btn-ghost btn-sm btn-square sm:inline-flex', currentPage === 0 && 'btn-disabled opacity-40')}
                 onClick={() => onPageChange(0)}
                 disabled={currentPage === 0}
               >
                 <ChevronsLeft className="h-4 w-4" />
               </button>
               <button
-                className={clsx('btn btn-ghost btn-sm btn-square', currentPage === 0 && 'btn-disabled opacity-40')}
+                className={clsx('grid h-9 w-9 place-items-center rounded-xl bg-base-200 press-scale sm:btn sm:btn-ghost sm:btn-sm sm:btn-square sm:bg-transparent', currentPage === 0 && 'opacity-40')}
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 0}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
 
-              <div className="flex items-center gap-0.5 mx-1">
+              {/* Mobile: joriy sahifa */}
+              <span className="px-2 text-sm font-semibold tabular-nums sm:hidden">
+                {currentPage + 1} / {totalPages}
+              </span>
+
+              {/* Desktop: sahifa raqamlari */}
+              <div className="mx-1 hidden items-center gap-0.5 sm:flex">
                 {visiblePages.map((page, idx) =>
                   page === 'ellipsis' ? (
                     <span key={`ellipsis-${idx}`} className="px-2 text-base-content/40">•••</span>
@@ -421,14 +434,14 @@ export function DataTable<T>({
               </div>
 
               <button
-                className={clsx('btn btn-ghost btn-sm btn-square', currentPage >= totalPages - 1 && 'btn-disabled opacity-40')}
+                className={clsx('grid h-9 w-9 place-items-center rounded-xl bg-base-200 press-scale sm:btn sm:btn-ghost sm:btn-sm sm:btn-square sm:bg-transparent', currentPage >= totalPages - 1 && 'opacity-40')}
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage >= totalPages - 1}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
               <button
-                className={clsx('btn btn-ghost btn-sm btn-square', currentPage >= totalPages - 1 && 'btn-disabled opacity-40')}
+                className={clsx('hidden btn btn-ghost btn-sm btn-square sm:inline-flex', currentPage >= totalPages - 1 && 'btn-disabled opacity-40')}
                 onClick={() => onPageChange(totalPages - 1)}
                 disabled={currentPage >= totalPages - 1}
               >

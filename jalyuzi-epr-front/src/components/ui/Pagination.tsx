@@ -72,24 +72,25 @@ export function Pagination({
   return (
     <div
       className={clsx(
-        'flex flex-col gap-3 border-t border-base-200 bg-base-100/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between',
+        'flex items-center justify-between gap-2 border-t border-base-300/60 px-1 py-3 sm:px-4',
         className
       )}
     >
       {/* Left side - Info & Page size */}
-      <div className="flex flex-wrap items-center gap-3 text-sm">
+      <div className="flex items-center gap-2 text-sm sm:gap-3">
         {showInfo && totalElements > 0 && (
-          <div className="text-base-content/60">
+          <div className="whitespace-nowrap text-base-content/60">
             <span className="font-medium text-base-content">{startItem}-{endItem}</span>
-            {' / '}
-            <span className="font-medium text-base-content">{totalElements.toLocaleString()}</span>
-            {' '}ta
+            <span className="hidden sm:inline">{' / '}
+              <span className="font-medium text-base-content">{totalElements.toLocaleString()}</span>
+              {' '}ta
+            </span>
           </div>
         )}
 
         {showPageSize && onPageSizeChange && (
-          <div className="flex items-center gap-2">
-            <span className="text-base-content/50 text-xs hidden sm:inline">Ko'rsatish:</span>
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="hidden text-xs text-base-content/50 sm:inline">Ko'rsatish:</span>
             <Select
               value={pageSize}
               onChange={(val) => onPageSizeChange(Number(val))}
@@ -106,10 +107,10 @@ export function Pagination({
       {/* Right side - Page navigation */}
       {totalPages > 1 && (
         <div className="flex items-center gap-1">
-          {/* First page */}
+          {/* First page - desktop only */}
           <button
             className={clsx(
-              'btn btn-ghost btn-sm btn-square transition-all',
+              'hidden btn btn-ghost btn-sm btn-square transition-all sm:inline-flex',
               currentPage === 0 && 'btn-disabled opacity-40'
             )}
             onClick={() => onPageChange(0)}
@@ -122,8 +123,8 @@ export function Pagination({
           {/* Previous page */}
           <button
             className={clsx(
-              'btn btn-ghost btn-sm btn-square transition-all',
-              currentPage === 0 && 'btn-disabled opacity-40'
+              'grid h-9 w-9 place-items-center rounded-xl bg-base-200 press-scale transition-all sm:btn sm:btn-ghost sm:btn-sm sm:btn-square sm:bg-transparent',
+              currentPage === 0 && 'opacity-40'
             )}
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage === 0}
@@ -132,8 +133,13 @@ export function Pagination({
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          {/* Page numbers */}
-          <div className="flex items-center gap-0.5 mx-1">
+          {/* Mobile: joriy sahifa */}
+          <span className="px-2 text-sm font-semibold tabular-nums sm:hidden">
+            {currentPage + 1} / {totalPages}
+          </span>
+
+          {/* Page numbers - desktop only */}
+          <div className="mx-1 hidden items-center gap-0.5 sm:flex">
             {visiblePages.map((page, index) => (
               page === 'ellipsis' ? (
                 <span
@@ -162,8 +168,8 @@ export function Pagination({
           {/* Next page */}
           <button
             className={clsx(
-              'btn btn-ghost btn-sm btn-square transition-all',
-              currentPage >= totalPages - 1 && 'btn-disabled opacity-40'
+              'grid h-9 w-9 place-items-center rounded-xl bg-base-200 press-scale transition-all sm:btn sm:btn-ghost sm:btn-sm sm:btn-square sm:bg-transparent',
+              currentPage >= totalPages - 1 && 'opacity-40'
             )}
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages - 1}
@@ -172,10 +178,10 @@ export function Pagination({
             <ChevronRight className="h-4 w-4" />
           </button>
 
-          {/* Last page */}
+          {/* Last page - desktop only */}
           <button
             className={clsx(
-              'btn btn-ghost btn-sm btn-square transition-all',
+              'hidden btn btn-ghost btn-sm btn-square transition-all sm:inline-flex',
               currentPage >= totalPages - 1 && 'btn-disabled opacity-40'
             )}
             onClick={() => onPageChange(totalPages - 1)}

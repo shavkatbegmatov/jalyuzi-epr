@@ -471,7 +471,7 @@ export function CreateOrderPage() {
       <div className="surface-card overflow-hidden">
         {/* ─── Step 0: Customer Selection ─── */}
         {step === 0 && (
-          <div className="p-6">
+          <div className="p-4 lg:p-6">
             <h2 className="mb-4 text-lg font-semibold">Mijoz tanlash</h2>
 
             {selectedCustomer ? (
@@ -586,7 +586,7 @@ export function CreateOrderPage() {
 
         {/* ─── Step 1: Address ─── */}
         {step === 1 && (
-          <div className="p-6">
+          <div className="p-4 lg:p-6">
             <h2 className="mb-4 text-lg font-semibold">O'rnatish manzili</h2>
 
             <div className="form-control">
@@ -630,7 +630,7 @@ export function CreateOrderPage() {
 
         {/* ─── Step 2: Products ─── */}
         {step === 2 && (
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-4 lg:p-6">
             <h2 className="text-lg font-semibold">Mahsulotlar</h2>
 
             {/* Product Search */}
@@ -857,7 +857,7 @@ export function CreateOrderPage() {
 
         {/* ─── Step 3: Review & Confirm ─── */}
         {step === 3 && (
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-4 lg:p-6">
             <h2 className="text-lg font-semibold">Buyurtmani tasdiqlash</h2>
 
             {/* Customer info */}
@@ -1052,9 +1052,9 @@ export function CreateOrderPage() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <button
-          className="btn btn-ghost"
+          className="btn btn-ghost flex-1 sm:flex-none"
           onClick={() => {
             if (step === 0) {
               navigate(-1);
@@ -1064,12 +1064,12 @@ export function CreateOrderPage() {
           }}
         >
           <ArrowLeft className="h-4 w-4" />
-          {step === 0 ? 'Orqaga' : 'Oldingi qadam'}
+          {step === 0 ? 'Orqaga' : 'Oldingi'}
         </button>
 
         {step < 3 ? (
           <button
-            className="btn btn-primary"
+            className="btn btn-primary flex-1 sm:flex-none"
             disabled={!canGoNext()}
             onClick={() => setStep(step + 1)}
           >
@@ -1078,7 +1078,7 @@ export function CreateOrderPage() {
           </button>
         ) : (
           <button
-            className="btn btn-primary"
+            className="btn btn-primary flex-1 sm:flex-none"
             disabled={loading || !canGoNext()}
             onClick={handleSubmit}
           >

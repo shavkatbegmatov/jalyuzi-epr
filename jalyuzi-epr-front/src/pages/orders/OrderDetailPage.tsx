@@ -795,19 +795,65 @@ export function OrderDetailPage() {
 
       {/* ==================== TIMELINE STEPPER ==================== */}
       {!isCancelled && (
-        <div className="surface-card p-4 overflow-x-auto">
-          <div className="flex items-center min-w-[600px]">
+        <div className="surface-card p-4">
+          {/* Desktop: gorizontal stepper */}
+          <div className="hidden overflow-x-auto lg:block">
+            <div className="flex min-w-[600px] items-center">
+              {TIMELINE_PHASES.map((phase, idx) => {
+                const isCompleted = idx < currentPhaseIndex;
+                const isCurrent = idx === currentPhaseIndex;
+
+                return (
+                  <div key={phase.key} className="flex flex-1 items-center last:flex-none">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                          isCompleted
+                            ? 'bg-success text-success-content'
+                            : isCurrent
+                              ? 'bg-primary text-primary-content ring-4 ring-primary/30'
+                              : 'bg-base-300 text-base-content/40'
+                        }`}
+                      >
+                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                      </div>
+                      <span
+                        className={`mt-1 whitespace-nowrap text-xs ${
+                          isCurrent
+                            ? 'font-semibold text-primary'
+                            : isCompleted
+                              ? 'text-success'
+                              : 'text-base-content/40'
+                        }`}
+                      >
+                        {phase.label}
+                      </span>
+                    </div>
+                    {idx < TIMELINE_PHASES.length - 1 && (
+                      <div
+                        className={`mx-2 mt-[-16px] h-0.5 flex-1 ${
+                          isCompleted ? 'bg-success' : isCurrent ? 'bg-gradient-to-r from-primary to-base-300' : 'bg-base-300'
+                        }`}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mobile: vertikal stepper */}
+          <div className="flex flex-col lg:hidden">
             {TIMELINE_PHASES.map((phase, idx) => {
               const isCompleted = idx < currentPhaseIndex;
               const isCurrent = idx === currentPhaseIndex;
-              const isUpcoming = idx > currentPhaseIndex;
+              const isLast = idx === TIMELINE_PHASES.length - 1;
 
               return (
-                <div key={phase.key} className="flex items-center flex-1 last:flex-none">
-                  {/* Circle */}
+                <div key={phase.key} className="flex gap-3">
                   <div className="flex flex-col items-center">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                      className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold transition-colors ${
                         isCompleted
                           ? 'bg-success text-success-content'
                           : isCurrent
@@ -815,39 +861,23 @@ export function OrderDetailPage() {
                             : 'bg-base-300 text-base-content/40'
                       }`}
                     >
-                      {isCompleted ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : (
-                        idx + 1
-                      )}
+                      {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                     </div>
-                    <span
-                      className={`text-xs mt-1 whitespace-nowrap ${
-                        isCurrent
-                          ? 'font-semibold text-primary'
-                          : isCompleted
-                            ? 'text-success'
-                            : 'text-base-content/40'
-                      }`}
-                    >
-                      {phase.label}
-                    </span>
+                    {!isLast && (
+                      <div className={`my-1 w-0.5 flex-1 ${isCompleted ? 'bg-success' : 'bg-base-300'}`} />
+                    )}
                   </div>
-
-                  {/* Connector line */}
-                  {idx < TIMELINE_PHASES.length - 1 && (
-                    <div
-                      className={`flex-1 h-0.5 mx-2 mt-[-16px] ${
-                        isCompleted
-                          ? 'bg-success'
-                          : isCurrent
-                            ? 'bg-gradient-to-r from-primary to-base-300'
-                            : isUpcoming
-                              ? 'bg-base-300'
-                              : 'bg-base-300'
-                      }`}
-                    />
-                  )}
+                  <div
+                    className={`pt-1.5 text-sm ${isLast ? '' : 'pb-5'} ${
+                      isCurrent
+                        ? 'font-semibold text-primary'
+                        : isCompleted
+                          ? 'text-success'
+                          : 'text-base-content/40'
+                    }`}
+                  >
+                    {phase.label}
+                  </div>
                 </div>
               );
             })}

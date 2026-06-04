@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -7,8 +7,6 @@ import {
   Package,
   CheckCircle,
   XCircle,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
@@ -20,6 +18,14 @@ import {
   ORDER_STATUS_LIST,
 } from '../../config/constants';
 import { usePermission, PermissionCode } from '../../hooks/usePermission';
+import {
+  FilterChipBar,
+  type FilterChip,
+  MetricCard,
+  ListItemCard,
+  EmptyState,
+} from '../../components/mobile';
+import { Pagination } from '../../components/ui/Pagination';
 import type { Order, OrderStatus, OrderStatsResponse } from '../../types';
 
 export function OrdersPage() {
@@ -114,6 +120,19 @@ export function OrdersPage() {
     </span>
   );
 
+  // Status filter chiplari
+  const statusChips: FilterChip[] = useMemo(
+    () => [
+      { key: '', label: 'Barchasi', count: stats?.totalOrders },
+      ...ORDER_STATUS_LIST.map((status) => ({
+        key: status,
+        label: getOrderStatusLabel(status),
+        count: stats?.statusCounts?.[status],
+      })),
+    ],
+    [stats]
+  );
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -123,146 +142,71 @@ export function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 lg:space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="section-title">Buyurtmalar</h1>
-          <p className="section-subtitle">Buyurtmalar boshqaruvi</p>
+          <p className="section-subtitle hidden sm:block">Buyurtmalar boshqaruvi</p>
+          <p className="text-sm text-base-content/55 sm:hidden">{totalElements} ta buyurtma</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="pill">{totalElements} ta buyurtma</span>
-          {hasPermission(PermissionCode.SALES_CREATE) && (
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate('/orders/new')}
-            >
-              <Plus className="h-5 w-5" />
-              Yangi buyurtma
-            </button>
-          )}
-        </div>
+        {hasPermission(PermissionCode.SALES_CREATE) && (
+          <button className="btn btn-primary btn-sm lg:btn-md" onClick={() => navigate('/orders/new')}>
+            <Plus className="h-5 w-5" />
+            <span className="hidden sm:inline">Yangi buyurtma</span>
+            <span className="sm:hidden">Yangi</span>
+          </button>
+        )}
       </div>
 
       {/* Stats Cards */}
       {stats && (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <div className="surface-card flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/15">
-              <ClipboardList className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                Jami
-              </p>
-              <p className="text-2xl font-bold">{stats.totalOrders}</p>
-            </div>
-          </div>
-
-          <div className="surface-card flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-warning/15">
-              <Package className="h-6 w-6 text-warning" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                Faol
-              </p>
-              <p className="text-2xl font-bold">{stats.activeOrders}</p>
-            </div>
-          </div>
-
-          <div className="surface-card flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-success/15">
-              <CheckCircle className="h-6 w-6 text-success" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                Yakunlangan
-              </p>
-              <p className="text-2xl font-bold">{stats.completedOrders}</p>
-            </div>
-          </div>
-
-          <div className="surface-card flex items-center gap-4 p-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-error/15">
-              <XCircle className="h-6 w-6 text-error" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-base-content/50">
-                Bekor qilingan
-              </p>
-              <p className="text-2xl font-bold">{stats.cancelledOrders}</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          <MetricCard title="Jami" value={stats.totalOrders} icon={ClipboardList} color="primary" />
+          <MetricCard title="Faol" value={stats.activeOrders} icon={Package} color="warning" />
+          <MetricCard title="Yakunlangan" value={stats.completedOrders} icon={CheckCircle} color="success" />
+          <MetricCard title="Bekor qilingan" value={stats.cancelledOrders} icon={XCircle} color="error" />
         </div>
       )}
 
-      {/* Status Filter Tabs */}
-      <div className="surface-card p-4">
-        <div className="flex flex-wrap gap-2 overflow-x-auto">
-          <button
-            className={`btn btn-sm ${statusFilter === '' ? 'btn-primary' : 'btn-ghost'}`}
-            onClick={() => handleStatusFilterChange('')}
-          >
-            Barchasi
-          </button>
-          {ORDER_STATUS_LIST.map((status) => (
-            <button
-              key={status}
-              className={`btn btn-sm whitespace-nowrap ${statusFilter === status ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => handleStatusFilterChange(status)}
-            >
-              {getOrderStatusLabel(status)}
-              {stats?.statusCounts?.[status] != null && (
-                <span className="badge badge-sm badge-neutral ml-1">
-                  {stats.statusCounts[status]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Status Filter */}
+      <FilterChipBar
+        chips={statusChips}
+        value={statusFilter}
+        onChange={(key) => handleStatusFilterChange(key as OrderStatus | '')}
+      />
 
       {/* Search */}
-      <div className="surface-card p-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/50" />
-          <input
-            type="text"
-            className="input input-bordered w-full pl-10"
-            placeholder="Buyurtma raqami yoki mijoz nomi bo'yicha qidirish..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-base-content/45" />
+        <input
+          type="text"
+          className="input input-bordered h-12 w-full pl-10 lg:max-w-md"
+          placeholder="Buyurtma raqami yoki mijoz..."
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+        />
       </div>
 
-      {/* Orders Table */}
+      {/* Orders */}
       <div className="relative">
         {refreshing && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-base-100/60 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-3">
-              <span className="loading loading-spinner loading-lg text-primary"></span>
-              <span className="text-sm font-medium text-base-content/70">
-                Yangilanmoqda...
-              </span>
-            </div>
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-base-100/60 backdrop-blur-sm">
+            <span className="loading loading-spinner loading-lg text-primary"></span>
           </div>
         )}
 
-        <div className="surface-card overflow-x-auto">
-          {orders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-base-content/50">
-              <ClipboardList className="h-12 w-12 mb-3" />
-              <p className="text-lg font-medium">Buyurtmalar topilmadi</p>
-              <p className="text-sm mt-1">
-                Filtrlarni o'zgartiring yoki yangi buyurtma yarating
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Desktop Table */}
-              <table className="table hidden lg:table">
+        {orders.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title="Buyurtmalar topilmadi"
+            description="Filtrlarni o'zgartiring yoki yangi buyurtma yarating"
+          />
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden overflow-hidden rounded-2xl border border-base-300/70 bg-base-100 shadow-card lg:block">
+              <table className="table">
                 <thead>
                   <tr>
                     <th>#</th>
@@ -279,133 +223,78 @@ export function OrdersPage() {
                   {orders.map((order, index) => (
                     <tr
                       key={order.id}
-                      className="cursor-pointer hover:bg-base-200/50 transition-colors"
+                      className="cursor-pointer transition-colors hover:bg-base-200/50"
                       onClick={() => navigate(`/orders/${order.id}`)}
                     >
-                      <td className="text-base-content/60">
-                        {page * pageSize + index + 1}
-                      </td>
+                      <td className="text-base-content/60">{page * pageSize + index + 1}</td>
                       <td>
-                        <span className="font-mono text-sm font-medium">
-                          {order.orderNumber}
-                        </span>
+                        <span className="font-mono text-sm font-medium">{order.orderNumber}</span>
                       </td>
                       <td>
                         <div>
                           <div className="font-medium">{order.customerName}</div>
-                          <div className="text-xs text-base-content/60">
-                            {order.customerPhone}
-                          </div>
+                          <div className="text-xs text-base-content/60">{order.customerPhone}</div>
                         </div>
                       </td>
                       <td>{getStatusBadge(order.status)}</td>
-                      <td className="text-right font-semibold">
-                        {formatCurrency(order.totalAmount)}
-                      </td>
-                      <td className="text-right text-success">
-                        {formatCurrency(order.paidAmount)}
-                      </td>
+                      <td className="text-right font-semibold">{formatCurrency(order.totalAmount)}</td>
+                      <td className="text-right text-success">{formatCurrency(order.paidAmount)}</td>
                       <td className="text-right">
-                        <span
-                          className={
-                            order.remainingAmount > 0 ? 'text-error' : ''
-                          }
-                        >
+                        <span className={order.remainingAmount > 0 ? 'text-error' : ''}>
                           {formatCurrency(order.remainingAmount)}
                         </span>
                       </td>
-                      <td className="text-sm text-base-content/70">
-                        {formatDateTime(order.createdAt)}
-                      </td>
+                      <td className="text-sm text-base-content/70">{formatDateTime(order.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
 
-              {/* Mobile Cards */}
-              <div className="flex flex-col gap-3 p-4 lg:hidden">
-                {orders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="surface-panel cursor-pointer rounded-xl p-4 transition-colors hover:bg-base-200/50"
-                    onClick={() => navigate(`/orders/${order.id}`)}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <span className="font-mono text-sm font-medium">
-                          {order.orderNumber}
-                        </span>
-                        <div className="mt-1 text-sm font-medium">
-                          {order.customerName}
-                        </div>
-                        <div className="text-xs text-base-content/60">
-                          {order.customerPhone}
-                        </div>
-                      </div>
+            {/* Mobile Cards */}
+            <div className="space-y-2.5 lg:hidden">
+              {orders.map((order) => (
+                <ListItemCard
+                  key={order.id}
+                  onClick={() => navigate(`/orders/${order.id}`)}
+                  title={
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm font-bold text-primary">{order.orderNumber}</span>
                       {getStatusBadge(order.status)}
                     </div>
-                    <div className="mt-3 flex items-center justify-between border-t border-base-200 pt-3">
-                      <div>
-                        <div className="font-semibold">
-                          {formatCurrency(order.totalAmount)}
-                        </div>
+                  }
+                  subtitle={`${order.customerName} · ${order.customerPhone}`}
+                  footer={
+                    <>
+                      <span className="text-sm font-bold">{formatCurrency(order.totalAmount)}</span>
+                      <div className="flex items-center gap-2">
                         {order.remainingAmount > 0 && (
-                          <div className="text-xs text-error">
-                            Qoldiq: {formatCurrency(order.remainingAmount)}
-                          </div>
+                          <span className="text-xs font-medium text-error">
+                            -{formatCurrency(order.remainingAmount)}
+                          </span>
                         )}
+                        <span className="text-[11px] text-base-content/45">{formatDateTime(order.createdAt)}</span>
                       </div>
-                      <div className="text-xs text-base-content/60">
-                        {formatDateTime(order.createdAt)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                    </>
+                  }
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Pagination */}
         {totalPages > 0 && (
-          <div className="mt-4 flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2 text-sm text-base-content/70">
-              <span>Sahifada:</span>
-              <select
-                className="select select-bordered select-sm"
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-              <span>
-                Jami: {totalElements} ta buyurtma
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                className="btn btn-sm btn-ghost"
-                disabled={page === 0}
-                onClick={() => setPage((p) => Math.max(0, p - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Oldingi
-              </button>
-              <span className="text-sm text-base-content/70">
-                {page + 1} / {totalPages}
-              </span>
-              <button
-                className="btn btn-sm btn-ghost"
-                disabled={page >= totalPages - 1}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Keyingi
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+            pageSizeOptions={[10, 20, 50]}
+            className="mt-4 lg:rounded-2xl lg:border lg:border-base-300/70 lg:bg-base-100"
+          />
         )}
       </div>
     </div>
