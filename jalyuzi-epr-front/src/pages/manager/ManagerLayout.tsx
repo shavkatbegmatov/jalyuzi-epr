@@ -20,7 +20,7 @@ export default function ManagerLayout() {
   return (
     <div className="max-w-md mx-auto min-h-screen bg-base-200 flex flex-col">
       {/* Top Header */}
-      <header className="bg-warning text-warning-content px-4 py-3 flex items-center justify-between shadow-md">
+      <header className="app-safe-header bg-warning text-warning-content px-4 pb-3 flex items-center justify-between shadow-md">
         <div>
           <h1 className="text-lg font-bold">Jalyuzi Menejer</h1>
           <p className="text-xs text-warning-content/70">{user?.fullName}</p>
@@ -35,12 +35,12 @@ export default function ManagerLayout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 pb-20">
+      <main className="flex-1 overflow-y-auto p-4 pb-24">
         <Outlet />
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-base-100 border-t border-base-300 shadow-lg z-50">
+      <nav className="app-safe-bottom fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-base-100 border-t border-base-300 shadow-lg z-50">
         <div className="flex">
           <NavLink
             to="/manager"

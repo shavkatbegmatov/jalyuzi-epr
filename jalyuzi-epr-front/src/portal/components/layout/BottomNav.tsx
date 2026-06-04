@@ -26,7 +26,7 @@ export default function BottomNav({ unreadCount = 0 }: BottomNavProps) {
   const { t } = useTranslation();
 
   return (
-    <nav className="btm-nav btm-nav-sm bg-base-100 border-t border-base-300 z-50">
+    <nav className="btm-nav btm-nav-sm app-safe-bottom bg-base-100 border-t border-base-300 z-50">
       {navItems.map((item) => (
         <NavLink
           key={item.path}

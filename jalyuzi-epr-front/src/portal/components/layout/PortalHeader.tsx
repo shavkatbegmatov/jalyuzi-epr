@@ -52,7 +52,7 @@ export default function PortalHeader({
   };
 
   return (
-    <header className="navbar bg-primary text-primary-content sticky top-0 z-40 px-2">
+    <header className="navbar app-safe-header bg-primary text-primary-content sticky top-0 z-40 px-2">
       <div className="navbar-start">
         {showBack && (
           <button

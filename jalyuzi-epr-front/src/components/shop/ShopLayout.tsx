@@ -14,7 +14,7 @@ export function ShopLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-base-100">
       {/* Header */}
-      <header className="navbar bg-primary text-primary-content sticky top-0 z-50 shadow-lg">
+      <header className="navbar app-safe-header bg-primary text-primary-content sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto">
           {/* Logo */}
           <div className="flex-1">

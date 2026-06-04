@@ -285,6 +285,17 @@
   .press-scale {
     @apply transition-transform duration-150 active:scale-[0.97];
   }
+
+  /* Mobil panel sarlavhasi — Android/iOS status bar (notch/cutout) ustiga chiqmasligi uchun.
+     env() + ichki bo'shliq (0.75rem). py-3 o'rniga ishlatiladi. */
+  .app-safe-header {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+  }
+
+  /* Mobil pastki navigatsiya — gesture/navigatsiya bar ustiga chiqmasligi uchun */
+  .app-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
