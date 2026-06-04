@@ -18,7 +18,7 @@ export default function ManagerLayout() {
   }
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-base-200 flex flex-col">
+    <div className="max-w-md mx-auto h-[100dvh] overflow-hidden bg-base-200 flex flex-col">
       {/* Top Header */}
       <header className="app-safe-header bg-warning text-warning-content px-4 pb-3 flex items-center justify-between shadow-md">
         <div>

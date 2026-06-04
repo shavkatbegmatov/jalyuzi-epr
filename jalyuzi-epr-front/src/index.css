@@ -22,12 +22,26 @@
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    /* Android/iOS: butun sahifa over-scroll bounce'ni o'chirish */
+    overscroll-behavior-y: none;
   }
 
   body {
     min-height: 100%;
     background-color: hsl(var(--b2));
     color: hsl(var(--bc));
+    /* Native-app his: tap highlight va double-tap zoom kechikishini o'chirish */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Ichki scroll konteynerlari — scroll zanjiri va momentum (Android/iOS) */
+  main,
+  .overflow-y-auto,
+  .overflow-auto {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Premium minimalist fon — gradient yo'q, toza yuza */
