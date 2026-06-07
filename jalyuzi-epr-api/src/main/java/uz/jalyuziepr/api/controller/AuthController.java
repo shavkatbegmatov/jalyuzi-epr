@@ -44,8 +44,12 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     @Operation(summary = "Refresh Token", description = "Token yangilash")
-    public ResponseEntity<ApiResponse<JwtResponse>> refreshToken(@RequestParam String refreshToken) {
-        JwtResponse response = authService.refreshToken(refreshToken);
+    public ResponseEntity<ApiResponse<JwtResponse>> refreshToken(
+            @RequestParam String refreshToken,
+            HttpServletRequest httpRequest) {
+        String ipAddress = getClientIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        JwtResponse response = authService.refreshToken(refreshToken, ipAddress, userAgent);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import uz.jalyuziepr.api.dto.websocket.SessionUpdateMessage;
 import uz.jalyuziepr.api.entity.Session;
 import uz.jalyuziepr.api.entity.User;
+import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.SessionRepository;
 import uz.jalyuziepr.api.util.UserAgentParser;
@@ -43,13 +44,14 @@ public class SessionService {
      * Create a new session when user logs in
      */
     @Transactional
-    public Session createSession(User user, String token, String ipAddress, String userAgent, LocalDateTime expiresAt) {
+    public Session createSession(User user, String token, String refreshToken, String ipAddress, String userAgent, LocalDateTime expiresAt) {
         String tokenHash = hashToken(token);
         UserAgentParser.DeviceInfo deviceInfo = userAgentParser.parse(userAgent);
 
         Session session = Session.builder()
                 .user(user)
                 .tokenHash(tokenHash)
+                .refreshTokenHash(refreshToken != null ? hashToken(refreshToken) : null)
                 .ipAddress(ipAddress)
                 .userAgent(userAgent)
                 .deviceType(deviceInfo.getDeviceType())
@@ -73,6 +75,40 @@ public class SessionService {
         log.info("Session {} created for user {} from {}", savedSession.getId(), user.getId(), ipAddress);
 
         return savedSession;
+    }
+
+    /**
+     * Rotate an existing session in place when a staff token is refreshed.
+     * Looks the session up by the OLD refresh token hash, then updates BOTH token
+     * hashes and extends the expiry (sliding window). Falls back to creating a fresh
+     * session for legacy rows (refresh_token_hash = NULL) or when the row is missing.
+     * Refuses to refresh a revoked session so "log out all devices" stays effective.
+     */
+    @Transactional
+    public Session rotateSession(User user, String oldRefreshToken, String newAccessToken,
+                                 String newRefreshToken, String ipAddress, String userAgent,
+                                 LocalDateTime expiresAt) {
+        Optional<Session> existing = sessionRepository.findByRefreshTokenHash(hashToken(oldRefreshToken));
+
+        if (existing.isEmpty()) {
+            // Migratsiyadan oldingi NULL qator yoki yo'qolgan sessiya — yangisini yaratamiz.
+            return createSession(user, newAccessToken, newRefreshToken, ipAddress, userAgent, expiresAt);
+        }
+
+        Session session = existing.get();
+        if (Boolean.FALSE.equals(session.getIsActive())) {
+            // Boshqa qurilmadan bekor qilingan — qayta tiklamaymiz, rad etamiz.
+            throw new BadRequestException("Sessiya bekor qilingan, qaytadan tizimga kiring");
+        }
+
+        session.setTokenHash(hashToken(newAccessToken));
+        session.setRefreshTokenHash(hashToken(newRefreshToken));
+        session.setExpiresAt(expiresAt);
+        session.setLastActivityAt(LocalDateTime.now());
+        Session saved = sessionRepository.save(session);
+
+        log.debug("Session {} rotated for user {}", saved.getId(), user.getId());
+        return saved;
     }
 
     /**

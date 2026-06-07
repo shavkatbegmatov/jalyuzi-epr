@@ -88,6 +88,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         var builder = Jwts.builder()
+                .id(UUID.randomUUID().toString()) // jti: tokenlar bir soniyada ham noyob bo'lsin
                 .subject(username)
                 .claim("type", tokenType)
                 .issuedAt(now)
@@ -108,6 +109,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         var builder = Jwts.builder()
+                .id(UUID.randomUUID().toString()) // jti: tokenlar bir soniyada ham noyob bo'lsin
                 .subject(username)
                 .claim("type", "STAFF")
                 .claim("userId", userId)
@@ -132,6 +134,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + refreshExpiration);
 
         var builder = Jwts.builder()
+                .id(UUID.randomUUID().toString()) // jti: refresh tokenlar har safar haqiqatan rotate bo'lsin
                 .subject(username)
                 .claim("type", tokenType)
                 .issuedAt(now)

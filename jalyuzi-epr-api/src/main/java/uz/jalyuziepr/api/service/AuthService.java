@@ -2,6 +2,7 @@ package uz.jalyuziepr.api.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -34,8 +35,8 @@ public class AuthService {
     private final SessionService sessionService;
     private final LoginAttemptService loginAttemptService;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
 
     public JwtResponse login(LoginRequest request, String ipAddress, String userAgent) {
         String username = request.getUsername();
@@ -80,11 +81,13 @@ public class AuthService {
             );
             String refreshToken = tokenProvider.generateStaffRefreshToken(userDetails.getUsername(), userId);
 
-            // Create session in database
-            LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(jwtExpiration / 1000);
+            // Create session in database. Session lifetime = REFRESH token lifetime
+            // (not access), so the session survives the whole refresh window.
+            LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000);
             Session session = sessionService.createSession(
                 userDetails.getUser(),
                 accessToken,
+                refreshToken,
                 ipAddress,
                 userAgent,
                 expiresAt
@@ -136,7 +139,7 @@ public class AuthService {
         }
     }
 
-    public JwtResponse refreshToken(String refreshToken) {
+    public JwtResponse refreshToken(String refreshToken, String ipAddress, String userAgent) {
         if (tokenProvider.validateToken(refreshToken)) {
             String username = tokenProvider.getUsernameFromToken(refreshToken);
             User user = userRepository.findByUsernameWithRolesAndPermissions(username)
@@ -152,6 +155,20 @@ public class AuthService {
             );
             String newRefreshToken = tokenProvider.generateStaffRefreshToken(username, user.getId());
 
+            // Rotate the server-side session so the NEW access token has a matching,
+            // active session row. Without this the auth filter rejects every request
+            // made with the refreshed token ("valid JWT but session revoked" -> 401).
+            LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000);
+            sessionService.rotateSession(
+                user,
+                refreshToken,
+                newAccessToken,
+                newRefreshToken,
+                ipAddress,
+                userAgent,
+                expiresAt
+            );
+
             return JwtResponse.builder()
                     .accessToken(newAccessToken)
                     .refreshToken(newRefreshToken)
@@ -165,7 +182,11 @@ public class AuthService {
 
     public UserResponse getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            // Bekor qilingan/tugagan sessiya: filtr auth o'rnatmagan, ammo /v1/auth/me permitAll.
+            // 500 o'rniga toza 401 -> klient refresh qiladi -> rad etiladi -> login'ga yo'naltiradi.
+            throw new AuthenticationCredentialsNotFoundException("Sessiya yaroqsiz yoki tugagan, qaytadan tizimga kiring");
+        }
         return UserResponse.from(userDetails.getUser());
     }
 }
