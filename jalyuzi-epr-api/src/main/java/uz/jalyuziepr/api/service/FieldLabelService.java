@@ -58,12 +58,9 @@ public class FieldLabelService {
         productLabels.put("sellingPrice", "Sotuv narxi");
         productLabels.put("quantity", "Miqdor");
         productLabels.put("minStockLevel", "Minimal zaxira");
-        productLabels.put("season", "Mavsum");
         productLabels.put("brandName", "Brend");
         productLabels.put("categoryName", "Kategoriya");
         productLabels.put("sizeString", "O'lcham");
-        productLabels.put("loadIndex", "Yuk indeksi");
-        productLabels.put("speedRating", "Tezlik reytingi");
         productLabels.put("active", "Faol");
         productLabels.put("description", "Tavsif");
         entityFieldLabels.put("Product", productLabels);
@@ -149,7 +146,6 @@ public class FieldLabelService {
         productTypes.put("sellingPrice", AuditLogDetailResponse.FieldType.CURRENCY);
         productTypes.put("quantity", AuditLogDetailResponse.FieldType.NUMBER);
         productTypes.put("minStockLevel", AuditLogDetailResponse.FieldType.NUMBER);
-        productTypes.put("season", AuditLogDetailResponse.FieldType.ENUM);
         productTypes.put("active", AuditLogDetailResponse.FieldType.BOOLEAN);
         entityFieldTypes.put("Product", productTypes);
 

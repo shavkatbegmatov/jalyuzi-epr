@@ -148,9 +148,6 @@ export type InstallationStatus = 'PENDING' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMP
 export type ProductType = 'FINISHED_PRODUCT' | 'RAW_MATERIAL' | 'ACCESSORY';
 export type UnitType = 'PIECE' | 'METER' | 'SQUARE_METER' | 'KILOGRAM' | 'ROLL';
 
-// Product Types (deprecated - keeping for compatibility)
-export type Season = 'SUMMER' | 'WINTER' | 'ALL_SEASON';
-
 export interface Brand {
   id: number;
   name: string;

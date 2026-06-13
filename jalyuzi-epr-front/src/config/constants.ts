@@ -182,13 +182,6 @@ export const UNIT_TYPES = {
   ROLL: { label: 'Rulon', value: 'ROLL' },
 } as const;
 
-// Deprecated - eski tizim uchun
-export const SEASONS = {
-  SUMMER: { label: 'Yozgi', value: 'SUMMER' },
-  WINTER: { label: 'Qishki', value: 'WINTER' },
-  ALL_SEASON: { label: 'Universal', value: 'ALL_SEASON' },
-} as const;
-
 export const PAYMENT_METHODS = {
   CASH: { label: 'Naqd', value: 'CASH' },
   CARD: { label: 'Karta', value: 'CARD' },

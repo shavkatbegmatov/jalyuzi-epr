@@ -7,6 +7,7 @@
 
 # Maven
 jalyuzi-epr-api/target/
+*.class
 
 # User uploaded files (photos, signatures) — must NEVER be committed
 jalyuzi-epr-api/uploads/

@@ -708,7 +708,7 @@ export function SettingsPage() {
                   className="input input-bordered w-full"
                   value={brandForm.name}
                   onChange={(e) => setBrandForm((prev) => ({ ...prev, name: e.target.value }))}
-                  placeholder="Michelin, Bridgestone..."
+                  placeholder="Hunter Douglas, Somfy..."
                 />
               </label>
 
@@ -779,7 +779,7 @@ export function SettingsPage() {
                   onChange={(e) =>
                     setCategoryForm((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="Yengil avtomobil, Yuk mashinasi..."
+                  placeholder="Roletka, Vertikal jalyuzi..."
                 />
               </label>
 

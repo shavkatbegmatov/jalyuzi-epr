@@ -52,13 +52,6 @@ public class ExportFormatter {
     }
 
     private String formatEnum(Object value) {
-        if (value instanceof Season season) {
-            return switch (season) {
-                case SUMMER -> "Yoz";
-                case WINTER -> "Qish";
-                case ALL_SEASON -> "Barcha fasl";
-            };
-        }
         if (value instanceof CustomerType customerType) {
             return switch (customerType) {
                 case INDIVIDUAL -> "Jismoniy shaxs";
