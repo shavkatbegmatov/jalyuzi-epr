@@ -24,12 +24,13 @@ versiyalash esa [Semantic Versioning](https://semver.org/lang/uz/) (SemVer) qoid
 
 ## [Reja qilinmagan / Unreleased]
 
-> 2026-06-07 dan 2026-06-13 gacha kiritilgan, hali alohida reliz raqami berilmagan o'zgarishlar.
+> 2026-06-07 dan 2026-06-14 gacha kiritilgan, hali alohida reliz raqami berilmagan o'zgarishlar.
 
 ### Tuzatildi
 - **Auth:** Token yangilashda (`refresh`) sessiya rotatsiyasi qo'shildi — takroriy `401` loop muammosi bartaraf etildi (`V41__session_refresh_token_hash`).
 - **Buyurtmalar:** `ADMIN` roliga `ORDERS` ruxsatlari qaytarildi (`V42__fix_admin_order_permissions`).
 - **Qarzlar:** Manfiy mijoz balansi endi `ACTIVE` qarz yozuvi bilan moslashtiriladi (`V43__reconcile_customer_debt_balances`).
+- **Ruxsatlar (RBAC):** `MANAGER` roliga `EMPLOYEES_VIEW` berildi — menejer xodimlar ro'yxatini ko'ra oladi (`GET /v1/employees` endi `403` qaytarmaydi) va "Xodimlar" menyusi unga ko'rinadi, shu bilan `EMPLOYEES_CHANGE_ROLE`/`EMPLOYEES_MANAGE_ACCESS` amalda ishlaydigan bo'ldi (`V45__manager_employees_view_permission`).
 
 ### Olib tashlandi
 - Avvalgi "shina magazin" (tire shop) loyihasidan qolgan test/seed qoldiqlari tozalandi (`V44__cleanup_tire_shop_seed_data`).
