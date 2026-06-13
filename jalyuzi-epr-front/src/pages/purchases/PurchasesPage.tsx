@@ -854,19 +854,13 @@ export function PurchasesPage() {
                       <span>{formatCurrency(cartTotal)}</span>
                     </div>
                     <div className="divider my-2"></div>
-                    <label className="form-control">
-                      <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
-                        To'langan summa
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={cartTotal}
-                        className="input input-bordered w-full"
-                        value={paidAmount}
-                        onChange={(e) => setPaidAmount(Number(e.target.value) || 0)}
-                      />
-                    </label>
+                    <CurrencyInput
+                      label="To'langan summa"
+                      value={paidAmount}
+                      onChange={setPaidAmount}
+                      min={0}
+                      max={cartTotal}
+                    />
                     <div className="flex justify-between text-lg">
                       <span className="text-base-content/70">Qarz:</span>
                       <span className={clsx('font-semibold', debtAmount > 0 ? 'text-error' : 'text-success')}>

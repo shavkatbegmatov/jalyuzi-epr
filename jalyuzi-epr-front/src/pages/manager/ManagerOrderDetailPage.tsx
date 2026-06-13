@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
+import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { employeesApi } from '../../api/employees.api';
 import { formatCurrency, formatDate, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
 import type { Order, OrderStatus, OrderPaymentType, Employee } from '../../types';
@@ -826,13 +827,10 @@ export function ManagerOrderDetailPage() {
                   <span className="label-text font-medium">Summa</span>
                   <span className="label-text-alt">Qoldiq: {formatCurrency(order.remainingAmount)}</span>
                 </label>
-                <input
-                  type="number"
-                  className="input input-bordered w-full"
+                <CurrencyInput
+                  value={Number(paymentAmount) || 0}
+                  onChange={(val) => setPaymentAmount(val ? String(val) : '')}
                   placeholder="Summani kiriting"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
-                  min={1}
                   max={order.remainingAmount}
                 />
               </div>

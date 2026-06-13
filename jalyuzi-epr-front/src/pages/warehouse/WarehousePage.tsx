@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { warehouseApi } from '../../api/warehouse.api';
+import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { productsApi } from '../../api/products.api';
 import { suppliersApi } from '../../api/suppliers.api';
 import { NumberInput } from '../../components/ui/NumberInput';
@@ -728,24 +729,19 @@ export function WarehousePage() {
                   </label>
 
                   {selectedSupplier && (
-                    <label className="form-control">
-                      <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
-                        Birlik narxi
-                      </span>
-                      <input
-                        type="number"
+                    <div className="form-control">
+                      <CurrencyInput
+                        label="Birlik narxi"
+                        value={unitPrice}
+                        onChange={setUnitPrice}
                         min={0}
-                        className="input input-bordered w-full"
-                        value={unitPrice || ''}
-                        onChange={(e) => setUnitPrice(Number(e.target.value) || 0)}
-                        placeholder="0"
                       />
                       {unitPrice > 0 && adjustmentQuantity && (
                         <span className="label-text-alt mt-1 text-base-content/70">
                           Jami: {formatCurrency(unitPrice * parseInt(adjustmentQuantity || '0'))}
                         </span>
                       )}
-                    </label>
+                    </div>
                   )}
                 </div>
               )}

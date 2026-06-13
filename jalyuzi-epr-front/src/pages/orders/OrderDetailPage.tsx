@@ -25,6 +25,7 @@ import {
   Ban,
 } from 'lucide-react';
 import { ordersApi } from '../../api/orders.api';
+import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
@@ -266,11 +267,9 @@ function PaymentModal({ open, onClose, onSubmit, loading, maxAmount }: PaymentMo
                 </span>
               )}
             </label>
-            <input
-              type="number"
-              className="input input-bordered w-full"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : '')}
+            <CurrencyInput
+              value={amount || 0}
+              onChange={(val) => setAmount(val || '')}
               placeholder="Summani kiriting"
               min={0}
             />

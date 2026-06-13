@@ -1272,15 +1272,10 @@ export function CreateOrderPage() {
                   <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
                     Sotish narxi (so'm) *
                   </span>
-                  <input
-                    type="number"
+                  <CurrencyInput
+                    value={newProduct.sellingPrice || 0}
+                    onChange={(val) => setNewProduct((p) => ({ ...p, sellingPrice: val }))}
                     min={0}
-                    className="input input-bordered w-full"
-                    placeholder="0"
-                    value={newProduct.sellingPrice || ''}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, sellingPrice: parseFloat(e.target.value) || 0 }))
-                    }
                   />
                 </label>
               </div>
@@ -1290,36 +1285,20 @@ export function CreateOrderPage() {
                   <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
                     Narx/m² (ixtiyoriy)
                   </span>
-                  <input
-                    type="number"
+                  <CurrencyInput
+                    value={newProduct.pricePerSquareMeter ?? 0}
+                    onChange={(val) => setNewProduct((p) => ({ ...p, pricePerSquareMeter: val || undefined }))}
                     min={0}
-                    className="input input-bordered w-full"
-                    placeholder="0"
-                    value={newProduct.pricePerSquareMeter ?? ''}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({
-                        ...p,
-                        pricePerSquareMeter: e.target.value ? parseFloat(e.target.value) : undefined,
-                      }))
-                    }
                   />
                 </label>
                 <label className="form-control">
                   <span className="label-text mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">
                     O'rnatish narxi (ixtiyoriy)
                   </span>
-                  <input
-                    type="number"
+                  <CurrencyInput
+                    value={newProduct.installationPrice ?? 0}
+                    onChange={(val) => setNewProduct((p) => ({ ...p, installationPrice: val || undefined }))}
                     min={0}
-                    className="input input-bordered w-full"
-                    placeholder="0"
-                    value={newProduct.installationPrice ?? ''}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({
-                        ...p,
-                        installationPrice: e.target.value ? parseFloat(e.target.value) : undefined,
-                      }))
-                    }
                   />
                 </label>
               </div>

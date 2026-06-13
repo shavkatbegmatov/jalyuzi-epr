@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { suppliersApi } from '../../api/suppliers.api';
+import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { purchasesApi } from '../../api/purchases.api';
 import { productsApi } from '../../api/products.api';
 import { formatCurrency, formatDate, getTashkentToday } from '../../config/constants';
@@ -1110,12 +1111,11 @@ export function SuppliersPage() {
                               />
                             </td>
                             <td>
-                              <input
-                                type="number"
+                              <CurrencyInput
+                                size="sm"
                                 min={0}
-                                className="input input-bordered input-sm w-full"
                                 value={item.unitPrice}
-                                onChange={(e) => handleUpdateCartItem(item.product.id, 'unitPrice', Number(e.target.value) || 0)}
+                                onChange={(val) => handleUpdateCartItem(item.product.id, 'unitPrice', val)}
                               />
                             </td>
                             <td className="text-right font-semibold">
@@ -1155,19 +1155,13 @@ export function SuppliersPage() {
                       <span>{formatCurrency(cartTotal)}</span>
                     </div>
                     <div className="divider my-2"></div>
-                    <label className="form-control">
-                      <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
-                        To'langan summa
-                      </span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={cartTotal}
-                        className="input input-bordered w-full"
-                        value={paidAmount}
-                        onChange={(e) => setPaidAmount(Number(e.target.value) || 0)}
-                      />
-                    </label>
+                    <CurrencyInput
+                      label="To'langan summa"
+                      value={paidAmount}
+                      onChange={setPaidAmount}
+                      min={0}
+                      max={cartTotal}
+                    />
                     <div className="flex justify-between text-lg">
                       <span className="text-base-content/70">Qarz:</span>
                       <span className={clsx('font-semibold', debtAmount > 0 ? 'text-error' : 'text-success')}>
