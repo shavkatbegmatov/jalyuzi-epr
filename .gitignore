@@ -35,4 +35,5 @@ jalyuzi-epr-front/android/app/release/
 
 # Generated Play Store assets (regenerated via npm run android:store-assets)
 jalyuzi-epr-front/store-assets/
-/2026-02-05-this-session-is-being-continued-from-a-previous-co.txt
+# Claude Code session/plan dumps (timestamped root-level txt)
+/20*-*.txt
