@@ -89,7 +89,9 @@ public class EmployeeController {
     }
 
     @GetMapping("/technicians")
-    @RequiresPermission(PermissionCode.ORDERS_ASSIGN)
+    // Kassa (POS) o'rnatishli sotuvda sotuvchi texnik tanlashi kerak — shuning uchun
+    // ORDERS_ASSIGN (menejer/admin) YOKI ORDERS_CREATE (sotuvchi) yetarli.
+    @RequiresPermission(value = {PermissionCode.ORDERS_ASSIGN, PermissionCode.ORDERS_CREATE}, requireAll = false)
     @Operation(summary = "Get active technicians", description = "Faol texniklarni olish (buyurtmaga tayinlash uchun)")
     public ResponseEntity<ApiResponse<List<EmployeeResponse>>> getActiveTechnicians() {
         return ResponseEntity.ok(ApiResponse.success(employeeService.getActiveTechnicians()));
