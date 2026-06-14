@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import uz.jalyuziepr.api.dto.request.*;
 import uz.jalyuziepr.api.dto.response.OrderResponse;
 import uz.jalyuziepr.api.dto.response.OrderStatsResponse;
@@ -16,6 +18,7 @@ import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.*;
 import uz.jalyuziepr.api.security.CustomUserDetails;
+import uz.jalyuziepr.api.service.export.OrderDocumentService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,6 +48,9 @@ public class OrderService {
     private final SettingsService settingsService;
     private final ProductionService productionService;
     private final PaymentScheduleService paymentScheduleService;
+    private final OrderDocumentService orderDocumentService;
+    private final TelegramService telegramService;
+    private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
 
     // ==================== QUERY ====================
 
@@ -417,6 +423,16 @@ public class OrderService {
         validateTransition(order, OrderStatus.ORNATISH_BAJARILDI);
         User currentUser = getCurrentUser();
 
+        // O'rnatish yakunlanishidan oldin dala dalillarini talab qilamiz:
+        // kamida bitta "keyin" fotosurati va mijozning qabul qilish imzosi.
+        // Bu o'rnatish bo'yicha nizolarni oldini oladi va akt-kvitansiyaga asos bo'ladi.
+        if (order.getPhotosAfter() == null || order.getPhotosAfter().isEmpty()) {
+            throw new BadRequestException("O'rnatishni yakunlash uchun kamida bitta \"o'rnatishdan keyin\" fotosurati kerak");
+        }
+        if (order.getCustomerSignature() == null || order.getCustomerSignature().isBlank()) {
+            throw new BadRequestException("O'rnatishni yakunlash uchun mijozning qabul qilish imzosi kerak");
+        }
+
         changeStatus(order, OrderStatus.ORNATISH_BAJARILDI, currentUser, notes);
         Order saved = orderRepository.save(order);
 
@@ -427,7 +443,97 @@ public class OrderService {
                         order.getOrderNumber()),
                 StaffNotificationType.SUCCESS, "ORDER", saved.getId());
 
+        // Telegram kvitansiyani tranzaksiyadan TASHQARIda — commit'dan keyin yuboramiz.
+        // Tashqi (sekin) HTTP so'rovi DB ulanishi/tranzaksiyasini ushlab turmasligi kerak.
+        // chatId'ni hozir, mijoz hali managed holatda, hisoblab olamiz.
+        final Long chatId = resolveCustomerChatId(saved.getCustomer());
+        final Long savedId = saved.getId();
+        final String orderNumber = saved.getOrderNumber();
+        final BigDecimal remaining = saved.getRemainingAmount();
+        registerAfterCommit(() -> sendCompletionReceipt(savedId, orderNumber, remaining, chatId));
+
         return OrderResponse.from(saved);
+    }
+
+    /**
+     * Berilgan amalni joriy tranzaksiya muvaffaqiyatli commit bo'lгач bajaradi.
+     * Tranzaksiya bo'lmasa — darhol bajaradi.
+     */
+    private void registerAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
+        }
+    }
+
+    /**
+     * Yakunlangan o'rnatish uchun imzolangan akt-kvitansiyani (PDF) mijozning
+     * Telegram'iga yuboradi. Telegram nosozligi o'rnatishni yakunlashga to'sqinlik
+     * qilmasligi kerak — shuning uchun barcha xatolar yutiladi va menejerga
+     * ogohlantirish yuboriladi.
+     */
+    private void sendCompletionReceipt(Long orderId, String orderNumber, BigDecimal remaining, Long chatId) {
+        try {
+            if (chatId == null) {
+                log.info("Buyurtma {} uchun mijoz Telegram'ga ulanmagan — kvitansiya yuborilmadi", orderNumber);
+                staffNotificationService.createGlobalNotification(
+                        "Telegram kvitansiya yuborilmadi",
+                        String.format("Buyurtma %s: mijoz Telegram'ga ulanmagan, aktni qo'lda yuboring", orderNumber),
+                        StaffNotificationType.WARNING, "ORDER", orderId);
+                return;
+            }
+
+            byte[] pdf = orderDocumentService.generateInstallationAct(orderId);
+            boolean sent = telegramService.sendDocument(
+                    chatId, pdf, "akt-" + orderNumber + ".pdf", buildReceiptCaption(orderNumber, remaining));
+
+            if (!sent) {
+                staffNotificationService.createGlobalNotification(
+                        "Telegram kvitansiya yuborilmadi",
+                        String.format("Buyurtma %s: Telegram'ga aktni yuborib bo'lmadi", orderNumber),
+                        StaffNotificationType.WARNING, "ORDER", orderId);
+            }
+        } catch (Exception e) {
+            log.warn("Buyurtma {} uchun Telegram kvitansiyani yuborishda xatolik: {}", orderNumber, e.getMessage());
+        }
+    }
+
+    /**
+     * Mijozning Telegram chat ID'sini aniqlaydi: avval mijoz yozuvidagi to'g'ridan-to'g'ri
+     * bog'lanish, bo'lmasa telefon raqami orqali telegram_phone_links jadvalidan.
+     */
+    private Long resolveCustomerChatId(Customer customer) {
+        if (customer == null) {
+            return null;
+        }
+        if (customer.getTelegramChatId() != null) {
+            return customer.getTelegramChatId();
+        }
+        if (customer.getPhone() != null && !customer.getPhone().isBlank()) {
+            return telegramPhoneLinkRepository.findByPhone(customer.getPhone())
+                    .map(TelegramPhoneLink::getChatId)
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private String buildReceiptCaption(String orderNumber, BigDecimal remaining) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("✅ <b>O'rnatish yakunlandi</b>\n");
+        sb.append("Buyurtma: <b>").append(orderNumber).append("</b>\n");
+        if (remaining != null && remaining.compareTo(BigDecimal.ZERO) > 0) {
+            sb.append("Qoldiq to'lov: <b>")
+                    .append(String.format("%,.0f", remaining))
+                    .append(" so'm</b>\n");
+        }
+        sb.append("\nXizmatimizdan foydalanganingiz uchun rahmat! 🙏");
+        return sb.toString();
     }
 
     @Transactional

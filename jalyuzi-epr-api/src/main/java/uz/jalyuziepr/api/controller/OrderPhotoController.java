@@ -36,7 +36,7 @@ public class OrderPhotoController {
     }
 
     @PostMapping(value = "/{type}", consumes = "multipart/form-data")
-    @RequiresPermission(PermissionCode.ORDERS_UPDATE)
+    @RequiresPermission({PermissionCode.ORDERS_UPDATE, PermissionCode.ORDERS_INSTALL})
     @Operation(summary = "Fotosurat yuklash (measurement/before/after)")
     public ResponseEntity<ApiResponse<List<String>>> upload(
             @PathVariable Long orderId,
@@ -47,7 +47,7 @@ public class OrderPhotoController {
     }
 
     @DeleteMapping("/{type}")
-    @RequiresPermission(PermissionCode.ORDERS_UPDATE)
+    @RequiresPermission({PermissionCode.ORDERS_UPDATE, PermissionCode.ORDERS_INSTALL})
     @Operation(summary = "Fotosurat o'chirish (URL'i bilan)")
     public ResponseEntity<ApiResponse<List<String>>> delete(
             @PathVariable Long orderId,
@@ -58,7 +58,7 @@ public class OrderPhotoController {
     }
 
     @PostMapping("/signature")
-    @RequiresPermission(PermissionCode.ORDERS_INSTALL)
+    @RequiresPermission({PermissionCode.ORDERS_INSTALL, PermissionCode.ORDERS_UPDATE})
     @Operation(summary = "Mijoz imzosini saqlash (base64 PNG)")
     public ResponseEntity<ApiResponse<String>> saveSignature(
             @PathVariable Long orderId,
