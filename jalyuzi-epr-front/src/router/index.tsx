@@ -458,7 +458,7 @@ export const router = createBrowserRouter([
       {
         path: 'installations',
         element: (
-          <ProtectedRoute permission={PermissionCode.SALES_VIEW}>
+          <ProtectedRoute permission={PermissionCode.ORDERS_VIEW}>
             <LazyRoute>
               <InstallationsPage />
             </LazyRoute>

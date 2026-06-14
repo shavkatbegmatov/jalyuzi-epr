@@ -106,6 +106,29 @@ public class OrderService {
                 .toList();
     }
 
+    /**
+     * O'rnatish bosqichidagi buyurtmalar (worklist).
+     * "O'rnatishlar" sahifasi shu yagona manbadan o'qiydi: o'rnatish ma'lumotlari
+     * (installer, installationDate, manzil, foto, imzo) Order yozuvida saqlanadi —
+     * alohida installations jadvali emas.
+     */
+    private static final List<OrderStatus> INSTALLATION_PHASE_STATUSES = List.of(
+            OrderStatus.ORNATISHGA_TAYINLANDI,
+            OrderStatus.ORNATISH_JARAYONIDA,
+            OrderStatus.ORNATISH_BAJARILDI
+    );
+
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getInstallationOrders(OrderStatus status, Pageable pageable) {
+        if (status != null) {
+            if (!INSTALLATION_PHASE_STATUSES.contains(status)) {
+                throw new BadRequestException("Bu status o'rnatish bosqichiga tegishli emas");
+            }
+            return orderRepository.findByStatus(status, pageable).map(OrderResponse::fromList);
+        }
+        return orderRepository.findByStatusIn(INSTALLATION_PHASE_STATUSES, pageable).map(OrderResponse::fromList);
+    }
+
     @Transactional(readOnly = true)
     public OrderStatsResponse getStats() {
         List<Object[]> statusCounts = orderRepository.countByStatusGroup();

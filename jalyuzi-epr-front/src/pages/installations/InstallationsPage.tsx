@@ -1,138 +1,67 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Wrench,
   Calendar,
   User,
   MapPin,
-  Clock,
-  CheckCircle,
-  XCircle,
-  PlayCircle,
-  AlertCircle,
-  Filter,
-  RefreshCw,
   Phone,
+  RefreshCw,
+  ChevronRight,
+  AlertCircle,
 } from 'lucide-react';
-import { installationsApi, InstallationFilters } from '../../api/installations.api';
-import { employeesApi } from '../../api/employees.api';
-import type { Employee, Installation, InstallationStatus } from '../../types';
-import { formatDate, formatTime, INSTALLATION_STATUSES } from '../../config/constants';
-import toast from 'react-hot-toast';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
+import { ordersApi } from '../../api/orders.api';
+import type { Order, OrderStatus } from '../../types';
+import { ORDER_STATUSES, formatDateTime } from '../../config/constants';
+import { usePermission } from '../../hooks/usePermission';
+
+// O'rnatish bosqichidagi statuslar uchun filtr tablari.
+// Manba — Order lifecycle (ORNATISHGA_TAYINLANDI → ORNATISH_JARAYONIDA → ORNATISH_BAJARILDI).
+const STATUS_TABS: { value: OrderStatus | 'ALL'; label: string }[] = [
+  { value: 'ALL', label: 'Barchasi' },
+  { value: 'ORNATISHGA_TAYINLANDI', label: 'Tayinlangan' },
+  { value: 'ORNATISH_JARAYONIDA', label: 'Jarayonda' },
+  { value: 'ORNATISH_BAJARILDI', label: 'Bajarildi' },
+];
 
 export function InstallationsPage() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { canInstallOrders } = usePermission();
 
-  // Filters
-  const [filters, setFilters] = useState<InstallationFilters>({
-    page: 0,
-    size: 20,
-  });
-  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'ALL'>('ALL');
+  const [page, setPage] = useState(0);
 
-
-  // Complete modal
-  const [completeModal, setCompleteModal] = useState<{
-    isOpen: boolean;
-    installation: Installation | null;
-    notes: string;
-  }>({ isOpen: false, installation: null, notes: '' });
-
-  // Cancel modal
-  const [cancelModal, setCancelModal] = useState<{
-    isOpen: boolean;
-    installation: Installation | null;
-    reason: string;
-  }>({ isOpen: false, installation: null, reason: '' });
-
-  // Fetch installations
-  const { data: installationsData, isLoading, refetch } = useQuery({
-    queryKey: ['installations', filters],
-    queryFn: () => installationsApi.getAll(filters),
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['installation-orders', statusFilter, page],
+    queryFn: () =>
+      ordersApi.getInstallations({
+        status: statusFilter === 'ALL' ? undefined : statusFilter,
+        page,
+        size: 20,
+      }),
   });
 
-  // Fetch technicians for filter
-  const { data: technicians = [] } = useQuery({
-    queryKey: ['technicians'],
-    queryFn: () => employeesApi.getTechnicians(),
-  });
-
-  // Update status mutation
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: InstallationStatus }) =>
-      installationsApi.updateStatus(id, status),
+  // O'rnatishni boshlash — yagona xavfsiz inline amal (oldindan shart talab qilmaydi).
+  // Yakunlash montaj akti (foto + imzo) talab qiladi, shuning uchun u buyurtma sahifasida.
+  const startMutation = useMutation({
+    mutationFn: (id: number) => ordersApi.startInstallation(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['installations'] });
-      toast.success('Status yangilandi');
+      queryClient.invalidateQueries({ queryKey: ['installation-orders'] });
+      toast.success("O'rnatish boshlandi");
     },
-    onError: () => {
-      toast.error('Xatolik yuz berdi');
-    },
+    onError: () => toast.error("O'rnatishni boshlashda xatolik"),
   });
 
-  // Complete installation mutation
-  const completeMutation = useMutation({
-    mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
-      installationsApi.complete(id, notes),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['installations'] });
-      toast.success("O'rnatish yakunlandi");
-      setCompleteModal({ isOpen: false, installation: null, notes: '' });
-    },
-    onError: () => {
-      toast.error('Xatolik yuz berdi');
-    },
-  });
+  const orders = data?.content ?? [];
+  const totalPages = data?.totalPages ?? 0;
 
-  // Cancel installation mutation
-  const cancelMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
-      installationsApi.cancel(id, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['installations'] });
-      toast.success("O'rnatish bekor qilindi");
-      setCancelModal({ isOpen: false, installation: null, reason: '' });
-    },
-    onError: () => {
-      toast.error('Xatolik yuz berdi');
-    },
-  });
-
-  const installations = installationsData?.content || [];
-  const totalPages = installationsData?.totalPages || 0;
-
-  const getStatusIcon = (status: InstallationStatus) => {
-    switch (status) {
-      case 'PENDING':
-        return <AlertCircle className="h-4 w-4" />;
-      case 'SCHEDULED':
-        return <Calendar className="h-4 w-4" />;
-      case 'IN_PROGRESS':
-        return <PlayCircle className="h-4 w-4" />;
-      case 'COMPLETED':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'CANCELLED':
-        return <XCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusBadgeClass = (status: InstallationStatus) => {
-    return INSTALLATION_STATUSES[status]?.color || 'badge-ghost';
-  };
-
-  const handleFilterChange = (key: keyof InstallationFilters, value: string | number | undefined) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value || undefined,
-      page: 0,
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({ page: 0, size: 20 });
+  const handleTabChange = (value: OrderStatus | 'ALL') => {
+    setStatusFilter(value);
+    setPage(0);
   };
 
   return (
@@ -142,135 +71,76 @@ export function InstallationsPage() {
         <div>
           <h1 className="text-2xl font-bold">O'rnatishlar</h1>
           <p className="text-sm text-base-content/60">
-            O'rnatish jadvalini boshqarish
+            O'rnatishga tayinlangan buyurtmalar
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            className="btn btn-outline btn-sm"
-            onClick={() => setShowFilters(!showFilters)}
-          >
-            <Filter className="h-4 w-4" />
-            Filtr
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4" />
-          </button>
-        </div>
+        <button className="btn btn-outline btn-sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4" />
+          Yangilash
+        </button>
       </div>
 
-      {/* Filters */}
-      {showFilters && (
-        <div className="card bg-base-100 shadow-sm">
-          <div className="card-body">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Texnik</span>
-                </label>
-                <select
-                  className="select select-bordered select-sm"
-                  value={filters.technicianId || ''}
-                  onChange={(e) =>
-                    handleFilterChange('technicianId', e.target.value ? Number(e.target.value) : undefined)
-                  }
-                >
-                  <option value="">Barcha texniklar</option>
-                  {technicians.map((tech: Employee) => (
-                    <option key={tech.id} value={tech.id}>
-                      {tech.fullName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+      {/* Status tabs */}
+      <div className="flex flex-wrap gap-2">
+        {STATUS_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            className={clsx(
+              'btn btn-sm',
+              statusFilter === tab.value ? 'btn-primary' : 'btn-ghost'
+            )}
+            onClick={() => handleTabChange(tab.value)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Status</span>
-                </label>
-                <select
-                  className="select select-bordered select-sm"
-                  value={filters.status || ''}
-                  onChange={(e) =>
-                    handleFilterChange('status', e.target.value as InstallationStatus || undefined)
-                  }
-                >
-                  <option value="">Barcha statuslar</option>
-                  {Object.entries(INSTALLATION_STATUSES).map(([value, { label }]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Boshlanish sanasi</span>
-                </label>
-                <input
-                  type="date"
-                  className="input input-bordered input-sm"
-                  value={filters.startDate || ''}
-                  onChange={(e) => handleFilterChange('startDate', e.target.value || undefined)}
-                />
-              </div>
-
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Tugash sanasi</span>
-                </label>
-                <input
-                  type="date"
-                  className="input input-bordered input-sm"
-                  value={filters.endDate || ''}
-                  onChange={(e) => handleFilterChange('endDate', e.target.value || undefined)}
-                />
-              </div>
-            </div>
-
-            <div className="mt-4 flex justify-end">
-              <button className="btn btn-ghost btn-sm" onClick={clearFilters}>
-                Tozalash
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Installation Cards */}
+      {/* Content */}
       {isLoading ? (
         <div className="flex justify-center py-12">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
-      ) : installations.length === 0 ? (
+      ) : isError ? (
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body items-center py-12 text-center">
+            <AlertCircle className="h-12 w-12 text-error/60" />
+            <p className="text-base-content/60">Ma'lumotlarni yuklashda xatolik yuz berdi</p>
+            <button className="btn btn-sm btn-outline" onClick={() => refetch()}>
+              Qayta urinish
+            </button>
+          </div>
+        </div>
+      ) : orders.length === 0 ? (
         <div className="card bg-base-100 shadow-sm">
           <div className="card-body items-center py-12 text-center">
             <Wrench className="h-12 w-12 text-base-content/30" />
             <p className="text-base-content/60">O'rnatishlar topilmadi</p>
+            <p className="text-xs text-base-content/40">
+              Buyurtma "O'rnatishga tayinlandi" bosqichiga o'tgach, bu yerda ko'rinadi
+            </p>
           </div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {installations.map((installation: Installation) => (
-            <div key={installation.id} className="card bg-base-100 shadow-sm">
+          {orders.map((order: Order) => (
+            <div key={order.id} className="card bg-base-100 shadow-sm">
               <div className="card-body">
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold">#{installation.id}</h3>
-                    <p className="text-sm text-base-content/60">
-                      Sotuv #{installation.saleId}
-                    </p>
+                    <h3 className="font-semibold">{order.orderNumber}</h3>
+                    {order.installationDate && (
+                      <p className="flex items-center gap-1 text-sm text-base-content/60">
+                        <Calendar className="h-3.5 w-3.5" />
+                        {formatDateTime(order.installationDate)}
+                      </p>
+                    )}
                   </div>
                   <span
-                    className={clsx(
-                      'badge gap-1',
-                      getStatusBadgeClass(installation.status)
-                    )}
+                    className={clsx('badge', ORDER_STATUSES[order.status]?.color || 'badge-ghost')}
                   >
-                    {getStatusIcon(installation.status)}
-                    {INSTALLATION_STATUSES[installation.status]?.label}
+                    {ORDER_STATUSES[order.status]?.label || order.status}
                   </span>
                 </div>
 
@@ -279,105 +149,50 @@ export function InstallationsPage() {
                 {/* Details */}
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-base-content/50" />
-                    <span>{formatDate(installation.scheduledDate)}</span>
-                    {installation.scheduledTimeStart && (
-                      <>
-                        <Clock className="ml-2 h-4 w-4 text-base-content/50" />
-                        <span>{formatTime(installation.scheduledTimeStart)}</span>
-                        {installation.scheduledTimeEnd && (
-                          <span>- {formatTime(installation.scheduledTimeEnd)}</span>
-                        )}
-                      </>
-                    )}
+                    <User className="h-4 w-4 text-base-content/50" />
+                    <span>{order.customerName}</span>
                   </div>
 
-                  {installation.technicianName && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-base-content/50" />
-                      <span>{installation.technicianName}</span>
-                    </div>
-                  )}
-
-                  <div className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-base-content/50" />
-                    <span className="line-clamp-2">{installation.address}</span>
-                  </div>
-
-                  {installation.customerName && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-base-content/50" />
-                      <span>{installation.customerName}</span>
-                    </div>
-                  )}
-
-                  {installation.customerPhone && (
+                  {order.customerPhone && (
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-base-content/50" />
-                      <span>{installation.customerPhone}</span>
+                      <span>{order.customerPhone}</span>
+                    </div>
+                  )}
+
+                  {order.installationAddress && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-base-content/50" />
+                      <span className="line-clamp-2">{order.installationAddress}</span>
+                    </div>
+                  )}
+
+                  {order.installerName && (
+                    <div className="flex items-center gap-2">
+                      <Wrench className="h-4 w-4 text-base-content/50" />
+                      <span>{order.installerName}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Actions */}
                 <div className="card-actions mt-4 justify-end">
-                  {installation.status === 'PENDING' && (
-                    <button
-                      className="btn btn-info btn-sm"
-                      onClick={() =>
-                        updateStatusMutation.mutate({
-                          id: installation.id,
-                          status: 'SCHEDULED',
-                        })
-                      }
-                    >
-                      Rejalash
-                    </button>
-                  )}
-
-                  {installation.status === 'SCHEDULED' && (
+                  {order.status === 'ORNATISHGA_TAYINLANDI' && canInstallOrders && (
                     <button
                       className="btn btn-primary btn-sm"
-                      onClick={() =>
-                        updateStatusMutation.mutate({
-                          id: installation.id,
-                          status: 'IN_PROGRESS',
-                        })
-                      }
+                      onClick={() => startMutation.mutate(order.id)}
+                      disabled={startMutation.isPending}
                     >
                       Boshlash
                     </button>
                   )}
-
-                  {installation.status === 'IN_PROGRESS' && (
-                    <button
-                      className="btn btn-success btn-sm"
-                      onClick={() =>
-                        setCompleteModal({
-                          isOpen: true,
-                          installation,
-                          notes: '',
-                        })
-                      }
-                    >
-                      Yakunlash
-                    </button>
-                  )}
-
-                  {['PENDING', 'SCHEDULED'].includes(installation.status) && (
-                    <button
-                      className="btn btn-error btn-outline btn-sm"
-                      onClick={() =>
-                        setCancelModal({
-                          isOpen: true,
-                          installation,
-                          reason: '',
-                        })
-                      }
-                    >
-                      Bekor
-                    </button>
-                  )}
+                  <button
+                    className="btn btn-outline btn-sm"
+                    onClick={() => navigate(`/orders/${order.id}`)}
+                  >
+                    Ochish
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             </div>
@@ -391,137 +206,23 @@ export function InstallationsPage() {
           <div className="join">
             <button
               className="btn btn-sm join-item"
-              disabled={filters.page === 0}
-              onClick={() => setFilters((prev) => ({ ...prev, page: (prev.page || 0) - 1 }))}
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
             >
               «
             </button>
             <button className="btn btn-sm join-item">
-              {(filters.page || 0) + 1} / {totalPages}
+              {page + 1} / {totalPages}
             </button>
             <button
               className="btn btn-sm join-item"
-              disabled={(filters.page || 0) >= totalPages - 1}
-              onClick={() => setFilters((prev) => ({ ...prev, page: (prev.page || 0) + 1 }))}
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
             >
               »
             </button>
           </div>
         </div>
-      )}
-
-      {/* Complete Modal */}
-      {completeModal.isOpen && completeModal.installation && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="text-lg font-bold">O'rnatishni yakunlash</h3>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Izohlar (ixtiyoriy)</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered"
-                rows={3}
-                placeholder="Qo'shimcha izohlar..."
-                value={completeModal.notes}
-                onChange={(e) =>
-                  setCompleteModal((prev) => ({ ...prev, notes: e.target.value }))
-                }
-              />
-            </div>
-            <div className="modal-action">
-              <button
-                className="btn btn-ghost"
-                onClick={() =>
-                  setCompleteModal({ isOpen: false, installation: null, notes: '' })
-                }
-              >
-                Bekor
-              </button>
-              <button
-                className="btn btn-success"
-                onClick={() =>
-                  completeMutation.mutate({
-                    id: completeModal.installation!.id,
-                    notes: completeModal.notes || undefined,
-                  })
-                }
-                disabled={completeMutation.isPending}
-              >
-                {completeMutation.isPending && (
-                  <span className="loading loading-spinner loading-sm"></span>
-                )}
-                Yakunlash
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button
-              onClick={() =>
-                setCompleteModal({ isOpen: false, installation: null, notes: '' })
-              }
-            >
-              close
-            </button>
-          </form>
-        </dialog>
-      )}
-
-      {/* Cancel Modal */}
-      {cancelModal.isOpen && cancelModal.installation && (
-        <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="text-lg font-bold">O'rnatishni bekor qilish</h3>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Sabab *</span>
-              </label>
-              <textarea
-                className="textarea textarea-bordered"
-                rows={3}
-                placeholder="Bekor qilish sababi..."
-                value={cancelModal.reason}
-                onChange={(e) =>
-                  setCancelModal((prev) => ({ ...prev, reason: e.target.value }))
-                }
-              />
-            </div>
-            <div className="modal-action">
-              <button
-                className="btn btn-ghost"
-                onClick={() =>
-                  setCancelModal({ isOpen: false, installation: null, reason: '' })
-                }
-              >
-                Ortga
-              </button>
-              <button
-                className="btn btn-error"
-                onClick={() =>
-                  cancelMutation.mutate({
-                    id: cancelModal.installation!.id,
-                    reason: cancelModal.reason,
-                  })
-                }
-                disabled={!cancelModal.reason.trim() || cancelMutation.isPending}
-              >
-                {cancelMutation.isPending && (
-                  <span className="loading loading-spinner loading-sm"></span>
-                )}
-                Bekor qilish
-              </button>
-            </div>
-          </div>
-          <form method="dialog" className="modal-backdrop">
-            <button
-              onClick={() =>
-                setCancelModal({ isOpen: false, installation: null, reason: '' })
-              }
-            >
-              close
-            </button>
-          </form>
-        </dialog>
       )}
     </div>
   );

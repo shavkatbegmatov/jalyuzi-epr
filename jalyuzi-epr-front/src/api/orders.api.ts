@@ -61,6 +61,22 @@ export const ordersApi = {
     return data.data;
   },
 
+  // O'rnatish bosqichidagi buyurtmalar (O'rnatishlar sahifasi uchun)
+  getInstallations: async (params: {
+    status?: string;
+    page?: number;
+    size?: number;
+  }): Promise<PagedResponse<Order>> => {
+    const searchParams = new URLSearchParams();
+    if (params.status) searchParams.append('status', params.status);
+    if (params.page !== undefined) searchParams.append('page', String(params.page));
+    if (params.size !== undefined) searchParams.append('size', String(params.size));
+    const { data } = await api.get<ApiResponse<PagedResponse<Order>>>(
+      `/v1/orders/installations?${searchParams.toString()}`
+    );
+    return data.data;
+  },
+
   // Lifecycle
   create: async (request: OrderCreateRequest): Promise<Order> => {
     const { data } = await api.post<ApiResponse<Order>>('/v1/orders', request);

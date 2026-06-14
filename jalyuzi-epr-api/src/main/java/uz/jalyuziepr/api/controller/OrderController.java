@@ -67,6 +67,17 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderService.getInstallerOrders(userDetails.getId())));
     }
 
+    @GetMapping("/installations")
+    @RequiresPermission(PermissionCode.ORDERS_VIEW)
+    @Operation(summary = "O'rnatish buyurtmalari",
+            description = "O'rnatish bosqichidagi buyurtmalar ro'yxati (worklist)")
+    public ResponseEntity<ApiResponse<PagedResponse<OrderResponse>>> getInstallationOrders(
+            @RequestParam(required = false) OrderStatus status,
+            @PageableDefault(size = 20, sort = "installationDate") Pageable pageable) {
+        Page<OrderResponse> orders = orderService.getInstallationOrders(status, pageable);
+        return ResponseEntity.ok(ApiResponse.success(PagedResponse.from(orders)));
+    }
+
     // ==================== LIFECYCLE ====================
 
     @PostMapping

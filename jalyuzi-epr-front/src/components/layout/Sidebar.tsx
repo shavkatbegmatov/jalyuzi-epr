@@ -64,7 +64,7 @@ const menuGroups: MenuGroup[] = [
       { path: '/pos', icon: ShoppingCart, label: 'Kassa (POS)', permission: PermissionCode.SALES_CREATE },
       { path: '/sales', icon: CreditCard, label: 'Sotuvlar', permission: PermissionCode.SALES_VIEW },
       { path: '/orders', icon: ClipboardList, label: 'Buyurtmalar', permission: PermissionCode.ORDERS_VIEW },
-      { path: '/installations', icon: Wrench, label: "O'rnatishlar", permission: PermissionCode.SALES_VIEW },
+      { path: '/installations', icon: Wrench, label: "O'rnatishlar", permission: PermissionCode.ORDERS_VIEW },
       { path: '/warranty', icon: ShieldCheck, label: 'Kafolat shikoyatlari', permission: PermissionCode.WARRANTY_VIEW },
     ],
   },
