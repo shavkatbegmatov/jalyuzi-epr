@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -39,7 +41,15 @@ public class TelegramService {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(8_000);  // ulanish: 8s
         factory.setReadTimeout(15_000);    // o'qish: 15s
-        return new RestTemplate(factory);
+        RestTemplate rt = new RestTemplate(factory);
+        // Multipart matn qismlari (caption) UTF-8'da kodlanishi uchun form-konverter
+        // charset'ini UTF-8'ga sozlaymiz — emoji va o'zbekcha matn buzilmasligi kerak.
+        for (HttpMessageConverter<?> conv : rt.getMessageConverters()) {
+            if (conv instanceof FormHttpMessageConverter formConv) {
+                formConv.setCharset(StandardCharsets.UTF_8);
+            }
+        }
+        return rt;
     }
 
     @PostConstruct
@@ -146,11 +156,9 @@ public class TelegramService {
             body.add("chat_id", String.valueOf(chatId));
             body.add("document", fileResource);
             if (caption != null && !caption.isBlank()) {
-                // Caption qismini aniq UTF-8'da kodlaymiz — aks holda emoji va
-                // o'zbekcha matn ISO-8859-1 sukut kodlashda buziladi
-                HttpHeaders captionHeaders = new HttpHeaders();
-                captionHeaders.setContentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8));
-                body.add("caption", new HttpEntity<>(caption, captionHeaders));
+                // Charset form-konverterda UTF-8'ga sozlangan (buildTimeoutRestTemplate),
+                // shuning uchun caption'ni oddiy matn sifatida qo'shsak bo'ladi.
+                body.add("caption", caption);
                 body.add("parse_mode", "HTML");
             }
 

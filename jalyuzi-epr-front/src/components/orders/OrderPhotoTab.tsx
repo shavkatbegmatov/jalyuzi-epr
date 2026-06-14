@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Trash2, X, Upload, FileSignature, Ruler, Wrench, Check } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
@@ -30,7 +30,7 @@ function resolvePhotoUrl(url: string): string {
   return url;
 }
 
-function PhotoGrid({
+const PhotoGrid = memo(function PhotoGrid({
   type,
   urls,
   canEdit,
@@ -41,8 +41,8 @@ function PhotoGrid({
   type: PhotoType;
   urls: string[];
   canEdit: boolean;
-  onUpload: (file: File) => Promise<void>;
-  onDelete: (url: string) => Promise<void>;
+  onUpload: (type: PhotoType, file: File) => Promise<void>;
+  onDelete: (type: PhotoType, url: string) => Promise<void>;
   onPreview: (url: string) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +55,7 @@ function PhotoGrid({
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        await onUpload(file);
+        await onUpload(type, file);
       }
     } finally {
       setUploading(false);
@@ -69,7 +69,7 @@ function PhotoGrid({
       setUploading(true);
       try {
         const file = await pickImageNative();
-        if (file) await onUpload(file);
+        if (file) await onUpload(type, file);
       } catch {
         toast.error("Kamera ochilmadi yoki ruxsat berilmadi");
       } finally {
@@ -139,7 +139,7 @@ function PhotoGrid({
                   className="absolute right-1 top-1 rounded-full bg-error/90 p-1 text-white opacity-0 transition group-hover:opacity-100"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (confirm("O'chirilsinmi?")) onDelete(url);
+                    if (confirm("O'chirilsinmi?")) onDelete(type, url);
                   }}
                 >
                   <Trash2 className="h-3 w-3" />
@@ -151,7 +151,7 @@ function PhotoGrid({
       )}
     </div>
   );
-}
+});
 
 export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props) {
   const [photos, setPhotos] = useState<OrderPhotos | null>(null);
@@ -189,7 +189,8 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
     }
   }, [photos, onStateChange]);
 
-  const handleUpload = async (type: PhotoType, file: File) => {
+  // useCallback — barqaror identifikatsiya, memo(PhotoGrid) keraksiz qayta render qilmasligi uchun
+  const handleUpload = useCallback(async (type: PhotoType, file: File) => {
     try {
       const urls = await orderPhotosApi.upload(orderId, type, file);
       setPhotos((prev) => prev ? { ...prev, [type.toLowerCase()]: urls } : prev);
@@ -198,9 +199,9 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
       console.error(e);
       toast.error('Yuklab bo\'lmadi');
     }
-  };
+  }, [orderId]);
 
-  const handleDelete = async (type: PhotoType, url: string) => {
+  const handleDelete = useCallback(async (type: PhotoType, url: string) => {
     try {
       const urls = await orderPhotosApi.delete(orderId, type, url);
       setPhotos((prev) => prev ? { ...prev, [type.toLowerCase()]: urls } : prev);
@@ -209,7 +210,7 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
       console.error(e);
       toast.error('O\'chirib bo\'lmadi');
     }
-  };
+  }, [orderId]);
 
   const handleSaveSignature = async () => {
     if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) {
@@ -246,24 +247,24 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
         type="MEASUREMENT"
         urls={photos.measurement}
         canEdit={canEdit}
-        onUpload={(f) => handleUpload('MEASUREMENT', f)}
-        onDelete={(u) => handleDelete('MEASUREMENT', u)}
+        onUpload={handleUpload}
+        onDelete={handleDelete}
         onPreview={setPreview}
       />
       <PhotoGrid
         type="BEFORE"
         urls={photos.before}
         canEdit={canEdit}
-        onUpload={(f) => handleUpload('BEFORE', f)}
-        onDelete={(u) => handleDelete('BEFORE', u)}
+        onUpload={handleUpload}
+        onDelete={handleDelete}
         onPreview={setPreview}
       />
       <PhotoGrid
         type="AFTER"
         urls={photos.after}
         canEdit={canEdit}
-        onUpload={(f) => handleUpload('AFTER', f)}
-        onDelete={(u) => handleDelete('AFTER', u)}
+        onUpload={handleUpload}
+        onDelete={handleDelete}
         onPreview={setPreview}
       />
 
