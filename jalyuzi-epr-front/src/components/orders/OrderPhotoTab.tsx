@@ -13,6 +13,8 @@ import { isNativeMobile, pickImageNative } from '../../utils/nativeCamera';
 interface Props {
   orderId: number;
   canEdit?: boolean;
+  /** Foto/imzo holati o'zgarganda ota-komponentni xabardor qiladi (yakunlash tugmasini boshqarish uchun) */
+  onStateChange?: (state: { afterCount: number; hasSignature: boolean }) => void;
 }
 
 const TYPE_CONFIG: Record<PhotoType, { label: string; icon: typeof Camera; color: string }> = {
@@ -151,7 +153,7 @@ function PhotoGrid({
   );
 }
 
-export function OrderPhotoTab({ orderId, canEdit = false }: Props) {
+export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props) {
   const [photos, setPhotos] = useState<OrderPhotos | null>(null);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
@@ -173,6 +175,16 @@ export function OrderPhotoTab({ orderId, canEdit = false }: Props) {
   useEffect(() => {
     load();
   }, [load]);
+
+  // Ota-komponentni "keyin" foto soni va imzo mavjudligidan xabardor qilish
+  useEffect(() => {
+    if (photos && onStateChange) {
+      onStateChange({
+        afterCount: photos.after.length,
+        hasSignature: photos.signature.length > 0,
+      });
+    }
+  }, [photos, onStateChange]);
 
   const handleUpload = async (type: PhotoType, file: File) => {
     try {

@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import uz.jalyuziepr.api.config.TelegramConfig;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,6 +104,63 @@ public class TelegramService {
             }
         } catch (Exception e) {
             log.error("Telegram xabarini yuborishda xatolik: chatId={}, error={}", chatId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Hujjat (PDF, rasm va h.k.) yuborish — multipart/form-data orqali.
+     * Akt-kvitansiya, faktura kabi fayllarni mijozga yuborish uchun ishlatiladi.
+     */
+    public boolean sendDocument(Long chatId, byte[] content, String filename, String caption) {
+        if (!isEnabled()) {
+            log.warn("Telegram bot o'chirilgan. Hujjat yuborilmadi: chatId={}, file={}", chatId, filename);
+            return false;
+        }
+        if (content == null || content.length == 0) {
+            log.warn("Telegram hujjati bo'sh: chatId={}, file={}", chatId, filename);
+            return false;
+        }
+
+        try {
+            ByteArrayResource fileResource = new ByteArrayResource(content) {
+                @Override
+                public String getFilename() {
+                    return filename;
+                }
+            };
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("chat_id", String.valueOf(chatId));
+            body.add("document", fileResource);
+            if (caption != null && !caption.isBlank()) {
+                // Caption qismini aniq UTF-8'da kodlaymiz — aks holda emoji va
+                // o'zbekcha matn ISO-8859-1 sukut kodlashda buziladi
+                HttpHeaders captionHeaders = new HttpHeaders();
+                captionHeaders.setContentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8));
+                body.add("caption", new HttpEntity<>(caption, captionHeaders));
+                body.add("parse_mode", "HTML");
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    apiUrl("sendDocument"),
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Telegram hujjati yuborildi: chatId={}, file={}", chatId, filename);
+                return true;
+            } else {
+                log.error("Telegram hujjatini yuborishda xatolik: {} - {}", response.getStatusCode(), response.getBody());
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Telegram hujjatini yuborishda xatolik: chatId={}, file={}, error={}", chatId, filename, e.getMessage());
             return false;
         }
     }

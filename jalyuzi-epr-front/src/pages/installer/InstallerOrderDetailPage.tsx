@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
+import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
 import type { Order, OrderPaymentType } from '../../types';
@@ -31,6 +32,13 @@ export function InstallerOrderDetailPage() {
   const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+
+  // Foto/imzo dalillari holati (yakunlash tugmasini boshqarish uchun)
+  const [photoState, setPhotoState] = useState({ afterCount: 0, hasSignature: false });
+  const handlePhotoStateChange = useCallback(
+    (s: { afterCount: number; hasSignature: boolean }) => setPhotoState(s),
+    [],
+  );
 
   const loadOrder = useCallback(async () => {
     if (!id) return;
@@ -73,8 +81,10 @@ export function InstallerOrderDetailPage() {
       setOrder(updated);
       toast.success("O'rnatish bajarildi");
     } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       console.error('Failed to complete installation:', error);
-      toast.error("O'rnatishni yakunlashda xatolik");
+      toast.error(message || "O'rnatishni yakunlashda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -141,6 +151,14 @@ export function InstallerOrderDetailPage() {
 
   const canStartInstallation = order.status === 'ORNATISHGA_TAYINLANDI';
   const canCompleteInstallation = order.status === 'ORNATISH_JARAYONIDA';
+  const showPhotoEvidence = [
+    'ORNATISH_JARAYONIDA',
+    'ORNATISH_BAJARILDI',
+    'TOLOV_KUTILMOQDA',
+    'YAKUNLANDI',
+    'QARZGA_OTKAZILDI',
+  ].includes(order.status);
+  const evidenceReady = photoState.afterCount > 0 && photoState.hasSignature;
   const canCollectPayment =
     (order.status === 'ORNATISH_BAJARILDI' || order.status === 'TOLOV_KUTILMOQDA') &&
     order.remainingAmount > 0;
@@ -310,6 +328,22 @@ export function InstallerOrderDetailPage() {
         </div>
       </div>
 
+      {/* Ish dalillari: foto + mijoz imzosi */}
+      {showPhotoEvidence && (
+        <div className="card bg-base-100 shadow-sm">
+          <div className="card-body p-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-base-content/50 mb-3">
+              Ish dalillari — foto va imzo
+            </h3>
+            <OrderPhotoTab
+              orderId={order.id}
+              canEdit={canCompleteInstallation}
+              onStateChange={handlePhotoStateChange}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Notes */}
       {order.notes && (
         <div className="card bg-base-100 shadow-sm">
@@ -340,18 +374,25 @@ export function InstallerOrderDetailPage() {
         )}
 
         {canCompleteInstallation && (
-          <button
-            className="btn btn-success btn-block"
-            onClick={handleCompleteInstallation}
-            disabled={actionLoading}
-          >
-            {actionLoading ? (
-              <span className="loading loading-spinner loading-sm"></span>
-            ) : (
-              <CheckCircle className="h-5 w-5" />
+          <div className="space-y-2">
+            <button
+              className="btn btn-success btn-block"
+              onClick={handleCompleteInstallation}
+              disabled={actionLoading || !evidenceReady}
+            >
+              {actionLoading ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                <CheckCircle className="h-5 w-5" />
+              )}
+              O'rnatish bajarildi
+            </button>
+            {!evidenceReady && (
+              <p className="text-center text-xs text-warning">
+                Yakunlash uchun "o'rnatishdan keyin" fotosurati va mijoz imzosi kerak
+              </p>
             )}
-            O'rnatish bajarildi
-          </button>
+          </div>
         )}
 
         {canCollectPayment && (

@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.Locale;
 
 /**
@@ -112,8 +113,15 @@ public class OrderDocumentService {
             // Imzo joylari
             PdfPTable sigs = new PdfPTable(2);
             sigs.setWidthPercentage(100);
-            sigs.addCell(signatureCell("Buyurtmachi (Mijoz)", order.getCustomer() != null ? safe(order.getCustomer().getFullName()) : ""));
-            sigs.addCell(signatureCell("Ijrochi (Usta)", order.getInstaller() != null ? safe(order.getInstaller().getFullName()) : ""));
+            // Mijoz katakchasiga dala'da olingan haqiqiy imzo rasmi joylanadi (mavjud bo'lsa)
+            sigs.addCell(signatureCell(
+                    "Buyurtmachi (Mijoz)",
+                    order.getCustomer() != null ? safe(order.getCustomer().getFullName()) : "",
+                    order.getCustomerSignature()));
+            sigs.addCell(signatureCell(
+                    "Ijrochi (Usta)",
+                    order.getInstaller() != null ? safe(order.getInstaller().getFullName()) : "",
+                    null));
             doc.add(sigs);
 
             writeFooter(doc, "Akt " + DATETIME.format(LocalDateTime.now()) + " da yaratildi");
@@ -366,17 +374,45 @@ public class OrderDocumentService {
         return c;
     }
 
-    private PdfPCell signatureCell(String role, String name) {
+    private PdfPCell signatureCell(String role, String name, String base64Signature) {
         PdfPCell c = new PdfPCell();
         c.setBorder(Rectangle.NO_BORDER);
         c.setPadding(10);
-        Paragraph p = new Paragraph();
-        p.add(new Chunk(role + ":\n", BODY_BOLD));
-        p.add(new Chunk("\n_________________________\n", BODY));
-        p.add(new Chunk(name + "\n", BODY));
-        p.add(new Chunk("(imzo / sana)", SMALL));
-        c.addElement(p);
+
+        Paragraph roleP = new Paragraph(role + ":", BODY_BOLD);
+        roleP.setSpacingAfter(4);
+        c.addElement(roleP);
+
+        Image sig = decodeSignature(base64Signature);
+        if (sig != null) {
+            sig.scaleToFit(170, 60);
+            c.addElement(sig);
+        } else {
+            c.addElement(new Paragraph("\n_________________________", BODY));
+        }
+
+        c.addElement(new Paragraph(name, BODY));
+        c.addElement(new Paragraph("(imzo / sana)", SMALL));
         return c;
+    }
+
+    /**
+     * "data:image/png;base64,...." ko'rinishidagi imzoni PDF rasmiga aylantiradi.
+     * Format noto'g'ri yoki bo'sh bo'lsa null qaytadi (PDF imzo chizig'i bilan chiqadi).
+     */
+    private Image decodeSignature(String dataUrl) {
+        if (dataUrl == null || !dataUrl.startsWith("data:image/")) {
+            return null;
+        }
+        try {
+            int comma = dataUrl.indexOf(',');
+            if (comma < 0) return null;
+            byte[] bytes = Base64.getDecoder().decode(dataUrl.substring(comma + 1));
+            return Image.getInstance(bytes);
+        } catch (Exception e) {
+            log.warn("Mijoz imzosini PDF'ga joylab bo'lmadi: {}", e.getMessage());
+            return null;
+        }
     }
 
     private String money(BigDecimal v) {

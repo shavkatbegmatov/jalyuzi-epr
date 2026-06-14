@@ -608,8 +608,10 @@ export function OrderDetailPage() {
       setConfirmModal(null);
       toast.success("O'rnatish bajarildi");
     } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message;
       console.error('Complete installation failed:', error);
-      toast.error("O'rnatishni yakunlashda xatolik");
+      toast.error(message || "O'rnatishni yakunlashda xatolik");
     } finally {
       setActionLoading(false);
     }

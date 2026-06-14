@@ -16,6 +16,7 @@ import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.*;
 import uz.jalyuziepr.api.security.CustomUserDetails;
+import uz.jalyuziepr.api.service.export.OrderDocumentService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -45,6 +46,9 @@ public class OrderService {
     private final SettingsService settingsService;
     private final ProductionService productionService;
     private final PaymentScheduleService paymentScheduleService;
+    private final OrderDocumentService orderDocumentService;
+    private final TelegramService telegramService;
+    private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
 
     // ==================== QUERY ====================
 
@@ -417,6 +421,16 @@ public class OrderService {
         validateTransition(order, OrderStatus.ORNATISH_BAJARILDI);
         User currentUser = getCurrentUser();
 
+        // O'rnatish yakunlanishidan oldin dala dalillarini talab qilamiz:
+        // kamida bitta "keyin" fotosurati va mijozning qabul qilish imzosi.
+        // Bu o'rnatish bo'yicha nizolarni oldini oladi va akt-kvitansiyaga asos bo'ladi.
+        if (order.getPhotosAfter() == null || order.getPhotosAfter().isEmpty()) {
+            throw new BadRequestException("O'rnatishni yakunlash uchun kamida bitta \"o'rnatishdan keyin\" fotosurati kerak");
+        }
+        if (order.getCustomerSignature() == null || order.getCustomerSignature().isBlank()) {
+            throw new BadRequestException("O'rnatishni yakunlash uchun mijozning qabul qilish imzosi kerak");
+        }
+
         changeStatus(order, OrderStatus.ORNATISH_BAJARILDI, currentUser, notes);
         Order saved = orderRepository.save(order);
 
@@ -427,7 +441,79 @@ public class OrderService {
                         order.getOrderNumber()),
                 StaffNotificationType.SUCCESS, "ORDER", saved.getId());
 
+        // Mijozning Telegram'iga imzolangan akt-kvitansiyani avtomatik yuborish
+        sendCompletionReceipt(saved);
+
         return OrderResponse.from(saved);
+    }
+
+    /**
+     * Yakunlangan o'rnatish uchun imzolangan akt-kvitansiyani (PDF) mijozning
+     * Telegram'iga yuboradi. Telegram nosozligi o'rnatishni yakunlashga to'sqinlik
+     * qilmasligi kerak — shuning uchun barcha xatolar yutiladi va menejerga
+     * ogohlantirish yuboriladi.
+     */
+    private void sendCompletionReceipt(Order order) {
+        try {
+            Long chatId = resolveCustomerChatId(order.getCustomer());
+            if (chatId == null) {
+                log.info("Buyurtma {} uchun mijoz Telegram'ga ulanmagan — kvitansiya yuborilmadi",
+                        order.getOrderNumber());
+                staffNotificationService.createGlobalNotification(
+                        "Telegram kvitansiya yuborilmadi",
+                        String.format("Buyurtma %s: mijoz Telegram'ga ulanmagan, aktni qo'lda yuboring",
+                                order.getOrderNumber()),
+                        StaffNotificationType.WARNING, "ORDER", order.getId());
+                return;
+            }
+
+            byte[] pdf = orderDocumentService.generateInstallationAct(order.getId());
+            boolean sent = telegramService.sendDocument(
+                    chatId, pdf, "akt-" + order.getOrderNumber() + ".pdf", buildReceiptCaption(order));
+
+            if (!sent) {
+                staffNotificationService.createGlobalNotification(
+                        "Telegram kvitansiya yuborilmadi",
+                        String.format("Buyurtma %s: Telegram'ga aktni yuborib bo'lmadi", order.getOrderNumber()),
+                        StaffNotificationType.WARNING, "ORDER", order.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Buyurtma {} uchun Telegram kvitansiyani yuborishda xatolik: {}",
+                    order.getOrderNumber(), e.getMessage());
+        }
+    }
+
+    /**
+     * Mijozning Telegram chat ID'sini aniqlaydi: avval mijoz yozuvidagi to'g'ridan-to'g'ri
+     * bog'lanish, bo'lmasa telefon raqami orqali telegram_phone_links jadvalidan.
+     */
+    private Long resolveCustomerChatId(Customer customer) {
+        if (customer == null) {
+            return null;
+        }
+        if (customer.getTelegramChatId() != null) {
+            return customer.getTelegramChatId();
+        }
+        if (customer.getPhone() != null && !customer.getPhone().isBlank()) {
+            return telegramPhoneLinkRepository.findByPhone(customer.getPhone())
+                    .map(TelegramPhoneLink::getChatId)
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    private String buildReceiptCaption(Order order) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("✅ <b>O'rnatish yakunlandi</b>\n");
+        sb.append("Buyurtma: <b>").append(order.getOrderNumber()).append("</b>\n");
+        if (order.getRemainingAmount() != null
+                && order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+            sb.append("Qoldiq to'lov: <b>")
+                    .append(String.format("%,.0f", order.getRemainingAmount()))
+                    .append(" so'm</b>\n");
+        }
+        sb.append("\nXizmatimizdan foydalanganingiz uchun rahmat! 🙏");
+        return sb.toString();
     }
 
     @Transactional
