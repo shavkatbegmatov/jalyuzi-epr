@@ -409,8 +409,11 @@ public class OrderDocumentService {
             if (comma < 0) return null;
             byte[] bytes = Base64.getDecoder().decode(dataUrl.substring(comma + 1));
             return Image.getInstance(bytes);
-        } catch (Exception e) {
-            log.warn("Mijoz imzosini PDF'ga joylab bo'lmadi: {}", e.getMessage());
+        } catch (Throwable e) {
+            // Throwable — chunki katta/buzuq imzo OutOfMemoryError (Error) berishi mumkin,
+            // bu esa imzosiz chiziqqa graceful fallback bo'lishi kerak, so'rovni yiqitmasligi kerak.
+            log.warn("Mijoz imzosini PDF'ga joylab bo'lmadi ({}): {}",
+                    e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }

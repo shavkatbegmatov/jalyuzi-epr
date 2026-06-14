@@ -15,6 +15,7 @@ import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
+import { getApiErrorMessage } from '../../utils/errorUtils';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
 import type { Order, OrderPaymentType } from '../../types';
 
@@ -81,10 +82,8 @@ export function InstallerOrderDetailPage() {
       setOrder(updated);
       toast.success("O'rnatish bajarildi");
     } catch (error) {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message;
       console.error('Failed to complete installation:', error);
-      toast.error(message || "O'rnatishni yakunlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "O'rnatishni yakunlashda xatolik");
     } finally {
       setActionLoading(false);
     }

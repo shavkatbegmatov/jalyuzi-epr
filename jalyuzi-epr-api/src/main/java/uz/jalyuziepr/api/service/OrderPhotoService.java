@@ -2,14 +2,20 @@ package uz.jalyuziepr.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import uz.jalyuziepr.api.controller.OrderPhotoController.PhotoType;
 import uz.jalyuziepr.api.entity.Order;
+import uz.jalyuziepr.api.enums.OrderStatus;
+import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.OrderRepository;
+import uz.jalyuziepr.api.security.CustomUserDetails;
 
 import java.util.*;
 
@@ -38,6 +44,7 @@ public class OrderPhotoService {
     public List<String> uploadPhoto(Long orderId, PhotoType type, MultipartFile file) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+        authorizeMutation(order, type);
 
         String url = fileStorageService.saveImage(file, "orders/" + orderId);
 
@@ -54,6 +61,7 @@ public class OrderPhotoService {
     public List<String> deletePhoto(Long orderId, PhotoType type, String url) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+        authorizeMutation(order, type);
 
         List<String> list = getList(order, type);
         if (!list.remove(url)) {
@@ -74,6 +82,7 @@ public class OrderPhotoService {
         }
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "id", orderId));
+        authorizeMutation(order, null);
 
         // Sanitar: faqat data:image/... bilan boshlanishi kerak
         if (!base64Signature.startsWith("data:image/")) {
@@ -83,11 +92,64 @@ public class OrderPhotoService {
         if (base64Signature.length() > 700_000) {
             throw new BadRequestException("Imzo juda katta (max 500 KB)");
         }
+        // Base64 to'g'ri dekodlanishini oldindan tekshirish (buzuq imzo saqlanib,
+        // keyin PDF yaratishda jimgina yiqilmasligi uchun)
+        int comma = base64Signature.indexOf(',');
+        try {
+            Base64.getDecoder().decode(base64Signature.substring(comma + 1));
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Imzo Base64 formati noto'g'ri");
+        }
 
+        CustomUserDetails me = currentUser();
         order.setCustomerSignature(base64Signature);
+        order.setSignatureSavedBy(me != null ? me.getId() : null);
+        order.setSignatureSavedAt(java.time.LocalDateTime.now());
         orderRepository.save(order);
-        log.info("Saved signature for order {}", orderId);
+        log.info("Saved signature for order {} by user {}", orderId, me != null ? me.getId() : null);
         return base64Signature;
+    }
+
+    /**
+     * Foto/imzo o'zgartirishni avtorizatsiya qiladi:
+     *  1) Yakunlangan/terminal buyurtmada (ORNATISH_BAJARILDI va keyin) dalil
+     *     o'zgartirib bo'lmaydi — imzolangan akt yaxlitligini saqlaydi.
+     *  2) ORDERS_UPDATE'ga ega xodim (menejer/admin) — to'liq ruxsat.
+     *  3) Faqat ORDERS_INSTALL'ga ega montajchi — faqat o'ziga tayinlangan
+     *     buyurtmaning "keyin" (AFTER) fotosini va imzosini boshqaradi.
+     *
+     * @param type AFTER/BEFORE/MEASUREMENT yoki imzo uchun null
+     */
+    private void authorizeMutation(Order order, PhotoType type) {
+        if (order.getStatus() != null
+                && order.getStatus().getOrder() >= OrderStatus.ORNATISH_BAJARILDI.getOrder()) {
+            throw new BadRequestException("O'rnatish yakunlangan — fotosurat yoki imzoni o'zgartirib bo'lmaydi");
+        }
+
+        CustomUserDetails me = currentUser();
+        if (me == null) {
+            throw new AccessDeniedException("Autentifikatsiya talab qilinadi");
+        }
+        // Menejer/admin (ORDERS_UPDATE) — barcha tur fotolarga ruxsat
+        if (me.hasPermission(PermissionCode.ORDERS_UPDATE.getCode())) {
+            return;
+        }
+        // Montajchi (faqat ORDERS_INSTALL): faqat o'ziga tayinlangan buyurtma
+        if (order.getInstaller() == null || !order.getInstaller().getId().equals(me.getId())) {
+            throw new AccessDeniedException("Bu buyurtma sizga tayinlanmagan");
+        }
+        // Montajchi faqat "keyin" fotosini boshqaradi (o'lchov/oldin — menejer ishi)
+        if (type != null && type != PhotoType.AFTER) {
+            throw new AccessDeniedException("Montajchi faqat \"keyin\" fotosini boshqarishi mumkin");
+        }
+    }
+
+    private CustomUserDetails currentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof CustomUserDetails cud) {
+            return cud;
+        }
+        return null;
     }
 
     private List<String> getList(Order order, PhotoType type) {

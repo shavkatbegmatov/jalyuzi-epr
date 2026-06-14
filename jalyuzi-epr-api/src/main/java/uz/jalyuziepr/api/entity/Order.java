@@ -133,6 +133,13 @@ public class Order extends BaseEntity implements Auditable {
     @Column(name = "customer_signature", columnDefinition = "TEXT")
     private String customerSignature;
 
+    // Imzo audit: kim va qachon qo'ygani (forensik kuzatuv)
+    @Column(name = "signature_saved_by")
+    private Long signatureSavedBy;
+
+    @Column(name = "signature_saved_at")
+    private java.time.LocalDateTime signatureSavedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
@@ -202,6 +209,10 @@ public class Order extends BaseEntity implements Auditable {
         }
         if (this.items != null) {
             map.put("itemCount", this.items.size());
+        }
+        if (this.signatureSavedBy != null) {
+            map.put("signatureSavedBy", this.signatureSavedBy);
+            map.put("signatureSavedAt", this.signatureSavedAt);
         }
 
         return map;

@@ -7,6 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import uz.jalyuziepr.api.dto.request.*;
 import uz.jalyuziepr.api.dto.response.OrderResponse;
 import uz.jalyuziepr.api.dto.response.OrderStatsResponse;
@@ -441,10 +443,33 @@ public class OrderService {
                         order.getOrderNumber()),
                 StaffNotificationType.SUCCESS, "ORDER", saved.getId());
 
-        // Mijozning Telegram'iga imzolangan akt-kvitansiyani avtomatik yuborish
-        sendCompletionReceipt(saved);
+        // Telegram kvitansiyani tranzaksiyadan TASHQARIda — commit'dan keyin yuboramiz.
+        // Tashqi (sekin) HTTP so'rovi DB ulanishi/tranzaksiyasini ushlab turmasligi kerak.
+        // chatId'ni hozir, mijoz hali managed holatda, hisoblab olamiz.
+        final Long chatId = resolveCustomerChatId(saved.getCustomer());
+        final Long savedId = saved.getId();
+        final String orderNumber = saved.getOrderNumber();
+        final BigDecimal remaining = saved.getRemainingAmount();
+        registerAfterCommit(() -> sendCompletionReceipt(savedId, orderNumber, remaining, chatId));
 
         return OrderResponse.from(saved);
+    }
+
+    /**
+     * Berilgan amalni joriy tranzaksiya muvaffaqiyatli commit bo'lгач bajaradi.
+     * Tranzaksiya bo'lmasa — darhol bajaradi.
+     */
+    private void registerAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    action.run();
+                }
+            });
+        } else {
+            action.run();
+        }
     }
 
     /**
@@ -453,33 +478,29 @@ public class OrderService {
      * qilmasligi kerak — shuning uchun barcha xatolar yutiladi va menejerga
      * ogohlantirish yuboriladi.
      */
-    private void sendCompletionReceipt(Order order) {
+    private void sendCompletionReceipt(Long orderId, String orderNumber, BigDecimal remaining, Long chatId) {
         try {
-            Long chatId = resolveCustomerChatId(order.getCustomer());
             if (chatId == null) {
-                log.info("Buyurtma {} uchun mijoz Telegram'ga ulanmagan — kvitansiya yuborilmadi",
-                        order.getOrderNumber());
+                log.info("Buyurtma {} uchun mijoz Telegram'ga ulanmagan — kvitansiya yuborilmadi", orderNumber);
                 staffNotificationService.createGlobalNotification(
                         "Telegram kvitansiya yuborilmadi",
-                        String.format("Buyurtma %s: mijoz Telegram'ga ulanmagan, aktni qo'lda yuboring",
-                                order.getOrderNumber()),
-                        StaffNotificationType.WARNING, "ORDER", order.getId());
+                        String.format("Buyurtma %s: mijoz Telegram'ga ulanmagan, aktni qo'lda yuboring", orderNumber),
+                        StaffNotificationType.WARNING, "ORDER", orderId);
                 return;
             }
 
-            byte[] pdf = orderDocumentService.generateInstallationAct(order.getId());
+            byte[] pdf = orderDocumentService.generateInstallationAct(orderId);
             boolean sent = telegramService.sendDocument(
-                    chatId, pdf, "akt-" + order.getOrderNumber() + ".pdf", buildReceiptCaption(order));
+                    chatId, pdf, "akt-" + orderNumber + ".pdf", buildReceiptCaption(orderNumber, remaining));
 
             if (!sent) {
                 staffNotificationService.createGlobalNotification(
                         "Telegram kvitansiya yuborilmadi",
-                        String.format("Buyurtma %s: Telegram'ga aktni yuborib bo'lmadi", order.getOrderNumber()),
-                        StaffNotificationType.WARNING, "ORDER", order.getId());
+                        String.format("Buyurtma %s: Telegram'ga aktni yuborib bo'lmadi", orderNumber),
+                        StaffNotificationType.WARNING, "ORDER", orderId);
             }
         } catch (Exception e) {
-            log.warn("Buyurtma {} uchun Telegram kvitansiyani yuborishda xatolik: {}",
-                    order.getOrderNumber(), e.getMessage());
+            log.warn("Buyurtma {} uchun Telegram kvitansiyani yuborishda xatolik: {}", orderNumber, e.getMessage());
         }
     }
 
@@ -502,14 +523,13 @@ public class OrderService {
         return null;
     }
 
-    private String buildReceiptCaption(Order order) {
+    private String buildReceiptCaption(String orderNumber, BigDecimal remaining) {
         StringBuilder sb = new StringBuilder();
         sb.append("✅ <b>O'rnatish yakunlandi</b>\n");
-        sb.append("Buyurtma: <b>").append(order.getOrderNumber()).append("</b>\n");
-        if (order.getRemainingAmount() != null
-                && order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+        sb.append("Buyurtma: <b>").append(orderNumber).append("</b>\n");
+        if (remaining != null && remaining.compareTo(BigDecimal.ZERO) > 0) {
             sb.append("Qoldiq to'lov: <b>")
-                    .append(String.format("%,.0f", order.getRemainingAmount()))
+                    .append(String.format("%,.0f", remaining))
                     .append(" so'm</b>\n");
         }
         sb.append("\nXizmatimizdan foydalanganingiz uchun rahmat! 🙏");

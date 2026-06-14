@@ -176,7 +176,10 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
     load();
   }, [load]);
 
-  // Ota-komponentni "keyin" foto soni va imzo mavjudligidan xabardor qilish
+  // Ota-komponentni "keyin" foto soni va imzo mavjudligidan xabardor qilish.
+  // MUHIM: ota-komponent `onStateChange`ni useCallback bilan memoizatsiya qilishi shart,
+  // aks holda bu effekt ota har render'da qayta ishlaydi (InstallerOrderDetailPage
+  // shunday qiladi — handlePhotoStateChange, deps []).
   useEffect(() => {
     if (photos && onStateChange) {
       onStateChange({

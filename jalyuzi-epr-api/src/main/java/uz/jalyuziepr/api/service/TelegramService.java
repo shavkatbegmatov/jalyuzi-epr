@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -27,8 +28,19 @@ import java.util.Map;
 public class TelegramService {
 
     private final TelegramConfig telegramConfig;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = buildTimeoutRestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    /**
+     * Timeout bilan RestTemplate — Telegram API javob bermasa, so'rov cheksiz
+     * osilib qolmasligi (va chaqiruvchini bloklamasligi) uchun.
+     */
+    private static RestTemplate buildTimeoutRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(8_000);  // ulanish: 8s
+        factory.setReadTimeout(15_000);    // o'qish: 15s
+        return new RestTemplate(factory);
+    }
 
     @PostConstruct
     public void init() {

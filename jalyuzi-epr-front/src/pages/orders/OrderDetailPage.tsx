@@ -29,6 +29,7 @@ import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
+import { getApiErrorMessage } from '../../utils/errorUtils';
 import { OrderDocumentsBar } from '../../components/orders/OrderDocumentsBar';
 import { PaymentScheduleBar } from '../../components/orders/PaymentScheduleBar';
 import { WarrantyClaimButton } from '../../components/orders/WarrantyClaimButton';
@@ -497,7 +498,7 @@ export function OrderDetailPage() {
       toast.success("O'lchovchi tayinlandi");
     } catch (error) {
       console.error('Assign measurer failed:', error);
-      toast.error("O'lchovchi tayinlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "O'lchovchi tayinlashda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -513,7 +514,7 @@ export function OrderDetailPage() {
       toast.success("O'rnatuvchi tayinlandi");
     } catch (error) {
       console.error('Assign installer failed:', error);
-      toast.error("O'rnatuvchi tayinlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "O'rnatuvchi tayinlashda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -529,7 +530,7 @@ export function OrderDetailPage() {
       toast.success('Narx tasdiqlandi');
     } catch (error) {
       console.error('Confirm price failed:', error);
-      toast.error('Narxni tasdiqlashda xatolik');
+      toast.error(getApiErrorMessage(error) || 'Narxni tasdiqlashda xatolik');
     } finally {
       setActionLoading(false);
     }
@@ -545,7 +546,7 @@ export function OrderDetailPage() {
       toast.success('Zaklad qabul qilindi');
     } catch (error) {
       console.error('Receive deposit failed:', error);
-      toast.error('Zaklad qabul qilishda xatolik');
+      toast.error(getApiErrorMessage(error) || 'Zaklad qabul qilishda xatolik');
     } finally {
       setActionLoading(false);
     }
@@ -561,7 +562,7 @@ export function OrderDetailPage() {
       toast.success('Ishlab chiqarish boshlandi');
     } catch (error) {
       console.error('Start production failed:', error);
-      toast.error('Ishlab chiqarishni boshlashda xatolik');
+      toast.error(getApiErrorMessage(error) || 'Ishlab chiqarishni boshlashda xatolik');
     } finally {
       setActionLoading(false);
     }
@@ -577,7 +578,7 @@ export function OrderDetailPage() {
       toast.success('Ishlab chiqarish yakunlandi');
     } catch (error) {
       console.error('Complete production failed:', error);
-      toast.error('Ishlab chiqarishni yakunlashda xatolik');
+      toast.error(getApiErrorMessage(error) || 'Ishlab chiqarishni yakunlashda xatolik');
     } finally {
       setActionLoading(false);
     }
@@ -593,7 +594,7 @@ export function OrderDetailPage() {
       toast.success("O'rnatish boshlandi");
     } catch (error) {
       console.error('Start installation failed:', error);
-      toast.error("O'rnatishni boshlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "O'rnatishni boshlashda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -608,10 +609,8 @@ export function OrderDetailPage() {
       setConfirmModal(null);
       toast.success("O'rnatish bajarildi");
     } catch (error) {
-      const message = (error as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message;
       console.error('Complete installation failed:', error);
-      toast.error(message || "O'rnatishni yakunlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "O'rnatishni yakunlashda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -627,7 +626,7 @@ export function OrderDetailPage() {
       toast.success("To'lov qabul qilindi");
     } catch (error) {
       console.error('Collect payment failed:', error);
-      toast.error("To'lov qabul qilishda xatolik");
+      toast.error(getApiErrorMessage(error) || "To'lov qabul qilishda xatolik");
     } finally {
       setActionLoading(false);
     }
@@ -641,7 +640,7 @@ export function OrderDetailPage() {
       toast.success("To'lov tasdiqlandi");
     } catch (error) {
       console.error('Confirm payment failed:', error);
-      toast.error("To'lovni tasdiqlashda xatolik");
+      toast.error(getApiErrorMessage(error) || "To'lovni tasdiqlashda xatolik");
     } finally {
       setActionLoading(false);
     }
