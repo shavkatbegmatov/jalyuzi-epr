@@ -13,6 +13,8 @@ import { isNativeMobile, pickImageNative } from '../../utils/nativeCamera';
 interface Props {
   orderId: number;
   canEdit?: boolean;
+  /** O'lchov (MEASUREMENT) fotosini faqat ko'rish (montajchi uchun — backend ham taqiqlaydi) */
+  measurementReadOnly?: boolean;
   /** Foto/imzo holati o'zgarganda ota-komponentni xabardor qiladi (yakunlash tugmasini boshqarish uchun) */
   onStateChange?: (state: { afterCount: number; hasSignature: boolean }) => void;
 }
@@ -153,7 +155,7 @@ const PhotoGrid = memo(function PhotoGrid({
   );
 });
 
-export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props) {
+export function OrderPhotoTab({ orderId, canEdit = false, measurementReadOnly = false, onStateChange }: Props) {
   const [photos, setPhotos] = useState<OrderPhotos | null>(null);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<string | null>(null);
@@ -246,7 +248,7 @@ export function OrderPhotoTab({ orderId, canEdit = false, onStateChange }: Props
       <PhotoGrid
         type="MEASUREMENT"
         urls={photos.measurement}
-        canEdit={canEdit}
+        canEdit={canEdit && !measurementReadOnly}
         onUpload={handleUpload}
         onDelete={handleDelete}
         onPreview={setPreview}

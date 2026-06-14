@@ -337,6 +337,7 @@ export function InstallerOrderDetailPage() {
             <OrderPhotoTab
               orderId={order.id}
               canEdit={canCompleteInstallation}
+              measurementReadOnly
               onStateChange={handlePhotoStateChange}
             />
           </div>

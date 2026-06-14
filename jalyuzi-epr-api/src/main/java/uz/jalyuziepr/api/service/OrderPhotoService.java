@@ -138,9 +138,10 @@ public class OrderPhotoService {
         if (order.getInstaller() == null || !order.getInstaller().getId().equals(me.getId())) {
             throw new AccessDeniedException("Bu buyurtma sizga tayinlanmagan");
         }
-        // Montajchi faqat "keyin" fotosini boshqaradi (o'lchov/oldin — menejer ishi)
-        if (type != null && type != PhotoType.AFTER) {
-            throw new AccessDeniedException("Montajchi faqat \"keyin\" fotosini boshqarishi mumkin");
+        // Montajchi o'lchov (MEASUREMENT) fotosiga tegmaydi — bu menejer/o'lchovchi ishi.
+        // "Oldin" (BEFORE) va "keyin" (AFTER) o'rnatish fotolari hamda imzo — montajchining ishi.
+        if (type == PhotoType.MEASUREMENT) {
+            throw new AccessDeniedException("O'lchov fotosini faqat menejer boshqaradi");
         }
     }
 
