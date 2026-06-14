@@ -16,6 +16,7 @@ import {
   CreditCard,
   AlertTriangle,
   Undo2,
+  Ruler,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
@@ -582,6 +583,18 @@ export function ManagerOrderDetailPage() {
             >
               <UserPlus className="h-5 w-5" />
               O'lchuvchi tayinlash
+            </button>
+          )}
+
+          {/* OLCHOV_KUTILMOQDA — o'lchov kiritish */}
+          {order.status === 'OLCHOV_KUTILMOQDA' && (
+            <button
+              className="btn btn-warning btn-block"
+              onClick={() => navigate(`/orders/${order.id}/measure`)}
+              disabled={actionLoading}
+            >
+              <Ruler className="h-5 w-5" />
+              O'lchov kiritish
             </button>
           )}
 
