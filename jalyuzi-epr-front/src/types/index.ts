@@ -1158,6 +1158,7 @@ export type OrderPaymentType = 'DEPOSIT' | 'FINAL_PAYMENT' | 'PARTIAL_PAYMENT';
 export interface Order {
   id: number;
   orderNumber: string;
+  trackingCode?: string;
   status: OrderStatus;
   statusDisplayName: string;
   customerId: number;

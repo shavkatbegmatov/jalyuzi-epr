@@ -39,6 +39,12 @@ server:
 
 # Application-specific file storage
 app:
+  # Ommaviy frontend manzili — kuzatuv havolalari (/t/{code}) shu asosda quriladi
+  public-base-url: ${PUBLIC_BASE_URL:https://kanjaltib.uz}
+  # "Jalyuzimni kuzat" — havola yetkazish: asosiy kanal Telegram (bepul).
+  # Telegram'siz mijozlarga SMS zaxirasini yoqish uchun true qiling (Eskiz pullik).
+  tracking:
+    sms-fallback-enabled: ${TRACKING_SMS_FALLBACK:false}
   storage:
     upload-dir: ${UPLOAD_DIR:./uploads}
     public-url-prefix: /api/files

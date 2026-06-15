@@ -81,6 +81,30 @@ public class SmsService {
     }
 
     /**
+     * Ixtiyoriy bildirishnoma matnini yuborish (tasdiqlash kodi emas).
+     * Agar mijoz Telegram'ga ulangan bo'lsa — Telegram, aks holda SMS orqali.
+     * Matn oddiy (plain) bo'lsin — SMS HTML'ni qo'llab-quvvatlamaydi.
+     */
+    public void sendNotification(String phone, String message) {
+        if (phone == null || phone.isBlank() || message == null || message.isBlank()) {
+            return;
+        }
+
+        Optional<TelegramPhoneLink> link = telegramPhoneLinkRepository.findByPhone(phone);
+        if (link.isPresent() && telegramService.isEnabled()) {
+            boolean sent = telegramService.sendMessage(link.get().getChatId(), message);
+            if (sent) {
+                log.info("Bildirishnoma Telegram orqali yuborildi: {}", phone);
+                return;
+            }
+            log.warn("Telegram xatolik, SMS'ga fallback: {}", phone);
+        }
+
+        sendSms(phone, message);
+        log.info("Bildirishnoma yuborildi: {} -> {}", phone, smsConfig.getEskiz().isEnabled() ? "SMS" : "LOG");
+    }
+
+    /**
      * Kodni yaratish va bazaga saqlash (haqiqiy yuborishsiz).
      * Bot ishlatadi — foydalanuvchi telefonini tasdiqlagach, kodni bot tarqatadi.
      */

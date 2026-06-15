@@ -51,6 +51,7 @@ public class OrderService {
     private final OrderDocumentService orderDocumentService;
     private final TelegramService telegramService;
     private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
+    private final OrderTrackingService orderTrackingService;
 
     // ==================== QUERY ====================
 
@@ -168,6 +169,7 @@ public class OrderService {
 
         Order order = Order.builder()
                 .orderNumber(generateOrderNumber())
+                .trackingCode(orderTrackingService.generateUniqueCode())
                 .customer(customer)
                 .status(OrderStatus.YANGI)
                 .installationAddress(request.getInstallationAddress() != null ?
@@ -341,6 +343,17 @@ public class OrderService {
         } catch (Exception e) {
             log.error("Auto-create payment schedule failed for order {}: {}", saved.getOrderNumber(), e.getMessage(), e);
         }
+
+        // "Jalyuzimni kuzat" — zaklad qabul qilinib, ishlab chiqarish boshlangani uchun
+        // mijozга kuzatuv havolasini yuboramiz (asosiy kanal — Telegram; commit'dan keyin, tashqi chaqiruv).
+        // chatId'ni hozir, mijoz hali managed holatda, hisoblab olamiz.
+        final Long trackChatId = resolveCustomerChatId(saved.getCustomer());
+        final String trackPhone = saved.getCustomer() != null ? saved.getCustomer().getPhone() : null;
+        final String trackOrderNumber = saved.getOrderNumber();
+        final Long trackOrderId = saved.getId();
+        final String trackCode = saved.getTrackingCode();
+        registerAfterCommit(() ->
+                orderTrackingService.sendTrackingLink(trackChatId, trackPhone, trackOrderNumber, trackOrderId, trackCode));
 
         return OrderResponse.from(saved);
     }
@@ -740,6 +753,10 @@ public class OrderService {
         addStatusHistory(order, oldStatus, targetStatus, currentUser,
                 "[ORQAGA] " + request.getReason());
 
+        // Treker push — orqaga qaytarish ham mijoz sahifasida aks etsin
+        final String trackingCode = order.getTrackingCode();
+        registerAfterCommit(() -> orderTrackingService.broadcastUpdate(trackingCode, targetStatus));
+
         Order saved = orderRepository.save(order);
 
         staffNotificationService.createGlobalNotification(
@@ -832,6 +849,10 @@ public class OrderService {
         OrderStatus oldStatus = order.getStatus();
         order.setStatus(newStatus);
         addStatusHistory(order, oldStatus, newStatus, changedBy, notes);
+
+        // "Jalyuzimni kuzat" treker — mijoz sahifasiga real-vaqt push (commit'dan keyin)
+        final String trackingCode = order.getTrackingCode();
+        registerAfterCommit(() -> orderTrackingService.broadcastUpdate(trackingCode, newStatus));
     }
 
     private void addStatusHistory(Order order, OrderStatus from, OrderStatus to, User changedBy, String notes) {

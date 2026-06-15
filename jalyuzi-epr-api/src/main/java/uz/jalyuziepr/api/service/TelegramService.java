@@ -186,6 +186,18 @@ public class TelegramService {
     }
 
     /**
+     * Bitta URL-havolali inline tugma (xabar ostida bosiladigan tugma).
+     */
+    public Map<String, Object> inlineUrlButton(String text, String url) {
+        Map<String, Object> button = new HashMap<>();
+        button.put("text", text);
+        button.put("url", url);
+        Map<String, Object> markup = new HashMap<>();
+        markup.put("inline_keyboard", new Object[][]{{button}});
+        return markup;
+    }
+
+    /**
      * Klaviaturani olib tashlash
      */
     public Map<String, Object> removeKeyboard() {

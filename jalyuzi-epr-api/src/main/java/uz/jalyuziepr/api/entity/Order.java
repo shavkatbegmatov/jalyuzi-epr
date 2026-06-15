@@ -32,6 +32,10 @@ public class Order extends BaseEntity implements Auditable {
     @Column(name = "order_number", nullable = false, unique = true, length = 30)
     private String orderNumber;
 
+    // Ommaviy kuzatuv kodi ("Jalyuzimni kuzat" treker — auth'siz /t/{code} sahifasi uchun)
+    @Column(name = "tracking_code", unique = true, length = 16)
+    private String trackingCode;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;

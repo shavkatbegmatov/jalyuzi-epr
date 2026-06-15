@@ -13,6 +13,9 @@ import { ChangePasswordPage } from '../pages/auth/ChangePasswordPage';
 // Public legal pages (lazy)
 const PrivacyPolicyPage = lazy(() => import('../pages/legal/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
 
+// Public order tracking ("Jalyuzimni kuzat") — auth talab qilinmaydi
+const OrderTrackingPage = lazy(() => import('../pages/tracking/OrderTrackingPage').then(m => ({ default: m.OrderTrackingPage })));
+
 // Lazy-loaded main app pages
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProductsPage = lazy(() => import('../pages/products/ProductsPage').then(m => ({ default: m.ProductsPage })));
@@ -114,6 +117,12 @@ export const router = createBrowserRouter([
     path: '/privacy',
     element: <LazyRoute><PrivacyPolicyPage /></LazyRoute>,
     handle: { title: 'Maxfiylik siyosati' },
+  },
+  {
+    // Ommaviy buyurtma kuzatuvi — "Jalyuzimni kuzat" (login talab qilinmaydi)
+    path: '/t/:code',
+    element: <LazyRoute><OrderTrackingPage /></LazyRoute>,
+    handle: { title: 'Buyurtma kuzatuvi' },
   },
   {
     path: '/',

@@ -25,6 +25,7 @@ import {
   Ban,
 } from 'lucide-react';
 import { ordersApi } from '../../api/orders.api';
+import { TrackingLinkCard } from '../../components/orders/TrackingLinkCard';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
@@ -1130,6 +1131,9 @@ export function OrderDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Mijoz kuzatuv havolasi ("Jalyuzimni kuzat") */}
+        <TrackingLinkCard trackingCode={order.trackingCode} />
 
         {/* Assigned Staff */}
         <div className="surface-card p-4">

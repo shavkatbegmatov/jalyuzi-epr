@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class OrderResponse {
     private Long id;
     private String orderNumber;
+    private String trackingCode;
     private OrderStatus status;
     private String statusDisplayName;
 
@@ -71,6 +72,7 @@ public class OrderResponse {
         return OrderResponse.builder()
                 .id(order.getId())
                 .orderNumber(order.getOrderNumber())
+                .trackingCode(order.getTrackingCode())
                 .status(order.getStatus())
                 .statusDisplayName(order.getStatus().getDisplayName())
                 .customerId(order.getCustomer() != null ? order.getCustomer().getId() : null)

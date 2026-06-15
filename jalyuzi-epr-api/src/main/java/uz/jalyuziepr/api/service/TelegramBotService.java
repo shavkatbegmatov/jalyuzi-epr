@@ -3,6 +3,7 @@ package uz.jalyuziepr.api.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import uz.jalyuziepr.api.entity.Customer;
@@ -42,6 +43,9 @@ public class TelegramBotService {
     private static final NumberFormat MONEY = NumberFormat.getInstance(new Locale("uz"));
 
     private static final String VERIFY_PAYLOAD_PREFIX = "verify_";
+
+    @Value("${app.public-base-url:https://kanjaltib.uz}")
+    private String publicBaseUrl;
 
     /**
      * Telegram'dan kelgan Update'ni qayta ishlash
@@ -208,6 +212,13 @@ public class TelegramBotService {
 
         log.info("Telegram /start: chatId={}, payload={}", chatId, payload);
 
+        // Deep-link: buyurtma kuzatuviga obuna bo'lish (track_<code>)
+        if (payload.startsWith(OrderTrackingService.TRACK_PAYLOAD_PREFIX)) {
+            String code = payload.substring(OrderTrackingService.TRACK_PAYLOAD_PREFIX.length()).trim();
+            handleTrackSubscribe(chatId, code);
+            return;
+        }
+
         String welcome = """
                 👋 Assalomu alaykum! <b>Jalyuzi ERP</b> bot'iga xush kelibsiz.
 
@@ -221,6 +232,55 @@ public class TelegramBotService {
                 welcome,
                 telegramService.requestContactKeyboard("📱 Telefon raqamni ulashish")
         );
+    }
+
+    /**
+     * Deep-link orqali buyurtma kuzatuviga obuna bo'lish (/start track_<code>).
+     * Mijoz hali Telegram'ga ulanmagan bo'lsa, shu chatni bog'laymiz — keyin barcha
+     * yangiliklar (status push, akt-kvitansiya) shu yerga keladi. Mavjud bog'lanishni
+     * ALMASHTIRMAYMIZ (boshqa odam kanalni o'zlashtirmasligi uchun).
+     */
+    private void handleTrackSubscribe(Long chatId, String code) {
+        Optional<Order> orderOpt = orderRepository.findByTrackingCodeWithDetails(
+                code == null ? null : code.trim().toUpperCase());
+        if (orderOpt.isEmpty()) {
+            telegramService.sendMessage(chatId,
+                    "❌ Buyurtma topilmadi. Kuzatuv havolasi noto'g'ri yoki eskirgan bo'lishi mumkin.");
+            return;
+        }
+
+        Order order = orderOpt.get();
+        Customer customer = order.getCustomer();
+
+        boolean subscribed = false;
+        if (customer != null && customer.getTelegramChatId() == null) {
+            customer.setTelegramChatId(chatId);
+            customerRepository.save(customer);
+            subscribed = true;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("🪟 <b>Buyurtma ").append(order.getOrderNumber()).append("</b>\n\n");
+        sb.append("Holat: <b>").append(order.getStatus().getDisplayName()).append("</b>\n");
+        if (order.getRemainingAmount() != null && order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+            sb.append("Qoldiq: <b>").append(money(order.getRemainingAmount())).append(" so'm</b>\n");
+        }
+        sb.append("\n");
+        if (subscribed) {
+            sb.append("✅ Obuna bo'ldingiz! Bu buyurtma bo'yicha yangiliklar shu yerga keladi.");
+        } else {
+            sb.append("Buyurtma holatini quyidagi tugma orqali to'liq kuzating.");
+        }
+
+        telegramService.sendMessage(chatId, sb.toString(),
+                telegramService.inlineUrlButton("📦 To'liq kuzatish", trackingUrl(order.getTrackingCode())));
+    }
+
+    private String trackingUrl(String code) {
+        String base = (publicBaseUrl != null && publicBaseUrl.endsWith("/"))
+                ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1)
+                : publicBaseUrl;
+        return base + "/t/" + code;
     }
 
     /**

@@ -21,6 +21,7 @@ import {
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
+import { TrackingLinkCard } from '../../components/orders/TrackingLinkCard';
 import { employeesApi } from '../../api/employees.api';
 import { formatCurrency, formatDate, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
 import type { Order, OrderStatus, OrderPaymentType, Employee } from '../../types';
@@ -376,6 +377,9 @@ export function ManagerOrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Mijoz kuzatuv havolasi ("Jalyuzimni kuzat") */}
+      <TrackingLinkCard trackingCode={order.trackingCode} />
 
       {/* Assignments Info */}
       {(order.managerName || order.measurerName || order.installerName) && (

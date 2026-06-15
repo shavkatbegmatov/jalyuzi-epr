@@ -25,6 +25,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "LEFT JOIN FETCH o.manager LEFT JOIN FETCH o.measurer LEFT JOIN FETCH o.installer WHERE o.id = :id")
     Optional<Order> findByIdWithAllDetails(@Param("id") Long id);
 
+    // Ommaviy kuzatuv ("Jalyuzimni kuzat") uchun — kod bo'yicha, kerakli bog'lanishlar bilan
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer " +
+            "LEFT JOIN FETCH o.items i LEFT JOIN FETCH i.product " +
+            "LEFT JOIN FETCH o.statusHistory " +
+            "LEFT JOIN FETCH o.measurer LEFT JOIN FETCH o.installer " +
+            "WHERE o.trackingCode = :code")
+    Optional<Order> findByTrackingCodeWithDetails(@Param("code") String code);
+
+    boolean existsByTrackingCode(String code);
+
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     @Query("SELECT o FROM Order o WHERE o.status IN :statuses")

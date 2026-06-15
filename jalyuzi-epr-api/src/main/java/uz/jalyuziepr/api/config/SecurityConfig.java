@@ -53,6 +53,9 @@ public class SecurityConfig {
                         // WebSocket endpoint (JWT token interceptor'da tekshiriladi)
                         .requestMatchers("/v1/ws/**").permitAll()
 
+                        // "Jalyuzimni kuzat" — ommaviy buyurtma kuzatuvi (maxfiy kod orqali)
+                        .requestMatchers("/v1/track/**").permitAll()
+
                         // Internet-do'kon Public API
                         .requestMatchers("/v1/shop/products/**").permitAll()
                         .requestMatchers("/v1/shop/categories").permitAll()
