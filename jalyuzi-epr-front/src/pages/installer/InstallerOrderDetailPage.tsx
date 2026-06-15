@@ -11,12 +11,15 @@ import {
   Clock,
   X,
   AlertTriangle,
+  Ruler,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
 import { escalationsApi, type OrderEscalation } from '../../api/escalations.api';
+import { revisionsApi } from '../../api/revisions.api';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
 import { OrderEscalationSheet } from '../../components/orders/OrderEscalationSheet';
+import { RemeasureSheet, type RemeasureItem } from '../../components/orders/RemeasureSheet';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { getApiErrorMessage } from '../../utils/errorUtils';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
@@ -57,6 +60,21 @@ export function InstallerOrderDetailPage() {
     }
   }, [id]);
 
+  // Joyida qayta o'lchov
+  const [remeasureItem, setRemeasureItem] = useState<RemeasureItem | null>(null);
+  const [pendingRevisionItemIds, setPendingRevisionItemIds] = useState<Set<number>>(new Set());
+  const loadRevisions = useCallback(async () => {
+    if (!id) return;
+    try {
+      const list = await revisionsApi.getByOrder(Number(id));
+      setPendingRevisionItemIds(
+        new Set(list.filter((r) => r.status === 'PENDING').map((r) => r.orderItemId)),
+      );
+    } catch {
+      // jim
+    }
+  }, [id]);
+
   const loadOrder = useCallback(async () => {
     if (!id) return;
     try {
@@ -78,6 +96,10 @@ export function InstallerOrderDetailPage() {
   useEffect(() => {
     void loadEscalations();
   }, [loadEscalations]);
+
+  useEffect(() => {
+    void loadRevisions();
+  }, [loadRevisions]);
 
   const handleStartInstallation = async () => {
     if (!order) return;
@@ -260,34 +282,66 @@ export function InstallerOrderDetailPage() {
               {order.items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between gap-3 pb-3 border-b border-base-200 last:border-0 last:pb-0"
+                  className="pb-3 border-b border-base-200 last:border-0 last:pb-0"
                 >
-                  <div className="flex items-start gap-2">
-                    <Package className="h-4 w-4 text-base-content/40 mt-0.5 shrink-0" />
-                    <div>
-                      <div className="text-sm font-medium">{item.productName}</div>
-                      {item.roomName && (
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2">
+                      <Package className="h-4 w-4 text-base-content/40 mt-0.5 shrink-0" />
+                      <div>
+                        <div className="text-sm font-medium">{item.productName}</div>
+                        {item.roomName && (
+                          <div className="text-xs text-base-content/60">
+                            Xona: {item.roomName}
+                          </div>
+                        )}
+                        {(item.widthMm || item.heightMm) && (
+                          <div className="text-xs text-base-content/60">
+                            {item.widthMm}x{item.heightMm} mm
+                            {item.calculatedSqm
+                              ? ` (${item.calculatedSqm.toFixed(2)} m\u00B2)`
+                              : ''}
+                          </div>
+                        )}
                         <div className="text-xs text-base-content/60">
-                          Xona: {item.roomName}
+                          {item.quantity} dona
+                          {item.installationIncluded && ' \u2022 O\'rnatish bilan'}
                         </div>
-                      )}
-                      {(item.widthMm || item.heightMm) && (
-                        <div className="text-xs text-base-content/60">
-                          {item.widthMm}x{item.heightMm} mm
-                          {item.calculatedSqm
-                            ? ` (${item.calculatedSqm.toFixed(2)} m\u00B2)`
-                            : ''}
-                        </div>
-                      )}
-                      <div className="text-xs text-base-content/60">
-                        {item.quantity} dona
-                        {item.installationIncluded && ' \u2022 O\'rnatish bilan'}
                       </div>
                     </div>
+                    <span className="text-sm font-semibold whitespace-nowrap">
+                      {formatCurrency(item.totalPrice)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold whitespace-nowrap">
-                    {formatCurrency(item.totalPrice)}
-                  </span>
+
+                  {/* Qayta o'lchov amali / kutilayotgan tasdiq */}
+                  {(canEscalate || pendingRevisionItemIds.has(item.id)) && (
+                    <div className="mt-2 flex items-center justify-end">
+                      {pendingRevisionItemIds.has(item.id) ? (
+                        <span className="badge badge-warning badge-sm gap-1">
+                          <Ruler className="h-3 w-3" />
+                          Yangi o'lcham tasdiqlanmoqda
+                        </span>
+                      ) : (
+                        canEscalate && (
+                          <button
+                            className="btn btn-ghost btn-xs gap-1 text-primary"
+                            onClick={() =>
+                              setRemeasureItem({
+                                id: item.id,
+                                productName: item.productName,
+                                roomName: item.roomName,
+                                widthMm: item.widthMm,
+                                heightMm: item.heightMm,
+                              })
+                            }
+                          >
+                            <Ruler className="h-3.5 w-3.5" />
+                            Qayta o'lchov
+                          </button>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -557,6 +611,14 @@ export function InstallerOrderDetailPage() {
         isOpen={showSos}
         onClose={() => setShowSos(false)}
         onCreated={loadEscalations}
+      />
+
+      <RemeasureSheet
+        orderId={order.id}
+        item={remeasureItem}
+        isOpen={remeasureItem !== null}
+        onClose={() => setRemeasureItem(null)}
+        onSubmitted={loadRevisions}
       />
     </div>
   );
