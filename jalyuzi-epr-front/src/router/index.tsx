@@ -67,6 +67,7 @@ const ManagerDashboardPage = lazy(() => import('../pages/manager/ManagerDashboar
 const ManagerOrdersPage = lazy(() => import('../pages/manager/ManagerOrdersPage').then(m => ({ default: m.ManagerOrdersPage })));
 const ManagerOrderDetailPage = lazy(() => import('../pages/manager/ManagerOrderDetailPage').then(m => ({ default: m.ManagerOrderDetailPage })));
 const ManagerProfilePage = lazy(() => import('../pages/manager/ManagerProfilePage').then(m => ({ default: m.ManagerProfilePage })));
+const ManagerEscalationsPage = lazy(() => import('../pages/manager/ManagerEscalationsPage').then(m => ({ default: m.ManagerEscalationsPage })));
 
 // Lazy-loaded portal pages
 const PortalLayout = lazy(() => import('../portal/components/layout/PortalLayout'));
@@ -602,6 +603,15 @@ export const router = createBrowserRouter([
           </LazyRoute>
         ),
         handle: { title: 'Menejer - Buyurtma' },
+      },
+      {
+        path: 'escalations',
+        element: (
+          <LazyRoute>
+            <ManagerEscalationsPage />
+          </LazyRoute>
+        ),
+        handle: { title: 'Menejer - Tezkor yordamlar' },
       },
       {
         path: 'profile',

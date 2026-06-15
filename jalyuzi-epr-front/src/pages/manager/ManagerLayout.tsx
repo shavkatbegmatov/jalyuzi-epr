@@ -1,11 +1,30 @@
+import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Navigate } from 'react-router-dom';
-import { LayoutDashboard, ClipboardList, User, LogOut } from 'lucide-react';
+import { LayoutDashboard, ClipboardList, User, LogOut, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useCrossTabSync } from '../../hooks/useCrossTabSync';
+import { useNotificationsStore } from '../../store/notificationsStore';
+import { escalationsApi } from '../../api/escalations.api';
 
 export default function ManagerLayout() {
   const { user, isAuthenticated, logout } = useAuthStore();
   useCrossTabSync();
+
+  // Ochiq SOS so'rovlari soni (nav badge) — yangi bildirishnoma kelganda yangilanadi
+  const [escalationCount, setEscalationCount] = useState(0);
+  const notifications = useNotificationsStore((s) => s.notifications);
+  useEffect(() => {
+    let active = true;
+    escalationsApi
+      .activeCount()
+      .then((c) => {
+        if (active) setEscalationCount(c);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [notifications.length]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -68,6 +87,26 @@ export default function ManagerLayout() {
           >
             <ClipboardList className="h-5 w-5" />
             <span>Buyurtmalar</span>
+          </NavLink>
+          <NavLink
+            to="/manager/escalations"
+            className={({ isActive }) =>
+              `flex-1 flex flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+                isActive
+                  ? 'text-error'
+                  : 'text-base-content/50 hover:text-base-content/80'
+              }`
+            }
+          >
+            <div className="relative">
+              <AlertTriangle className="h-5 w-5" />
+              {escalationCount > 0 && (
+                <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold leading-none text-error-content">
+                  {escalationCount}
+                </span>
+              )}
+            </div>
+            <span>SOS</span>
           </NavLink>
           <NavLink
             to="/manager/profile"

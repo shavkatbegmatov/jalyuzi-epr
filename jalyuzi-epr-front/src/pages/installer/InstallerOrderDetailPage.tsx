@@ -10,10 +10,13 @@ import {
   Package,
   Clock,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
+import { escalationsApi, type OrderEscalation } from '../../api/escalations.api';
 import { OrderPhotoTab } from '../../components/orders/OrderPhotoTab';
+import { OrderEscalationSheet } from '../../components/orders/OrderEscalationSheet';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { getApiErrorMessage } from '../../utils/errorUtils';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor, getPaymentMethodLabel } from '../../config/constants';
@@ -41,6 +44,19 @@ export function InstallerOrderDetailPage() {
     [],
   );
 
+  // Dala SOS / eskalatsiya
+  const [showSos, setShowSos] = useState(false);
+  const [openEscalations, setOpenEscalations] = useState<OrderEscalation[]>([]);
+  const loadEscalations = useCallback(async () => {
+    if (!id) return;
+    try {
+      const list = await escalationsApi.getByOrder(Number(id));
+      setOpenEscalations(list.filter((x) => x.status === 'OPEN'));
+    } catch {
+      // jim: eskalatsiyalar yuklanmasa ham asosiy oqim ishlayveradi
+    }
+  }, [id]);
+
   const loadOrder = useCallback(async () => {
     if (!id) return;
     try {
@@ -58,6 +74,10 @@ export function InstallerOrderDetailPage() {
   useEffect(() => {
     void loadOrder();
   }, [loadOrder]);
+
+  useEffect(() => {
+    void loadEscalations();
+  }, [loadEscalations]);
 
   const handleStartInstallation = async () => {
     if (!order) return;
@@ -161,6 +181,8 @@ export function InstallerOrderDetailPage() {
   const canCollectPayment =
     (order.status === 'ORNATISH_BAJARILDI' || order.status === 'TOLOV_KUTILMOQDA') &&
     order.remainingAmount > 0;
+  const canEscalate =
+    order.status === 'ORNATISHGA_TAYINLANDI' || order.status === 'ORNATISH_JARAYONIDA';
 
   return (
     <div className="space-y-4">
@@ -179,6 +201,19 @@ export function InstallerOrderDetailPage() {
           {getOrderStatusLabel(order.status)}
         </span>
       </div>
+
+      {/* Ochiq SOS so'rovi banneri */}
+      {openEscalations.length > 0 && (
+        <div className="alert alert-warning shadow-sm">
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <div className="text-sm">
+            <p className="font-semibold">Ochiq yordam so'rovi yuborilgan</p>
+            <p className="opacity-80">
+              {openEscalations.map((e) => e.reasonLabel).join(', ')} — menejer ko'rib chiqmoqda
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Customer Info Card */}
       <div className="card bg-base-100 shadow-sm">
@@ -500,6 +535,29 @@ export function InstallerOrderDetailPage() {
           ></div>
         </div>
       )}
+
+      {/* Dala SOS — suzuvchi tugma (mobil ustun ichida o'ngda) */}
+      {canEscalate && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-24 z-40 mx-auto max-w-md px-4">
+          <div className="flex justify-end">
+            <button
+              className="pointer-events-auto btn btn-error btn-circle btn-lg shadow-lg"
+              onClick={() => setShowSos(true)}
+              title="Tezkor yordam"
+              aria-label="Tezkor yordam"
+            >
+              <AlertTriangle className="h-6 w-6" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <OrderEscalationSheet
+        orderId={order.id}
+        isOpen={showSos}
+        onClose={() => setShowSos(false)}
+        onCreated={loadEscalations}
+      />
     </div>
   );
 }
