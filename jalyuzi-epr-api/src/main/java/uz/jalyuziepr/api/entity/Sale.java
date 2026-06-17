@@ -102,8 +102,9 @@ public class Sale extends BaseEntity implements Auditable {
     @Column(name = "installation_status", length = 20)
     private InstallationStatus installationStatus;
 
+    // Onlayn-do'kon buyurtmalarida xodim bo'lmaydi — shuning uchun nullable
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(name = "created_by")
     private User createdBy;
 
     @OneToMany(mappedBy = "sale", cascade = CascadeType.ALL, orphanRemoval = true)
