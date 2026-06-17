@@ -20,6 +20,7 @@ import {
   WifiOff,
   Send,
   Bell,
+  Star,
   type LucideIcon,
 } from 'lucide-react';
 import { trackingApi, type OrderTracking } from '../../api/tracking.api';
@@ -152,6 +153,7 @@ export function OrderTrackingPage() {
             {data.photosAfter.length > 0 && (
               <PhotoCard title="O'rnatish natijasi" urls={data.photosAfter} onPreview={setPreview} accent="success" />
             )}
+            {data.reviewable && <ReviewCard code={code || ''} data={data} onReviewed={setData} />}
             <PaymentCard data={data} />
             {data.items.length > 0 && <ItemsCard data={data} />}
             {data.photosBefore.length > 0 && (
@@ -230,6 +232,98 @@ function StatusHero({ data }: { data: OrderTracking }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function ReviewCard({
+  code,
+  data,
+  onReviewed,
+}: {
+  code: string;
+  data: OrderTracking;
+  onReviewed: (d: OrderTracking) => void;
+}) {
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Allaqachon baholangan — minnatdorchilik holati
+  if (data.reviewRating) {
+    return (
+      <div className="rounded-2xl border border-base-200 bg-base-100 p-5 text-center shadow-sm">
+        <p className="text-sm font-semibold">Bahoyingiz uchun rahmat! 🙏</p>
+        <div className="mt-2 flex justify-center gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Star
+              key={n}
+              className={`h-6 w-6 ${
+                n <= (data.reviewRating || 0) ? 'fill-warning text-warning' : 'text-base-300'
+              }`}
+            />
+          ))}
+        </div>
+        {data.reviewComment && (
+          <p className="mt-2 text-sm italic text-base-content/60">"{data.reviewComment}"</p>
+        )}
+      </div>
+    );
+  }
+
+  const submit = async () => {
+    if (rating < 1) {
+      setErr('Iltimos, baho tanlang');
+      return;
+    }
+    setSubmitting(true);
+    setErr(null);
+    try {
+      const updated = await trackingApi.submitReview(code, rating, comment.trim() || undefined);
+      onReviewed(updated);
+    } catch {
+      setErr("Yuborib bo'lmadi, qayta urinib ko'ring");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-base-200 bg-base-100 p-5 shadow-sm">
+      <p className="text-center font-semibold">Ishimizni qanday baholaysiz?</p>
+      <div className="mt-3 flex justify-center gap-1.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            onClick={() => setRating(n)}
+            onMouseEnter={() => setHover(n)}
+            onMouseLeave={() => setHover(0)}
+            className="p-1"
+            aria-label={`${n} yulduz`}
+          >
+            <Star
+              className={`h-9 w-9 transition ${
+                n <= (hover || rating) ? 'fill-warning text-warning' : 'text-base-300'
+              }`}
+            />
+          </button>
+        ))}
+      </div>
+      <textarea
+        className="textarea textarea-bordered mt-3 w-full"
+        rows={2}
+        placeholder="Izoh (ixtiyoriy)"
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+      />
+      {err && <p className="mt-1 text-center text-xs text-error">{err}</p>}
+      <button className="btn btn-primary btn-block mt-3" onClick={submit} disabled={submitting}>
+        {submitting && <span className="loading loading-spinner loading-sm" />}
+        Bahoni yuborish
+      </button>
     </div>
   );
 }

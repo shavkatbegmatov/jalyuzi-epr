@@ -10,8 +10,11 @@ import uz.jalyuziepr.api.dto.response.OrderTrackingResponse;
 import uz.jalyuziepr.api.entity.Order;
 import uz.jalyuziepr.api.enums.OrderStatus;
 import uz.jalyuziepr.api.enums.StaffNotificationType;
+import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.OrderRepository;
+
+import java.time.LocalDateTime;
 
 import java.security.SecureRandom;
 import java.util.Map;
@@ -62,6 +65,36 @@ public class OrderTrackingService {
 
     /** Telegram /start deep-link payload prefiksi (bot tomonidan track_ bilan boshlanadi) */
     public static final String TRACK_PAYLOAD_PREFIX = "track_";
+
+    /**
+     * Ommaviy kuzatuv sahifasidan mijoz bahosi (NPS / sharh). Auth talab qilinmaydi —
+     * kuzatuv kodi maxfiy kalit vazifasini bajaradi. Faqat o'rnatish yakunlangan
+     * buyurtmaga baho qoldirish mumkin.
+     */
+    @Transactional
+    public OrderTrackingResponse submitReview(String code, Integer rating, String comment) {
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new BadRequestException("Baho 1 dan 5 gacha bo'lishi kerak");
+        }
+        Order order = orderRepository.findByTrackingCodeWithDetails(normalize(code))
+                .orElseThrow(() -> new ResourceNotFoundException("Kuzatuv", "kod", code));
+        if (order.getStatus() == null
+                || order.getStatus() == OrderStatus.BEKOR_QILINDI
+                || order.getStatus().getOrder() < OrderStatus.ORNATISH_BAJARILDI.getOrder()) {
+            throw new BadRequestException("Baho qoldirish uchun o'rnatish yakunlangan bo'lishi kerak");
+        }
+        order.setReviewRating(rating);
+        order.setReviewComment(comment != null && !comment.isBlank() ? comment.trim() : null);
+        order.setReviewSubmittedAt(LocalDateTime.now());
+        orderRepository.save(order);
+        log.info("Mijoz bahosi qabul qilindi: buyurtma {}, baho {}", order.getOrderNumber(), rating);
+
+        OrderTrackingResponse resp = OrderTrackingResponse.from(order);
+        if (telegramService.isEnabled() && order.getTrackingCode() != null) {
+            resp.setTelegramSubscribeUrl(telegramService.buildDeepLink(TRACK_PAYLOAD_PREFIX + order.getTrackingCode()));
+        }
+        return resp;
+    }
 
     /**
      * Buyurtma uchun noyob kuzatuv kodini generatsiya qiladi (DB orqali noyoblik tekshiriladi).

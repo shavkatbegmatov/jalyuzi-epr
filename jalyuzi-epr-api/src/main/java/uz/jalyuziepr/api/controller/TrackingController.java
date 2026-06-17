@@ -6,8 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import uz.jalyuziepr.api.dto.request.TrackingReviewRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.OrderTrackingResponse;
 import uz.jalyuziepr.api.service.OrderTrackingService;
@@ -30,5 +33,14 @@ public class TrackingController {
     @Operation(summary = "Buyurtmani kuzatish", description = "Kuzatuv kodi bo'yicha buyurtma holatini olish")
     public ResponseEntity<ApiResponse<OrderTrackingResponse>> track(@PathVariable String code) {
         return ResponseEntity.ok(ApiResponse.success(trackingService.getByCode(code)));
+    }
+
+    @PostMapping("/{code}/review")
+    @Operation(summary = "Mijoz bahosi", description = "O'rnatish yakunlangach baho (1-5) va izoh qoldirish")
+    public ResponseEntity<ApiResponse<OrderTrackingResponse>> review(
+            @PathVariable String code,
+            @RequestBody TrackingReviewRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Bahoyingiz uchun rahmat!",
+                trackingService.submitReview(code, request.getRating(), request.getComment())));
     }
 }

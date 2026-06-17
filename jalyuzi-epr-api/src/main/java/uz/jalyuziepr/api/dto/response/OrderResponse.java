@@ -63,6 +63,10 @@ public class OrderResponse {
     private String notes;
     private String createdByName;
 
+    // Mijoz bahosi (NPS / sharh halqasi)
+    private Integer reviewRating;
+    private String reviewComment;
+
     // Related data
     private List<OrderItemResponse> items;
     private List<OrderPaymentResponse> payments;
@@ -102,6 +106,8 @@ public class OrderResponse {
                 .createdAt(order.getCreatedAt())
                 .notes(order.getNotes())
                 .createdByName(order.getCreatedBy() != null ? order.getCreatedBy().getFullName() : null)
+                .reviewRating(order.getReviewRating())
+                .reviewComment(order.getReviewComment())
                 .items(order.getItems() != null ?
                         order.getItems().stream().map(OrderItemResponse::from).collect(Collectors.toList()) : null)
                 .payments(order.getPayments() != null ?

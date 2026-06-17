@@ -64,6 +64,11 @@ public class OrderTrackingResponse {
     /** Telegram'da yangiliklarga obuna bo'lish deep-link'i (bot yoqilgan bo'lsa); aks holda null */
     private String telegramSubscribeUrl;
 
+    // NPS / sharh halqasi
+    private Integer reviewRating;   // 1..5 yoki null (hali baholanmagan)
+    private String reviewComment;
+    private boolean reviewable;     // mijoz baho qoldira oladimi (o'rnatish yakunlangan)
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -92,6 +97,7 @@ public class OrderTrackingResponse {
         boolean completed = s == OrderStatus.YAKUNLANDI || s == OrderStatus.QARZGA_OTKAZILDI;
         int stageIndex = cancelled ? -1 : stageIndexOf(s);
         int progress = cancelled ? 0 : Math.round((stageIndex + 1) * 100f / TOTAL_STAGES);
+        boolean reviewable = !cancelled && s.getOrder() >= OrderStatus.ORNATISH_BAJARILDI.getOrder();
 
         List<Item> items = o.getItems() == null ? List.of() : o.getItems().stream()
                 .map(OrderTrackingResponse::toItem)
@@ -133,6 +139,9 @@ public class OrderTrackingResponse {
                 .timeline(timeline)
                 .photosBefore(o.getPhotosBefore() != null ? List.copyOf(o.getPhotosBefore()) : List.of())
                 .photosAfter(o.getPhotosAfter() != null ? List.copyOf(o.getPhotosAfter()) : List.of())
+                .reviewRating(o.getReviewRating())
+                .reviewComment(o.getReviewComment())
+                .reviewable(reviewable)
                 .build();
     }
 

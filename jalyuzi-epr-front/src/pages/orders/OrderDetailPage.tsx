@@ -23,6 +23,7 @@ import {
   ChevronRight,
   BadgeCheck,
   Ban,
+  Star,
 } from 'lucide-react';
 import { ordersApi } from '../../api/orders.api';
 import { TrackingLinkCard } from '../../components/orders/TrackingLinkCard';
@@ -1327,6 +1328,28 @@ export function OrderDetailPage() {
                 </div>
               </>
             )}
+            {order.reviewRating ? (
+              <>
+                <div className="divider my-1" />
+                <div>
+                  <p className="text-xs text-base-content/60 mb-1">Mijoz bahosi</p>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className={`h-4 w-4 ${
+                          n <= (order.reviewRating || 0) ? 'fill-warning text-warning' : 'text-base-300'
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-1 text-sm font-semibold">{order.reviewRating}/5</span>
+                  </div>
+                  {order.reviewComment && (
+                    <p className="mt-1 text-sm italic text-base-content/70">"{order.reviewComment}"</p>
+                  )}
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
       </div>

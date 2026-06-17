@@ -45,6 +45,9 @@ export interface OrderTracking {
   photosBefore: string[];
   photosAfter: string[];
   telegramSubscribeUrl?: string;
+  reviewRating?: number | null;
+  reviewComment?: string | null;
+  reviewable: boolean;
 }
 
 interface ApiResponse<T> {
@@ -58,6 +61,18 @@ export const trackingApi = {
   get: async (code: string): Promise<OrderTracking> => {
     const { data } = await publicApi.get<ApiResponse<OrderTracking>>(
       `/v1/track/${encodeURIComponent(code)}`
+    );
+    return data.data;
+  },
+
+  submitReview: async (
+    code: string,
+    rating: number,
+    comment?: string,
+  ): Promise<OrderTracking> => {
+    const { data } = await publicApi.post<ApiResponse<OrderTracking>>(
+      `/v1/track/${encodeURIComponent(code)}/review`,
+      { rating, comment },
     );
     return data.data;
   },

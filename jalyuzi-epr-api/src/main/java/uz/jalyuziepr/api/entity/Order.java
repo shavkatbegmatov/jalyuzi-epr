@@ -119,6 +119,16 @@ public class Order extends BaseEntity implements Auditable {
     @Column(name = "quote_followup_sent_at")
     private LocalDateTime quoteFollowupSentAt;
 
+    // Post-installation mijoz bahosi (NPS / sharh halqasi)
+    @Column(name = "review_rating")
+    private Integer reviewRating;
+
+    @Column(name = "review_comment", columnDefinition = "TEXT")
+    private String reviewComment;
+
+    @Column(name = "review_submitted_at")
+    private LocalDateTime reviewSubmittedAt;
+
     @Column(length = 1000)
     private String notes;
 

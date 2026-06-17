@@ -1188,6 +1188,8 @@ export interface Order {
   createdAt: string;
   notes?: string;
   createdByName: string;
+  reviewRating?: number;
+  reviewComment?: string;
   items?: OrderItemType[];
   payments?: OrderPaymentItem[];
   statusHistory?: OrderStatusHistoryItem[];
