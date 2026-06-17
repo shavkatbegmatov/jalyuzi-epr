@@ -173,6 +173,12 @@ export const productionApi = {
     return res.data.data;
   },
 
+  // QR job-traveler: keyingi bosqichga o'tkazish (skanerlab bir tugma)
+  advance: async (id: number): Promise<ProductionOrder> => {
+    const res = await api.post<ApiResponse<ProductionOrder>>(`/v1/production/orders/${id}/advance`);
+    return res.data.data;
+  },
+
   assignWorker: async (id: number, workerId: number | null): Promise<ProductionOrder> => {
     const res = await api.post<ApiResponse<ProductionOrder>>(
       `/v1/production/orders/${id}/assign`,

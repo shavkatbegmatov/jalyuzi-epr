@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { X, Clock, User, Package, AlertTriangle, Pause, Play, XCircle } from 'lucide-react';
+import { X, Clock, User, Package, AlertTriangle, Pause, Play, XCircle, QrCode } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ModalPortal } from '../../components/common/Modal';
 import {
@@ -7,6 +7,7 @@ import {
   type ProductionOrder,
   type ProductionStage,
 } from '../../api/production.api';
+import { QrTravelerModal } from './QrTravelerModal';
 
 interface Props {
   orderId: number;
@@ -39,6 +40,7 @@ export function ProductionOrderModal({ orderId, onClose, onUpdate }: Props) {
   const [order, setOrder] = useState<ProductionOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   const loadOrder = useCallback(async () => {
     try {
@@ -91,10 +93,26 @@ export function ProductionOrderModal({ orderId, onClose, onUpdate }: Props) {
                 </p>
               )}
             </div>
-            <button className="btn btn-ghost btn-sm btn-square" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              {order && (
+                <button
+                  className="btn btn-ghost btn-sm gap-1"
+                  onClick={() => setShowQr(true)}
+                  title="QR job-traveler chop etish"
+                >
+                  <QrCode className="h-4 w-4" />
+                  QR
+                </button>
+              )}
+              <button className="btn btn-ghost btn-sm btn-square" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
+
+          {showQr && order && (
+            <QrTravelerModal order={order} onClose={() => setShowQr(false)} />
+          )}
 
           {loading || !order ? (
             <div className="flex justify-center py-12">

@@ -46,6 +46,7 @@ const ProfilePage = lazy(() => import('../pages/profile/ProfilePage').then(m => 
 const AuditLogsPage = lazy(() => import('../pages/audit-logs/AuditLogsPage').then(m => ({ default: m.AuditLogsPage })));
 const InstallationsPage = lazy(() => import('../pages/installations/InstallationsPage').then(m => ({ default: m.InstallationsPage })));
 const ProductionPage = lazy(() => import('../pages/production/ProductionPage').then(m => ({ default: m.ProductionPage })));
+const ProductionScanPage = lazy(() => import('../pages/production/ProductionScanPage').then(m => ({ default: m.ProductionScanPage })));
 const WarrantyPage = lazy(() => import('../pages/warranty/WarrantyPage').then(m => ({ default: m.WarrantyPage })));
 const WarrantyDetailPage = lazy(() => import('../pages/warranty/WarrantyDetailPage').then(m => ({ default: m.WarrantyDetailPage })));
 
@@ -486,6 +487,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Ishlab chiqarish' },
+      },
+      {
+        path: 'production/scan/:id',
+        element: (
+          <ProtectedRoute permission={PermissionCode.PRODUCTION_VIEW}>
+            <LazyRoute>
+              <ProductionScanPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Sex skaneri' },
       },
       {
         path: 'warranty',

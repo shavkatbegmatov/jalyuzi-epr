@@ -95,6 +95,13 @@ public class ProductionController {
         return ResponseEntity.ok(ApiResponse.success(productionService.moveToStage(id, req)));
     }
 
+    @PostMapping("/orders/{id}/advance")
+    @RequiresPermission(PermissionCode.PRODUCTION_MANAGE)
+    @Operation(summary = "Keyingi bosqichga o'tkazish (QR skanerlab)")
+    public ResponseEntity<ApiResponse<ProductionOrderResponse>> advance(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(productionService.advanceToNextStage(id)));
+    }
+
     @PostMapping("/orders/{id}/assign")
     @RequiresPermission(PermissionCode.PRODUCTION_ASSIGN)
     @Operation(summary = "Ishchini biriktirish")

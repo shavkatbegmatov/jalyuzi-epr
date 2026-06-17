@@ -265,6 +265,29 @@ public class ProductionService {
         return ProductionOrderResponse.fromDetailed(po);
     }
 
+    /**
+     * QR job-traveler: keyingi faol bosqichga avtomatik o'tkazish (skanerlab bir tugma).
+     */
+    @Transactional
+    public ProductionOrderResponse advanceToNextStage(Long productionOrderId) {
+        ProductionOrder po = productionOrderRepository.findByIdWithDetails(productionOrderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Production order", "id", productionOrderId));
+        if (po.getStatus().isTerminal()) {
+            throw new BadRequestException("Yakunlangan production orderni harakatlantirib bo'lmaydi");
+        }
+        List<ProductionStage> all = stageRepository.findAllByIsActiveTrueOrderBySequenceAsc();
+        if (all.isEmpty()) {
+            throw new BadRequestException("Faol bosqichlar yo'q");
+        }
+        Integer curSeq = po.getCurrentStage() != null ? po.getCurrentStage().getSequence() : null;
+        ProductionStage next = all.stream()
+                .filter(s -> curSeq == null || s.getSequence() > curSeq)
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Bu allaqachon oxirgi bosqich"));
+        return moveToStage(productionOrderId,
+                ProductionStageMoveRequest.builder().stageId(next.getId()).build());
+    }
+
     @Transactional
     public ProductionOrderResponse assignWorker(Long productionOrderId, Long workerId) {
         ProductionOrder po = productionOrderRepository.findByIdWithDetails(productionOrderId)
