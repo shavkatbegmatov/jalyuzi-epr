@@ -48,6 +48,7 @@ public class ProductionOrderResponse {
     private Integer priority;
     private LocalDateTime deadline;
     private LocalDateTime startedAt;
+    private LocalDateTime currentStageEnteredAt;
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
 
@@ -86,6 +87,7 @@ public class ProductionOrderResponse {
                 .priority(po.getPriority())
                 .deadline(po.getDeadline())
                 .startedAt(po.getStartedAt())
+                .currentStageEnteredAt(po.getCurrentStageEnteredAt())
                 .completedAt(po.getCompletedAt())
                 .createdAt(po.getCreatedAt())
                 .notes(po.getNotes())

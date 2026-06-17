@@ -76,6 +76,7 @@ export interface ProductionOrder {
   priority: number;
   deadline?: string;
   startedAt?: string;
+  currentStageEnteredAt?: string;
   completedAt?: string;
   createdAt: string;
 

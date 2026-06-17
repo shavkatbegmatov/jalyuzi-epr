@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,7 @@ public class ProductionService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final StaffNotificationService staffNotificationService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // ==================== STAGE CATALOG ====================
 
@@ -117,11 +119,13 @@ public class ProductionService {
                 .deadline(req.getDeadline())
                 .notes(req.getNotes())
                 .createdBy(getCurrentUser())
+                .currentStageEnteredAt(LocalDateTime.now())
                 .build();
 
         po = productionOrderRepository.save(po);
 
         log.info("ProductionOrder created: {} for order {}", po.getProductionNumber(), order.getOrderNumber());
+        broadcastBoard();
         return ProductionOrderResponse.from(po);
     }
 
@@ -166,6 +170,7 @@ public class ProductionService {
         }
 
         log.info("Auto-created {} production orders for order {}", created.size(), order.getOrderNumber());
+        broadcastBoard();
         return created.stream().map(ProductionOrderResponse::from).collect(Collectors.toList());
     }
 
@@ -181,6 +186,7 @@ public class ProductionService {
                         ? order.getInstallationDate().minusDays(2)
                         : null)
                 .createdBy(createdBy)
+                .currentStageEnteredAt(LocalDateTime.now())
                 .build();
     }
 
@@ -238,6 +244,7 @@ public class ProductionService {
 
         // 4) Production orderni yangilash
         po.setCurrentStage(newStage);
+        po.setCurrentStageEnteredAt(now);
         if (po.getStartedAt() == null) {
             po.setStartedAt(now);
         }
@@ -254,6 +261,7 @@ public class ProductionService {
 
         po = productionOrderRepository.save(po);
         log.info("ProductionOrder {} moved to stage {}", po.getProductionNumber(), newStage.getName());
+        broadcastBoard();
         return ProductionOrderResponse.fromDetailed(po);
     }
 
@@ -271,6 +279,7 @@ public class ProductionService {
         }
 
         po = productionOrderRepository.save(po);
+        broadcastBoard();
         return ProductionOrderResponse.from(po);
     }
 
@@ -292,6 +301,7 @@ public class ProductionService {
         }
 
         po = productionOrderRepository.save(po);
+        broadcastBoard();
         return ProductionOrderResponse.from(po);
     }
 
@@ -446,5 +456,17 @@ public class ProductionService {
 
     private BigDecimal nz(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
+    }
+
+    /**
+     * Wallboard'ni real vaqtda yangilash signali — barcha ochiq board'lar refetch qiladi.
+     */
+    private void broadcastBoard() {
+        try {
+            messagingTemplate.convertAndSend("/topic/production/board",
+                    java.util.Map.of("type", "board-changed", "at", System.currentTimeMillis()));
+        } catch (Exception e) {
+            log.warn("Production board broadcast failed: {}", e.getMessage());
+        }
     }
 }

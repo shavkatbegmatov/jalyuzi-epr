@@ -60,6 +60,9 @@ public class ProductionOrder extends BaseEntity implements Auditable {
     @Column(name = "started_at")
     private LocalDateTime startedAt;
 
+    @Column(name = "current_stage_entered_at")
+    private LocalDateTime currentStageEnteredAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
