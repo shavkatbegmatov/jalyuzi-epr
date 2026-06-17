@@ -24,9 +24,11 @@ import {
   BadgeCheck,
   Ban,
   Star,
+  ShieldCheck,
 } from 'lucide-react';
 import { ordersApi } from '../../api/orders.api';
 import { TrackingLinkCard } from '../../components/orders/TrackingLinkCard';
+import { WarrantyCertificateModal } from '../../components/orders/WarrantyCertificateModal';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { employeesApi } from '../../api/employees.api';
 import { usePermission } from '../../hooks/usePermission';
@@ -446,6 +448,7 @@ export function OrderDetailPage() {
   const [assignMeasurerOpen, setAssignMeasurerOpen] = useState(false);
   const [assignInstallerOpen, setAssignInstallerOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [showCert, setShowCert] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -1135,6 +1138,24 @@ export function OrderDetailPage() {
 
         {/* Mijoz kuzatuv havolasi ("Jalyuzimni kuzat") */}
         <TrackingLinkCard trackingCode={order.trackingCode} />
+
+        {/* Kafolat sertifikati (o'rnatish yakunlangach) */}
+        {order.trackingCode &&
+          ['ORNATISH_BAJARILDI', 'TOLOV_KUTILMOQDA', 'YAKUNLANDI', 'QARZGA_OTKAZILDI'].includes(order.status) && (
+            <button className="btn btn-outline btn-block gap-2" onClick={() => setShowCert(true)}>
+              <ShieldCheck className="h-5 w-5" /> Kafolat sertifikati
+            </button>
+          )}
+        {showCert && (
+          <WarrantyCertificateModal
+            orderNumber={order.orderNumber}
+            customerName={order.customerName}
+            items={order.items?.map((it) => ({ productName: it.productName, roomName: it.roomName }))}
+            installDate={order.installationDate || order.completedDate}
+            verifyUrl={`${window.location.origin}/t/${order.trackingCode}`}
+            onClose={() => setShowCert(false)}
+          />
+        )}
 
         {/* Assigned Staff */}
         <div className="surface-card p-4">

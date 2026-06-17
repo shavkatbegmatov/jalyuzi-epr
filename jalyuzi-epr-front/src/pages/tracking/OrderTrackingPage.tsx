@@ -21,8 +21,10 @@ import {
   Send,
   Bell,
   Star,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
+import { WarrantyCertificateModal } from '../../components/orders/WarrantyCertificateModal';
 import { trackingApi, type OrderTracking } from '../../api/tracking.api';
 import { API_BASE_URL, formatCurrency, formatDateTime } from '../../config/constants';
 
@@ -60,6 +62,7 @@ export function OrderTrackingPage() {
   const [error, setError] = useState<'notfound' | 'generic' | null>(null);
   const [live, setLive] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showCert, setShowCert] = useState(false);
   const clientRef = useRef<Client | null>(null);
 
   const load = useCallback(async (silent = false) => {
@@ -154,6 +157,11 @@ export function OrderTrackingPage() {
               <PhotoCard title="O'rnatish natijasi" urls={data.photosAfter} onPreview={setPreview} accent="success" />
             )}
             {data.reviewable && <ReviewCard code={code || ''} data={data} onReviewed={setData} />}
+            {data.reviewable && (
+              <button className="btn btn-outline btn-block gap-2" onClick={() => setShowCert(true)}>
+                <ShieldCheck className="h-5 w-5" /> Kafolat sertifikati
+              </button>
+            )}
             <PaymentCard data={data} />
             {data.items.length > 0 && <ItemsCard data={data} />}
             {data.photosBefore.length > 0 && (
@@ -184,6 +192,17 @@ export function OrderTrackingPage() {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {showCert && data && (
+        <WarrantyCertificateModal
+          orderNumber={data.orderNumber}
+          customerName={data.customerName}
+          items={data.items}
+          installDate={data.installationDate || data.completedDate}
+          verifyUrl={typeof window !== 'undefined' ? window.location.href : ''}
+          onClose={() => setShowCert(false)}
+        />
       )}
     </div>
   );
