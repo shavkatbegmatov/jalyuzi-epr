@@ -19,10 +19,12 @@ import uz.jalyuziepr.api.dto.request.CustomerRequest;
 import uz.jalyuziepr.api.dto.request.CustomerSetPinRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.CustomerResponse;
+import uz.jalyuziepr.api.dto.response.CustomerRfmResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
 import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.security.RequiresPermission;
 import uz.jalyuziepr.api.service.CustomerAuthService;
+import uz.jalyuziepr.api.service.CustomerInsightsService;
 import uz.jalyuziepr.api.service.CustomerService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
 
@@ -39,6 +41,7 @@ public class CustomerController {
     private final CustomerService customerService;
     private final CustomerAuthService customerAuthService;
     private final GenericExportService genericExportService;
+    private final CustomerInsightsService customerInsightsService;
 
     @GetMapping
     @RequiresPermission(PermissionCode.CUSTOMERS_VIEW)
@@ -76,6 +79,13 @@ public class CustomerController {
     @Operation(summary = "Get customers with debt", description = "Qarzli mijozlar")
     public ResponseEntity<ApiResponse<List<CustomerResponse>>> getCustomersWithDebt() {
         return ResponseEntity.ok(ApiResponse.success(customerService.getCustomersWithDebt()));
+    }
+
+    @GetMapping("/rfm-insights")
+    @RequiresPermission(PermissionCode.CUSTOMERS_VIEW)
+    @Operation(summary = "RFM segmentatsiya", description = "Mijozlarni recency/frequency/monetary bo'yicha segmentlash")
+    public ResponseEntity<ApiResponse<CustomerRfmResponse>> rfmInsights() {
+        return ResponseEntity.ok(ApiResponse.success(customerInsightsService.getRfmInsights()));
     }
 
     @PostMapping

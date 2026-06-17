@@ -71,6 +71,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
+    // RFM segmentatsiya uchun — mijoz bo'yicha buyurtmalar agregati
+    // [customerId, fullName, phone, orderCount, totalPaid, lastOrderAt]
+    @Query("SELECT c.id, c.fullName, c.phone, COUNT(o), COALESCE(SUM(o.paidAmount), 0), MAX(o.createdAt) " +
+            "FROM Order o JOIN o.customer c " +
+            "WHERE o.status <> 'BEKOR_QILINDI' " +
+            "GROUP BY c.id, c.fullName, c.phone")
+    List<Object[]> findCustomerOrderAggregates();
+
     // "O'lchovdan keyin" — narx tasdiqlangan, zaklad to'lanmagan va eslatma hali
     // yuborilmagan buyurtmalar (o'lchovdan beri belgilangan kun o'tgan)
     @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer " +

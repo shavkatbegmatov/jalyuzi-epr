@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, Phone, X } from 'lucide-react';
+import { Plus, Users, Phone, X, PieChart } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { customersApi } from '../../api/customers.api';
@@ -256,6 +256,14 @@ export function CustomersPage() {
         </div>
         <div className="flex items-center gap-2">
           <span className="pill hidden sm:inline-flex">{totalElements} ta mijoz</span>
+          <button
+            className="btn btn-ghost btn-sm lg:btn-md"
+            onClick={() => navigate('/customers/insights')}
+            title="Mijoz segmentatsiyasi (RFM)"
+          >
+            <PieChart className="h-5 w-5" />
+            <span className="hidden sm:inline">Segmentatsiya</span>
+          </button>
           <PermissionGate permission={PermissionCode.CUSTOMERS_CREATE}>
             <button className="btn btn-primary btn-sm lg:btn-md" onClick={handleOpenNewModal}>
               <Plus className="h-5 w-5" />

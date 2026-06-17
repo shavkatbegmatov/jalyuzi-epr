@@ -7,6 +7,30 @@ export interface CustomerFilters {
   search?: string;
 }
 
+export interface RfmCustomer {
+  customerId: number;
+  name: string;
+  phone?: string;
+  orderCount: number;
+  totalSpent: number;
+  lastOrderAt?: string;
+  recencyDays?: number;
+  segment: string;
+  segmentLabel: string;
+}
+
+export interface RfmSegment {
+  segment: string;
+  label: string;
+  count: number;
+  totalMonetary: number;
+}
+
+export interface RfmInsights {
+  segments: RfmSegment[];
+  customers: RfmCustomer[];
+}
+
 export const customersApi = {
   getAll: async (filters: CustomerFilters = {}): Promise<PagedResponse<Customer>> => {
     const params = new URLSearchParams();
@@ -15,6 +39,11 @@ export const customersApi = {
     if (filters.search) params.append('search', filters.search);
 
     const response = await api.get<ApiResponse<PagedResponse<Customer>>>(`/v1/customers?${params}`);
+    return response.data.data;
+  },
+
+  getRfmInsights: async (): Promise<RfmInsights> => {
+    const response = await api.get<ApiResponse<RfmInsights>>('/v1/customers/rfm-insights');
     return response.data.data;
   },
 

@@ -23,6 +23,7 @@ const AddProductPage = lazy(() => import('../pages/products/AddProductPage').the
 const ProductDetailPage = lazy(() => import('../pages/products/ProductDetailPage').then(m => ({ default: m.ProductDetailPage })));
 const CustomersPage = lazy(() => import('../pages/customers/CustomersPage').then(m => ({ default: m.CustomersPage })));
 const CustomerDetailPage = lazy(() => import('../pages/customers/CustomerDetailPage').then(m => ({ default: m.CustomerDetailPage })));
+const CustomerInsightsPage = lazy(() => import('../pages/customers/CustomerInsightsPage').then(m => ({ default: m.CustomerInsightsPage })));
 const POSPage = lazy(() => import('../pages/sales/POSPage').then(m => ({ default: m.POSPage })));
 const SalesPage = lazy(() => import('../pages/sales/SalesPage').then(m => ({ default: m.SalesPage })));
 const SaleDetailPage = lazy(() => import('../pages/sales/SaleDetailPage').then(m => ({ default: m.SaleDetailPage })));
@@ -261,6 +262,17 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         handle: { title: 'Mijozlar' },
+      },
+      {
+        path: 'customers/insights',
+        element: (
+          <ProtectedRoute permission={PermissionCode.CUSTOMERS_VIEW}>
+            <LazyRoute>
+              <CustomerInsightsPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: 'Mijoz segmentatsiyasi' },
       },
       {
         path: 'customers/:id',
