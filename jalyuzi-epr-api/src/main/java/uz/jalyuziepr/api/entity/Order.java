@@ -115,6 +115,10 @@ public class Order extends BaseEntity implements Auditable {
     @Column(name = "completed_date")
     private LocalDateTime completedDate;
 
+    // "O'lchovdan keyin" — zaklad follow-up eslatmasi yuborilgan vaqt (takrorlamaslik uchun)
+    @Column(name = "quote_followup_sent_at")
+    private LocalDateTime quoteFollowupSentAt;
+
     @Column(length = 1000)
     private String notes;
 

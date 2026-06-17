@@ -71,6 +71,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByStatus(OrderStatus status);
 
+    // "O'lchovdan keyin" — narx tasdiqlangan, zaklad to'lanmagan va eslatma hali
+    // yuborilmagan buyurtmalar (o'lchovdan beri belgilangan kun o'tgan)
+    @Query("SELECT o FROM Order o LEFT JOIN FETCH o.customer " +
+            "WHERE o.status = :status AND o.remainingAmount > 0 " +
+            "AND o.quoteFollowupSentAt IS NULL " +
+            "AND o.measurementDate IS NOT NULL AND o.measurementDate < :cutoff")
+    List<Order> findQuoteFollowupCandidates(@Param("status") OrderStatus status,
+                                            @Param("cutoff") LocalDateTime cutoff);
+
     @Query("SELECT o.status, COUNT(o) FROM Order o GROUP BY o.status")
     List<Object[]> countByStatusGroup();
 

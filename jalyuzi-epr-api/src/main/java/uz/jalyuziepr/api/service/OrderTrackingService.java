@@ -145,6 +145,45 @@ public class OrderTrackingService {
         }
     }
 
+    /**
+     * "O'lchovdan keyin" — narx tasdiqlangan, zaklad to'lanmagan mijozga
+     * eslatma (win-back). Asosiy kanal Telegram; sozlamada yoqilgan bo'lsa SMS zaxira.
+     */
+    public void sendQuoteFollowup(Long chatId, String phone, String orderNumber, Long orderId, String trackingCode) {
+        if (trackingCode == null || trackingCode.isBlank()) {
+            return;
+        }
+        try {
+            String url = buildTrackingUrl(trackingCode);
+
+            if (chatId != null && telegramService.isEnabled()) {
+                String text = "💡 <b>Buyurtmangizni rasmiylashtiramizmi?</b>\n\n"
+                        + "Buyurtma: <b>" + orderNumber + "</b>\n"
+                        + "Narx tasdiqlandi. Zaklad to'lab rasmiylashtirsangiz, biz ishlab "
+                        + "chiqarishni boshlaymiz.\n\nTafsilotlar 👇";
+                Map<String, Object> markup = telegramService.inlineUrlButton("📦 Buyurtmani ko'rish", url);
+                if (telegramService.sendMessage(chatId, text, markup)) {
+                    return;
+                }
+                log.warn("Telegram orqali zaklad follow-up yuborilmadi (buyurtma {})", orderNumber);
+            }
+
+            if (smsFallbackEnabled && phone != null && !phone.isBlank()) {
+                String sms = "Hurmatli mijoz! " + orderNumber
+                        + " buyurtmangiz narxi tasdiqlandi. Zaklad to'lab rasmiylashtiring: " + url;
+                smsService.sendNotification(phone, sms);
+                return;
+            }
+
+            staffNotificationService.createGlobalNotification(
+                    "Zaklad follow-up yuborilmadi",
+                    "Buyurtma " + orderNumber + ": mijoz Telegram'ga ulanmagan. Qo'lda bog'laning.",
+                    StaffNotificationType.WARNING, "ORDER", orderId);
+        } catch (Exception e) {
+            log.warn("Zaklad follow-up yuborishda xatolik (buyurtma {}): {}", orderNumber, e.getMessage());
+        }
+    }
+
     public String buildTrackingUrl(String trackingCode) {
         String base = publicBaseUrl != null && publicBaseUrl.endsWith("/")
                 ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1)

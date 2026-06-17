@@ -45,6 +45,8 @@ app:
   # Telegram'siz mijozlarga SMS zaxirasini yoqish uchun true qiling (Eskiz pullik).
   tracking:
     sms-fallback-enabled: ${TRACKING_SMS_FALLBACK:false}
+    # "O'lchovdan keyin" — o'lchovdan necha kun o'tgach zaklad eslatmasi yuboriladi
+    quote-followup-days: ${QUOTE_FOLLOWUP_DAYS:2}
   storage:
     upload-dir: ${UPLOAD_DIR:./uploads}
     public-url-prefix: /api/files
