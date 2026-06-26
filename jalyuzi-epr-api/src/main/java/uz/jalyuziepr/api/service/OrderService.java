@@ -224,6 +224,89 @@ public class OrderService {
         return OrderResponse.from(saved);
     }
 
+    /**
+     * Onlayn-do'kon (WEB) sotuvini to'liq Order pipeline'iga aylantiradi.
+     * Shu orqali onlayn buyurtmalar ham treker / SOS / wallboard / QR funksiyalaridan foydalanadi.
+     *
+     * Bitta Sale qoidasi: yangi Sale yaratilmaydi — web Sale Order'ga bog'lanadi
+     * (order.sale) va buyurtma yakunlanganda mavjud Sale yangilanadi (revenue ikki marta sanalmaydi).
+     */
+    @Transactional
+    public OrderResponse createOrderFromSale(Long saleId) {
+        User currentUser = getCurrentUser();
+
+        Sale sale = saleRepository.findByIdWithItems(saleId)
+                .orElseThrow(() -> new ResourceNotFoundException("Sotuv", "id", saleId));
+
+        // Faqat onlayn-do'kon (WEB) buyurtmalari aylantiriladi
+        if (sale.getInvoiceNumber() == null || !sale.getInvoiceNumber().startsWith("WEB")) {
+            throw new BadRequestException("Faqat onlayn-do'kon (WEB) buyurtmalarini buyurtmaga aylantirish mumkin");
+        }
+        if (sale.getStatus() == SaleStatus.CANCELLED) {
+            throw new BadRequestException("Bekor qilingan sotuvni buyurtmaga aylantirib bo'lmaydi");
+        }
+        if (sale.getCustomer() == null) {
+            throw new BadRequestException("Mijozi ko'rsatilmagan sotuvni buyurtmaga aylantirib bo'lmaydi");
+        }
+        // Takror aylantirishni bloklash
+        orderRepository.findBySaleId(saleId).ifPresent(existing -> {
+            throw new BadRequestException(
+                    "Bu sotuv allaqachon buyurtmaga aylantirilgan: " + existing.getOrderNumber());
+        });
+
+        Customer customer = sale.getCustomer();
+
+        Order order = Order.builder()
+                .orderNumber(generateOrderNumber())
+                .trackingCode(orderTrackingService.generateUniqueCode())
+                .customer(customer)
+                .status(OrderStatus.YANGI)
+                .installationAddress(sale.getInstallationAddress() != null
+                        ? sale.getInstallationAddress() : customer.getAddress())
+                .manager(currentUser)
+                .createdBy(currentUser)
+                .sale(sale)
+                .notes("Onlayn buyurtmadan (" + sale.getInvoiceNumber() + ")"
+                        + (sale.getNotes() != null && !sale.getNotes().isBlank() ? " — " + sale.getNotes() : ""))
+                .build();
+
+        // SaleItem → OrderItem: o'lcham/miqdor ko'chiriladi, narx qayta hisoblanadi
+        // (formula bir xil bo'lгани uchun mijoz ko'rgan narx aynan saqlanadi).
+        for (SaleItem si : sale.getItems()) {
+            Product product = si.getProduct();
+            OrderItem item = OrderItem.builder()
+                    .product(product)
+                    .widthMm(si.getCustomWidth())
+                    .heightMm(si.getCustomHeight())
+                    .quantity(si.getQuantity() != null ? si.getQuantity() : 1)
+                    .installationIncluded(si.getInstallationIncluded())
+                    .unitPrice(si.getUnitPrice())
+                    .build();
+            priceService.calculateItemPrice(item, product);
+            order.addItem(item);
+        }
+
+        var totals = priceService.calculateOrderTotals(
+                order.getItems(), sale.getDiscountAmount(), sale.getDiscountPercent());
+        order.setSubtotal(totals.subtotal());
+        order.setDiscountAmount(totals.discountAmount());
+        order.setDiscountPercent(sale.getDiscountPercent() != null ? sale.getDiscountPercent() : BigDecimal.ZERO);
+        order.setTotalAmount(totals.totalAmount());
+        order.setRemainingAmount(totals.totalAmount());
+        order.setCostTotal(totals.costTotal());
+
+        addStatusHistory(order, null, OrderStatus.YANGI, currentUser,
+                "Onlayn buyurtmadan aylantirildi: " + sale.getInvoiceNumber());
+
+        Order saved = orderRepository.save(order);
+
+        staffNotificationService.notifyNewOrder(
+                saved.getOrderNumber(), customer.getFullName(), saved.getId());
+
+        log.info("Order {} created from WEB sale {}", saved.getOrderNumber(), sale.getInvoiceNumber());
+        return OrderResponse.from(saved);
+    }
+
     @Transactional
     public OrderResponse assignMeasurer(Long orderId, OrderAssignRequest request) {
         Order order = getOrderEntity(orderId);
@@ -827,6 +910,14 @@ public class OrderService {
 
         changeStatus(order, OrderStatus.BEKOR_QILINDI, currentUser, notes);
 
+        // Onlayn buyurtmadan kelgan bo'lsa, bog'langan (hali yakunlanmagan) Sale'ni ham bekor qilamiz —
+        // mijoz do'kon kabinetida buyurtma bekor qilingani aks etsin.
+        Sale linkedSale = order.getSale();
+        if (linkedSale != null && linkedSale.getStatus() == SaleStatus.PENDING) {
+            linkedSale.setStatus(SaleStatus.CANCELLED);
+            saleRepository.save(linkedSale);
+        }
+
         return OrderResponse.from(orderRepository.save(order));
     }
 
@@ -887,6 +978,12 @@ public class OrderService {
     }
 
     private Sale createSaleFromOrder(Order order, User currentUser) {
+        // Onlayn buyurtmadan kelgan bo'lsa — mavjud (WEB) Sale'ni yangilaymiz,
+        // yangi Sale yaratmaymiz (revenue ikki marta sanalmasligi uchun).
+        if (order.getSale() != null) {
+            return updateSaleFromOrder(order.getSale(), order, currentUser);
+        }
+
         Sale sale = Sale.builder()
                 .invoiceNumber(generateInvoiceNumber())
                 .customer(order.getCustomer())
@@ -909,22 +1006,62 @@ public class OrderService {
 
         // Add sale items
         for (OrderItem orderItem : order.getItems()) {
-            SaleItem saleItem = SaleItem.builder()
-                    .product(orderItem.getProduct())
-                    .quantity(orderItem.getQuantity())
-                    .unitPrice(orderItem.getUnitPrice())
-                    .discount(orderItem.getDiscount())
-                    .totalPrice(orderItem.getTotalPrice())
-                    .customWidth(orderItem.getWidthMm())
-                    .customHeight(orderItem.getHeightMm())
-                    .calculatedSqm(orderItem.getCalculatedSqm())
-                    .calculatedPrice(orderItem.getUnitPrice())
-                    .installationIncluded(orderItem.getInstallationIncluded())
-                    .build();
-            sale.addItem(saleItem);
+            sale.addItem(buildSaleItem(orderItem));
         }
 
         return saleRepository.save(sale);
+    }
+
+    /**
+     * Onlayn buyurtmadan kelgan mavjud Sale'ni buyurtmaning yakuniy holatiga moslab yangilaydi.
+     * Web faktura raqami (WEB...) saqlanadi — kelib chiqishi kuzatiladigan bo'lib qoladi.
+     */
+    private Sale updateSaleFromOrder(Sale sale, Order order, User currentUser) {
+        sale.setSaleDate(LocalDateTime.now());
+        sale.setSubtotal(order.getSubtotal());
+        sale.setDiscountAmount(order.getDiscountAmount());
+        sale.setDiscountPercent(order.getDiscountPercent());
+        sale.setTotalAmount(order.getTotalAmount());
+        sale.setPaidAmount(order.getPaidAmount());
+        sale.setDebtAmount(order.getRemainingAmount());
+        if (sale.getPaymentMethod() == null) {
+            sale.setPaymentMethod(PaymentMethod.CASH);
+        }
+        sale.setPaymentStatus(order.getRemainingAmount().compareTo(BigDecimal.ZERO) <= 0 ?
+                PaymentStatus.PAID : PaymentStatus.PARTIAL);
+        sale.setStatus(SaleStatus.COMPLETED);
+        sale.setNotes("Buyurtma: " + order.getOrderNumber());
+        sale.setOrderType(OrderType.INSTALLATION);
+        sale.setInstallationAddress(order.getInstallationAddress());
+        if (sale.getCreatedBy() == null) {
+            sale.setCreatedBy(currentUser);
+        }
+
+        // Elementlarni buyurtmaning yakuniy (o'lchangan) holatidan qayta quramiz
+        if (sale.getItems() == null) {
+            sale.setItems(new java.util.ArrayList<>());
+        }
+        sale.getItems().clear();
+        for (OrderItem orderItem : order.getItems()) {
+            sale.addItem(buildSaleItem(orderItem));
+        }
+
+        return saleRepository.save(sale);
+    }
+
+    private SaleItem buildSaleItem(OrderItem orderItem) {
+        return SaleItem.builder()
+                .product(orderItem.getProduct())
+                .quantity(orderItem.getQuantity())
+                .unitPrice(orderItem.getUnitPrice())
+                .discount(orderItem.getDiscount())
+                .totalPrice(orderItem.getTotalPrice())
+                .customWidth(orderItem.getWidthMm())
+                .customHeight(orderItem.getHeightMm())
+                .calculatedSqm(orderItem.getCalculatedSqm())
+                .calculatedPrice(orderItem.getUnitPrice())
+                .installationIncluded(orderItem.getInstallationIncluded())
+                .build();
     }
 
     private String generateOrderNumber() {

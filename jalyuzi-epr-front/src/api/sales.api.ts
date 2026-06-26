@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, InstallationStatus, OrderType, PagedResponse, Sale, SaleRequest } from '../types';
+import type { ApiResponse, InstallationStatus, Order, OrderType, PagedResponse, Sale, SaleRequest } from '../types';
 import { createExportApi } from './export.utils';
 
 export interface SaleFilters {
@@ -46,6 +46,12 @@ export const salesApi = {
 
   cancel: async (id: number): Promise<Sale> => {
     const response = await api.put<ApiResponse<Sale>>(`/v1/sales/${id}/cancel`);
+    return response.data.data;
+  },
+
+  // Onlayn (WEB) sotuvni to'liq Order pipeline'iga aylantirish
+  convertToOrder: async (id: number): Promise<Order> => {
+    const response = await api.post<ApiResponse<Order>>(`/v1/sales/${id}/convert-to-order`);
     return response.data.data;
   },
 

@@ -17,10 +17,12 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import uz.jalyuziepr.api.dto.request.SaleRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
+import uz.jalyuziepr.api.dto.response.OrderResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
 import uz.jalyuziepr.api.dto.response.SaleResponse;
 import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.security.RequiresPermission;
+import uz.jalyuziepr.api.service.OrderService;
 import uz.jalyuziepr.api.service.SaleService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
 
@@ -35,6 +37,7 @@ import java.util.List;
 public class SaleController {
 
     private final SaleService saleService;
+    private final OrderService orderService;
     private final GenericExportService genericExportService;
 
     @GetMapping
@@ -116,5 +119,15 @@ public class SaleController {
     public ResponseEntity<ApiResponse<SaleResponse>> cancelSale(@PathVariable Long id) {
         SaleResponse sale = saleService.cancelSale(id);
         return ResponseEntity.ok(ApiResponse.success("Sotuv bekor qilindi", sale));
+    }
+
+    @PostMapping("/{id}/convert-to-order")
+    @RequiresPermission(PermissionCode.ORDERS_CREATE)
+    @Operation(summary = "Convert WEB sale to order",
+            description = "Onlayn-do'kon (WEB) buyurtmasini to'liq Order pipeline'iga aylantiradi")
+    public ResponseEntity<ApiResponse<OrderResponse>> convertToOrder(@PathVariable Long id) {
+        OrderResponse order = orderService.createOrderFromSale(id);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Buyurtma yaratildi", order));
     }
 }

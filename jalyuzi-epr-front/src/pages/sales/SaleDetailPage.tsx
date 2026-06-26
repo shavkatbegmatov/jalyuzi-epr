@@ -12,8 +12,11 @@ import {
   FileText,
   AlertCircle,
   Hash,
+  ArrowRightLeft,
+  ExternalLink,
 } from 'lucide-react';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
 import { salesApi } from '../../api/sales.api';
 import { formatCurrency, formatDate } from '../../config/constants';
 import type { Sale } from '../../types';
@@ -24,6 +27,7 @@ export function SaleDetailPage() {
 
   const [sale, setSale] = useState<Sale | null>(null);
   const [loading, setLoading] = useState(true);
+  const [converting, setConverting] = useState(false);
 
   const loadSale = useCallback(async () => {
     if (!id) return;
@@ -36,6 +40,23 @@ export function SaleDetailPage() {
       setLoading(false);
     }
   }, [id]);
+
+  const handleConvertToOrder = async () => {
+    if (!sale) return;
+    setConverting(true);
+    try {
+      const order = await salesApi.convertToOrder(sale.id);
+      toast.success(`Buyurtma yaratildi: ${order.orderNumber}`);
+      navigate(`/orders/${order.id}`);
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? "Buyurtmaga aylantirishda xatolik yuz berdi";
+      toast.error(message);
+    } finally {
+      setConverting(false);
+    }
+  };
 
   useEffect(() => {
     void loadSale();
@@ -151,6 +172,12 @@ export function SaleDetailPage() {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {sale.invoiceNumber?.startsWith('WEB') && (
+            <span className="badge badge-info badge-outline gap-1">
+              <Package className="h-3.5 w-3.5" />
+              Onlayn buyurtma
+            </span>
+          )}
           <span className={clsx('badge', getStatusBadgeClass(sale.status))}>
             {getStatusLabel(sale.status)}
           </span>
@@ -159,6 +186,58 @@ export function SaleDetailPage() {
           </span>
         </div>
       </div>
+
+      {/* Onlayn buyurtma → Order pipeline ko'prigi */}
+      {sale.invoiceNumber?.startsWith('WEB') && (
+        sale.convertedOrderId ? (
+          <div className="surface-card flex flex-col gap-3 border border-success/30 bg-success/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-success/10 p-2.5">
+                <ArrowRightLeft className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="font-semibold">Jarayonga o'tkazilgan</p>
+                <p className="text-sm text-base-content/60">
+                  Bu onlayn buyurtma to'liq jarayonga (o'lchov → ishlab chiqarish → o'rnatish → kuzatuv) aylantirilgan.
+                </p>
+              </div>
+            </div>
+            <button
+              className="btn btn-outline btn-success btn-sm shrink-0"
+              onClick={() => navigate(`/orders/${sale.convertedOrderId}`)}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Buyurtmani ochish
+            </button>
+          </div>
+        ) : sale.status !== 'CANCELLED' ? (
+          <div className="surface-card flex flex-col gap-3 border border-info/30 bg-info/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-lg bg-info/10 p-2.5">
+                <ArrowRightLeft className="h-5 w-5 text-info" />
+              </div>
+              <div>
+                <p className="font-semibold">Buyurtmaga aylantirish</p>
+                <p className="text-sm text-base-content/60">
+                  Onlayn buyurtmani to'liq jarayonga o'tkazing — o'lchov, ishlab chiqarish, o'rnatish va kuzatuv (treker) yoqiladi.
+                </p>
+              </div>
+            </div>
+            <button
+              className="btn btn-primary btn-sm shrink-0"
+              onClick={handleConvertToOrder}
+              disabled={converting}
+            >
+              {converting ? (
+                <span className="loading loading-spinner loading-sm" />
+              ) : (
+                <ArrowRightLeft className="h-4 w-4" />
+              )}
+              {converting ? 'Aylantirilmoqda...' : 'Buyurtmaga aylantirish'}
+            </button>
+          </div>
+        ) : null
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

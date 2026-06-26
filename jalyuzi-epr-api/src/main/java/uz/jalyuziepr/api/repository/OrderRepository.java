@@ -35,6 +35,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     boolean existsByTrackingCode(String code);
 
+    // Onlayn (WEB) sotuv allaqachon buyurtmaga aylantirilganmi — takror aylantirishni bloklash uchun
+    Optional<Order> findBySaleId(Long saleId);
+
     Page<Order> findByStatus(OrderStatus status, Pageable pageable);
 
     @Query("SELECT o FROM Order o WHERE o.status IN :statuses")

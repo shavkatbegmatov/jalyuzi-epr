@@ -36,9 +36,14 @@ Bitta sessiyada **9 ta wow funksiya + 1 bugfix** productionga deploy qilindi. Mi
 ### A. 🔴 E2E (jonli) sinov — ENG BIRINCHI
 9 funksiyani kanjaltib.uz'da real sinash (5-bo'lim). Xato topilsa — Coolify **backend (API)** log'idan stack-trace olib tuzatish.
 
-### B. 🟠 Onlayn Sale → Order pipeline ko'prigi (aniqlangan GAP)
-Hozir onlayn do'kon buyurtmasi **`Sale`** (savdo) sifatida yaratiladi (`ShopService.createOrder`), to'liq **Order pipeline**'iga (O'lchov→Ishlab chiqarish→O'rnatish→treker) tushmaydi. Shuning uchun onlayn buyurtmalar uchun treker/SOS/wallboard/QR ishlamaydi.
-**Taklif:** "Onlayn Sale → Order yaratish" ko'prigi — admin Sotuvlar'da WEB buyurtmani bir tugma bilan Order'ga aylantirish (yoki `ShopService.createOrder` ichida ham `Order` yaratish). Shunda barcha wow funksiyalar onlayn buyurtmalarга ham tatbiq bo'ladi.
+### B. ✅ Onlayn Sale → Order pipeline ko'prigi — BAJARILDI (kod tayyor, jonli sinov kutilmoqda)
+**Yondashuv:** admin "Buyurtmaga aylantirish" tugmasi (avtomatik emas — vetting nazorati saqlandi).
+Sotuv tafsilotida WEB buyurtma uchun tugma chiqadi → bir bosishda to'liq Order yaratiladi (status `YANGI`, tracking kod beriladi) → barcha wow funksiyalar (treker/SOS/wallboard/QR) onlayn buyurtmaларга ham tatbiq bo'ladi.
+**Bitta Sale qoidasi:** yangi Sale yaratilmaydi — web Sale Order'ga bog'lanadi (`order.sale`); buyurtma yakunlanganda mavjud Sale yangilanadi (revenue ikki marta sanalmaydi). Web faktura raqami (`WEB...`) saqlanadi.
+**Asosiy fayllar:**
+- Backend: `OrderService.createOrderFromSale` + `createSaleFromOrder`/`updateSaleFromOrder` (qayta ishlatish) + `cancelOrder` sinxron; `SaleController` `POST /v1/sales/{id}/convert-to-order` (ruxsat: `ORDERS_CREATE`); `OrderRepository.findBySaleId`; `SaleResponse.convertedOrderId`.
+- Frontend: `salesApi.convertToOrder`, `SaleDetailPage.tsx` (aylantirish/ochish kartasi), `Sale.convertedOrderId` tipi.
+- ✔️ Backend `compile` + frontend `build` o'tdi. ⏳ Migratsiya **shart emas** edi (Order.createdBy = admin). Jonli sinov: WEB buyurtma ber → admin Sotuvlar'da aylantir → Order pipeline + treker ishlashini tekshir.
 
 ### C. 🟡 #4 Kafolat AI triage
 Kafolat shikoyatlarini AI bilan klassifikatsiya + javob qoralamasi. **Talab:** `ANTHROPIC_API_KEY` env + Maven `anthropic-java` (yoki HTTP) bog'liqligi. Foydalanuvchi qaroriga bog'liq (deploy/byudjet).

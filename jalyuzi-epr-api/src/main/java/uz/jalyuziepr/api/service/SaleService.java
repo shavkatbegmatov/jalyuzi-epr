@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 public class SaleService {
 
     private final SaleRepository saleRepository;
+    private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final UserRepository userRepository;
@@ -68,7 +69,11 @@ public class SaleService {
     public SaleResponse getSaleById(Long id) {
         Sale sale = saleRepository.findByIdWithItems(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sotuv", "id", id));
-        return SaleResponse.from(sale);
+        SaleResponse response = SaleResponse.from(sale);
+        // Onlayn sotuv allaqachon buyurtmaga aylantirilgan bo'lsa — Order ID'sini biriktiramiz
+        orderRepository.findBySaleId(id)
+                .ifPresent(order -> response.setConvertedOrderId(order.getId()));
+        return response;
     }
 
     public List<SaleResponse> getTodaySales() {

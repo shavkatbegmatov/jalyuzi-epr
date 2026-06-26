@@ -79,6 +79,9 @@ public class SaleResponse {
 
     private List<SaleItemResponse> items; // Not exported (complex type)
 
+    // Onlayn (WEB) sotuv buyurtmaga aylantirilgan bo'lsa — yaratilган Order ID'si (UI tugmasi uchun)
+    private Long convertedOrderId; // Not exported
+
     public static SaleResponse from(Sale sale) {
         return SaleResponse.builder()
                 .id(sale.getId())

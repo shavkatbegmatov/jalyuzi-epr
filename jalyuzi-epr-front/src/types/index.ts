@@ -538,6 +538,8 @@ export interface Sale {
   notes?: string;
   createdByName?: string;
   items?: SaleItem[];
+  // Onlayn (WEB) sotuv buyurtmaga aylantirilgan bo'lsa — yaratilgan Order ID'si
+  convertedOrderId?: number;
   // O'rnatish xizmati maydonlari
   orderType?: OrderType;
   installationDate?: string;
