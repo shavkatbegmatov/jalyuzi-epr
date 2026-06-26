@@ -12,11 +12,13 @@ import {
   Moon,
   Monitor,
   Clock,
+  CreditCard,
 } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { brandsApi, categoriesApi } from '../../api/products.api';
 import { settingsApi } from '../../api/settings.api';
+import { paymentMethodsApi, type PaymentMethodUpdateItem } from '../../api/paymentMethods.api';
 import { NumberInput } from '../../components/ui/NumberInput';
 import { Select } from '../../components/ui/Select';
 import { ModalPortal } from '../../components/common/Modal';
@@ -24,9 +26,9 @@ import { ExportButtons } from '../../components/common/ExportButtons';
 import { useUIStore } from '../../store/uiStore';
 import { PermissionCode } from '../../hooks/usePermission';
 import { PermissionGate } from '../../components/common/PermissionGate';
-import type { Brand, Category } from '../../types';
+import type { Brand, Category, PaymentMethod, PaymentMethodSetting } from '../../types';
 
-type Tab = 'appearance' | 'brands' | 'categories' | 'debts';
+type Tab = 'appearance' | 'brands' | 'categories' | 'debts' | 'payment-methods';
 
 interface BrandFormData {
   name: string;
@@ -71,6 +73,11 @@ export function SettingsPage() {
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
 
+  // Payment methods
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodSetting[]>([]);
+  const [pmLoading, setPmLoading] = useState(true);
+  const [pmSaving, setPmSaving] = useState(false);
+
   const loadSettings = useCallback(async () => {
     setSettingsLoading(true);
     try {
@@ -109,11 +116,24 @@ export function SettingsPage() {
     }
   }, []);
 
+  const loadPaymentMethods = useCallback(async () => {
+    setPmLoading(true);
+    try {
+      const data = await paymentMethodsApi.getAll();
+      setPaymentMethods(data);
+    } catch (error) {
+      console.error('Failed to load payment methods:', error);
+    } finally {
+      setPmLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadBrands();
     void loadCategories();
     void loadSettings();
-  }, [loadBrands, loadCategories, loadSettings]);
+    void loadPaymentMethods();
+  }, [loadBrands, loadCategories, loadSettings, loadPaymentMethods]);
 
   // Export handlers
   const handleExportBrands = async (format: 'excel' | 'pdf') => {
@@ -269,6 +289,32 @@ export function SettingsPage() {
     setDebtDueDays(value);
   };
 
+  // Payment method handlers
+  const handlePaymentMethodChange = (code: PaymentMethod, patch: Partial<PaymentMethodSetting>) => {
+    setPaymentMethods((prev) => prev.map((m) => (m.code === code ? { ...m, ...patch } : m)));
+  };
+
+  const handleSavePaymentMethods = async () => {
+    setPmSaving(true);
+    try {
+      const payload: PaymentMethodUpdateItem[] = paymentMethods.map((m) => ({
+        code: m.code,
+        label: m.label.trim() || m.code,
+        enabled: m.enabled,
+        shopEnabled: m.shopEnabled,
+        sortOrder: m.sortOrder,
+      }));
+      const updated = await paymentMethodsApi.update(payload);
+      setPaymentMethods(updated);
+      toast.success("To'lov usullari yangilandi");
+    } catch (error) {
+      console.error('Failed to save payment methods:', error);
+      toast.error('Saqlashda xatolik');
+    } finally {
+      setPmSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -306,6 +352,13 @@ export function SettingsPage() {
         >
           <Clock className="h-4 w-4" />
           Qarzlar
+        </button>
+        <button
+          className={clsx('tab gap-2', activeTab === 'payment-methods' && 'tab-active')}
+          onClick={() => setActiveTab('payment-methods')}
+        >
+          <CreditCard className="h-4 w-4" />
+          To'lov usullari
         </button>
       </div>
 
@@ -673,6 +726,136 @@ export function SettingsPage() {
                   Masalan: 30 kun. Bu qiymat faqat yangi qarzlar uchun ishlaydi.
                 </p>
               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Payment Methods Tab */}
+      {activeTab === 'payment-methods' && (
+        <div className="space-y-4">
+          <div className="surface-card p-4 lg:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">To'lov usullari</h2>
+                <p className="text-sm text-base-content/60">
+                  Qaysi to'lov usullari kassada va onlayn-do'konда ko'rinishini boshqaring
+                </p>
+              </div>
+              <PermissionGate permission={PermissionCode.SETTINGS_UPDATE}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSavePaymentMethods}
+                  disabled={pmSaving || pmLoading}
+                >
+                  {pmSaving && <span className="loading loading-spinner loading-sm" />}
+                  Saqlash
+                </button>
+              </PermissionGate>
+            </div>
+
+            {pmLoading ? (
+              <div className="mt-6 flex items-center justify-center py-8">
+                <span className="loading loading-spinner loading-lg" />
+              </div>
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="mt-6 hidden lg:block table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Nomi</th>
+                        <th className="text-center">Kassada</th>
+                        <th className="text-center">Onlayn do'kon</th>
+                        <th className="w-28 text-center">Tartib</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentMethods.map((m) => (
+                        <tr key={m.code}>
+                          <td>
+                            <input
+                              type="text"
+                              className="input input-bordered input-sm w-full max-w-xs"
+                              value={m.label}
+                              onChange={(e) => handlePaymentMethodChange(m.code, { label: e.target.value })}
+                            />
+                            <span className="ml-2 text-xs text-base-content/40">{m.code}</span>
+                          </td>
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-primary"
+                              checked={m.enabled}
+                              onChange={(e) => handlePaymentMethodChange(m.code, { enabled: e.target.checked })}
+                            />
+                          </td>
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-primary"
+                              checked={m.shopEnabled}
+                              onChange={(e) => handlePaymentMethodChange(m.code, { shopEnabled: e.target.checked })}
+                            />
+                          </td>
+                          <td className="text-center">
+                            <input
+                              type="number"
+                              className="input input-bordered input-sm w-20 text-center"
+                              value={m.sortOrder}
+                              onChange={(e) =>
+                                handlePaymentMethodChange(m.code, { sortOrder: Number(e.target.value) || 0 })
+                              }
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="mt-6 space-y-3 lg:hidden">
+                  {paymentMethods.map((m) => (
+                    <div key={m.code} className="surface-panel rounded-xl p-4 space-y-3">
+                      <label className="form-control">
+                        <span className="label-text mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+                          Nomi ({m.code})
+                        </span>
+                        <input
+                          type="text"
+                          className="input input-bordered input-sm w-full"
+                          value={m.label}
+                          onChange={(e) => handlePaymentMethodChange(m.code, { label: e.target.value })}
+                        />
+                      </label>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Kassada</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={m.enabled}
+                          onChange={(e) => handlePaymentMethodChange(m.code, { enabled: e.target.checked })}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Onlayn do'kon</span>
+                        <input
+                          type="checkbox"
+                          className="toggle toggle-primary"
+                          checked={m.shopEnabled}
+                          onChange={(e) => handlePaymentMethodChange(m.code, { shopEnabled: e.target.checked })}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <p className="mt-4 text-xs text-base-content/60">
+                  "Kassada" — xodimlar sotuvida; "Onlayn do'kon" — mijoz checkout'ida ko'rinadi.
+                </p>
+              </>
             )}
           </div>
         </div>

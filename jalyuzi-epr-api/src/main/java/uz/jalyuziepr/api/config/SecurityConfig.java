@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/v1/shop/brands").permitAll()
                         .requestMatchers("/v1/shop/blind-types").permitAll()
                         .requestMatchers("/v1/shop/materials").permitAll()
+                        .requestMatchers("/v1/shop/payment-methods").permitAll()
                         .requestMatchers("/v1/shop/calculate-price").permitAll()
                         .requestMatchers("/v1/shop/auth/**").permitAll()
 

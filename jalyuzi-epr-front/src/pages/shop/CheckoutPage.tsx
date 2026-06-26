@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useShopStore } from '../../store/shopStore';
-import { shopOrderApi, type ShopOrderRequest } from '../../api/shop.api';
+import { shopOrderApi, shopCatalogApi, type ShopOrderRequest, type ShopPaymentMethod } from '../../api/shop.api';
 import { formatCurrency } from '../../config/constants';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 
@@ -13,15 +13,28 @@ export function ShopCheckoutPage() {
   const { cart, clearCart, getCartTotal, isAuthenticated, customer } = useShopStore();
 
   const [loading, setLoading] = useState(false);
+  // To'lov usullari admin paneldan boshqariladi — backend'dan yoqilganlarini olamiz
+  const [paymentMethods, setPaymentMethods] = useState<ShopPaymentMethod[]>([]);
   const [form, setForm] = useState({
     customerName: customer?.fullName || '',
     customerPhone: customer?.phone || '',
     deliveryAddress: customer?.address || '',
     withInstallation: true,
     installationNotes: '',
-    paymentMethod: 'DEBT' as 'CASH' | 'CARD' | 'TRANSFER' | 'DEBT',
+    paymentMethod: '' as ShopPaymentMethod['code'] | '',
     notes: '',
   });
+
+  useEffect(() => {
+    shopCatalogApi
+      .getPaymentMethods()
+      .then((methods) => {
+        setPaymentMethods(methods);
+        // Birinchi yoqilgan usulni standart tanlaymiz (foydalanuvchi hali tanlamagan bo'lsa)
+        setForm((prev) => (prev.paymentMethod ? prev : { ...prev, paymentMethod: methods[0]?.code ?? '' }));
+      })
+      .catch((err) => console.error('Failed to load payment methods:', err));
+  }, []);
 
   const total = getCartTotal();
 
@@ -43,6 +56,12 @@ export function ShopCheckoutPage() {
       return;
     }
 
+    const paymentMethod = form.paymentMethod;
+    if (!paymentMethod) {
+      toast.error('To\'lov usulini tanlang');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -59,7 +78,7 @@ export function ShopCheckoutPage() {
         deliveryAddress: form.deliveryAddress,
         withInstallation: form.withInstallation,
         installationNotes: form.installationNotes,
-        paymentMethod: form.paymentMethod,
+        paymentMethod,
         notes: form.notes,
       };
 
@@ -170,24 +189,17 @@ export function ShopCheckoutPage() {
           <div className="card bg-base-200 p-6">
             <h3 className="font-bold text-lg mb-4">{t('shop.checkout.paymentMethod')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {[
-                { value: 'DEBT', label: t('shop.checkout.payDebt') },
-                { value: 'CASH', label: t('shop.checkout.payCash') },
-                { value: 'CARD', label: t('shop.checkout.payCard') },
-                { value: 'TRANSFER', label: t('shop.checkout.payTransfer') },
-              ].map((method) => (
+              {paymentMethods.map((method) => (
                 <label
-                  key={method.value}
-                  className={`btn ${form.paymentMethod === method.value ? 'btn-primary' : 'btn-outline'}`}
+                  key={method.code}
+                  className={`btn ${form.paymentMethod === method.code ? 'btn-primary' : 'btn-outline'}`}
                 >
                   <input
                     type="radio"
                     name="paymentMethod"
-                    value={method.value}
-                    checked={form.paymentMethod === method.value}
-                    onChange={(e) =>
-                      setForm({ ...form, paymentMethod: e.target.value as typeof form.paymentMethod })
-                    }
+                    value={method.code}
+                    checked={form.paymentMethod === method.code}
+                    onChange={() => setForm({ ...form, paymentMethod: method.code })}
                     className="hidden"
                   />
                   {method.label}

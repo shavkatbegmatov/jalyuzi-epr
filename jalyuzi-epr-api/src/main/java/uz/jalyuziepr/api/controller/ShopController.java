@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.PagedResponse;
+import uz.jalyuziepr.api.dto.response.PaymentMethodSettingResponse;
 import uz.jalyuziepr.api.dto.shop.*;
 import uz.jalyuziepr.api.entity.Customer;
 import uz.jalyuziepr.api.enums.BlindMaterial;
@@ -103,6 +104,12 @@ public class ShopController {
     @Operation(summary = "Materiallar", description = "Barcha materiallarni olish")
     public ResponseEntity<ApiResponse<List<ShopMaterialResponse>>> getMaterials() {
         return ResponseEntity.ok(ApiResponse.success(shopService.getMaterials()));
+    }
+
+    @GetMapping("/payment-methods")
+    @Operation(summary = "To'lov usullari", description = "Onlayn-do'kon uchun yoqilgan to'lov usullari")
+    public ResponseEntity<ApiResponse<List<PaymentMethodSettingResponse>>> getPaymentMethods() {
+        return ResponseEntity.ok(ApiResponse.success(shopService.getShopPaymentMethods()));
     }
 
     // ==================== NARX HISOBLASH (PUBLIC) ====================

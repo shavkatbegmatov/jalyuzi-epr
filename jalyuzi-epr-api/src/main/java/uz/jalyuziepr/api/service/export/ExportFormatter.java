@@ -87,6 +87,7 @@ public class ExportFormatter {
                 case CARD -> "Plastik karta";
                 case TRANSFER -> "Bank o'tkazmasi";
                 case MIXED -> "Aralash";
+                case DEBT -> "Qarzga";
             };
         }
         if (value instanceof PaymentType type) {

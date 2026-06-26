@@ -36,14 +36,21 @@ Bitta sessiyada **9 ta wow funksiya + 1 bugfix** productionga deploy qilindi. Mi
 ### A. 🔴 E2E (jonli) sinov — ENG BIRINCHI
 9 funksiyani kanjaltib.uz'da real sinash (5-bo'lim). Xato topilsa — Coolify **backend (API)** log'idan stack-trace olib tuzatish.
 
-### B. ✅ Onlayn Sale → Order pipeline ko'prigi — BAJARILDI (kod tayyor, jonli sinov kutilmoqda)
+### B. ✅ Onlayn Sale → Order pipeline ko'prigi — BAJARILDI va PRODUCTIONDA TASDIQLANDI (2026-06-26 E2E)
 **Yondashuv:** admin "Buyurtmaga aylantirish" tugmasi (avtomatik emas — vetting nazorati saqlandi).
-Sotuv tafsilotida WEB buyurtma uchun tugma chiqadi → bir bosishda to'liq Order yaratiladi (status `YANGI`, tracking kod beriladi) → barcha wow funksiyalar (treker/SOS/wallboard/QR) onlayn buyurtmaларга ham tatbiq bo'ladi.
-**Bitta Sale qoidasi:** yangi Sale yaratilmaydi — web Sale Order'ga bog'lanadi (`order.sale`); buyurtma yakunlanganda mavjud Sale yangilanadi (revenue ikki marta sanalmaydi). Web faktura raqami (`WEB...`) saqlanadi.
+Sotuv tafsilotida VA Sotuvlar ro'yxati modalida WEB buyurtma uchun tugma chiqadi → bir bosishda to'liq Order yaratiladi (status `YANGI`, tracking kod) → barcha wow funksiyalar (treker/SOS/wallboard/QR) onlayn buyurtmaларга ham tatbiq bo'ladi.
+**Bitta Sale qoidasi:** yangi Sale yaratilmaydi — web Sale Order'ga bog'lanadi (`order.sale`); yakunlashda mavjud Sale yangilanadi (revenue ikki marta sanalmaydi). Web faktura (`WEB...`) saqlanadi.
 **Asosiy fayllar:**
-- Backend: `OrderService.createOrderFromSale` + `createSaleFromOrder`/`updateSaleFromOrder` (qayta ishlatish) + `cancelOrder` sinxron; `SaleController` `POST /v1/sales/{id}/convert-to-order` (ruxsat: `ORDERS_CREATE`); `OrderRepository.findBySaleId`; `SaleResponse.convertedOrderId`.
-- Frontend: `salesApi.convertToOrder`, `SaleDetailPage.tsx` (aylantirish/ochish kartasi), `Sale.convertedOrderId` tipi.
-- ✔️ Backend `compile` + frontend `build` o'tdi. ⏳ Migratsiya **shart emas** edi (Order.createdBy = admin). Jonli sinov: WEB buyurtma ber → admin Sotuvlar'da aylantir → Order pipeline + treker ishlashini tekshir.
+- Backend: `OrderService.createOrderFromSale` + `createSaleFromOrder`/`updateSaleFromOrder` + `cancelOrder` sinxron; `SaleController` `POST /v1/sales/{id}/convert-to-order` (`ORDERS_CREATE`); `OrderRepository.findBySaleId`; `SaleResponse.convertedOrderId`.
+- Frontend: `salesApi.convertToOrder`, `SaleDetailPage.tsx` + `SalesPage.tsx` modal (aylantirish/ochish kartasi), `Sale.convertedOrderId`.
+- ✅ E2E productionда sinaldi: WEB2606268140 → ORD202606260001, narx/treker/idempotentlik to'g'ri.
+
+**Sinov davomida 2 pre-existing bug tuzatildi (V55 bilan birga deploy):**
+1. **Modal gap** — tugma faqat `/sales/:id` da edi; endi Sotuvlar ro'yxati **modalida ham** bor.
+2. **To'lov usullari admin paneldan boshqariladi** + `PaymentMethod` enum'ga **`DEBT`** qo'shildi. Ilgari shop checkout default'i `DEBT` yuborardi, lekin enum'da yo'q edi → 500. Endi:
+   - Yangi `PaymentMethodSetting` entity (V55: `payment_method_settings`), admin Settings → "To'lov usullari" tab (label, kassada/onlayn-do'kon yoqish, tartib).
+   - Shop checkout (`/v1/shop/payment-methods`) va POS endi admin sozlamasidan o'qiydi (hardcode emas).
+   - `ShopService.createOrder` to'lov usulini tekshiradi (yoqilmagan → 400, NOT NULL 500 emas).
 
 ### C. 🟡 #4 Kafolat AI triage
 Kafolat shikoyatlarini AI bilan klassifikatsiya + javob qoralamasi. **Talab:** `ANTHROPIC_API_KEY` env + Maven `anthropic-java` (yoki HTTP) bog'liqligi. Foydalanuvchi qaroriga bog'liq (deploy/byudjet).
@@ -60,7 +67,7 @@ referral dasturi (Telegram deep-link), lifecycle re-engagement scheduler (qayta-
 - **Branch:** har funksiya alohida `feat/...` branch'da → commit → `main`ga `--ff-only` merge → push.
 - **Deploy:** `main`ga push = Coolify **avtomatik production deploy** (kanjaltib.uz) + Flyway migratsiya. Har push **aniq foydalanuvchi tasdig'ini** talab qiladi.
 - **Tekshiruv:** backend `.\mvnw.cmd -q compile -DskipTests`, frontend `npm run build` — har o'zgarishdan keyin.
-- **Migratsiya:** keyingi raqam **V55** (oxirgisi V54). Format: `V{n}__{tavsif}.sql`.
+- **Migratsiya:** keyingi raqam **V56** (oxirgisi V55 — `payment_method_settings`). Format: `V{n}__{tavsif}.sql`.
 
 ### Windows/PowerShell gotcha
 CWD buyruqlar orasida saqlanadi — `Set-Location`да **absolyut yo'l** ishlating (`Set-Location 'D:\Projects\JALYUZI_EPR\jalyuzi-epr\jalyuzi-epr-api'`), aks holda nisbiy yo'l adashadi. Commit xabarида qo'shtirnoq bo'lsa `-F fayl` orqali commit qiling (native git'да `"` buziladi).

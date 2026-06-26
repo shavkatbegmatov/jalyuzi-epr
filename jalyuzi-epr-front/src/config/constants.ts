@@ -187,6 +187,7 @@ export const PAYMENT_METHODS = {
   CARD: { label: 'Karta', value: 'CARD' },
   TRANSFER: { label: "O'tkazma", value: 'TRANSFER' },
   MIXED: { label: 'Aralash', value: 'MIXED' },
+  DEBT: { label: 'Qarzga', value: 'DEBT' },
 } as const;
 
 // To'lov usulining o'zbekcha nomini qaytaradi (noma'lum kelsa — xom qiymat)

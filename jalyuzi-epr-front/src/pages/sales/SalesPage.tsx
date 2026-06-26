@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Receipt, Eye, XCircle, Calendar, User, X, CreditCard, Banknote, ArrowRightLeft, Layers, SlidersHorizontal, ChevronDown } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Receipt, Eye, XCircle, Calendar, User, X, CreditCard, Banknote, ArrowRightLeft, Layers, SlidersHorizontal, ChevronDown, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import toast from 'react-hot-toast';
 import { salesApi } from '../../api/sales.api';
@@ -32,6 +32,7 @@ const paymentMethodIcons: Record<PaymentMethod, React.ReactNode> = {
   CARD: <CreditCard className="h-4 w-4" />,
   TRANSFER: <ArrowRightLeft className="h-4 w-4" />,
   MIXED: <Layers className="h-4 w-4" />,
+  DEBT: <Receipt className="h-4 w-4" />,
 };
 
 export function SalesPage() {
@@ -47,9 +48,11 @@ export function SalesPage() {
   const [customRange, setCustomRange] = useState<DateRange>({ start: '', end: '' });
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<PaymentStatus | ''>('');
   const [statusFilter, setStatusFilter] = useState<SaleStatus | ''>('');
+  const navigate = useNavigate();
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -141,7 +144,10 @@ export function SalesPage() {
   const handleViewSale = async (sale: Sale) => {
     setSelectedSale(sale);
     setShowDetailModal(true);
-    if (!sale.items || sale.items.length === 0) {
+    // WEB (onlayn) sotuvlar uchun har doim to'liq yozuvni olamiz — "Buyurtmaga aylantirish"
+    // tugmasi convertedOrderId maydoniga tayanadi (faqat getById uni qaytaradi).
+    const isWeb = sale.invoiceNumber?.startsWith('WEB');
+    if (isWeb || !sale.items || sale.items.length === 0) {
       setLoadingDetails(true);
       try {
         const fullSale = await salesApi.getById(sale.id);
@@ -152,6 +158,25 @@ export function SalesPage() {
       } finally {
         setLoadingDetails(false);
       }
+    }
+  };
+
+  const handleConvertToOrder = async () => {
+    if (!selectedSale) return;
+    setConverting(true);
+    try {
+      const order = await salesApi.convertToOrder(selectedSale.id);
+      toast.success(`Buyurtma yaratildi: ${order.orderNumber}`);
+      setShowDetailModal(false);
+      setSelectedSale(null);
+      navigate(`/orders/${order.id}`);
+    } catch (error) {
+      const message =
+        (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? "Buyurtmaga aylantirishda xatolik yuz berdi";
+      toast.error(message);
+    } finally {
+      setConverting(false);
     }
   };
 
@@ -527,6 +552,49 @@ export function SalesPage() {
               <h3 className="text-lg font-bold">Sotuv tafsilotlari</h3>
               <p className="text-sm text-base-content/60">Faktura: {selectedSale.invoiceNumber}</p>
 
+              {/* Onlayn (WEB) sotuv → Order pipeline ko'prigi */}
+              {selectedSale.invoiceNumber?.startsWith('WEB') && (
+                selectedSale.convertedOrderId ? (
+                  <div className="mt-4 flex flex-col gap-3 rounded-xl border border-success/30 bg-success/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <ArrowRightLeft className="h-4 w-4 text-success" />
+                      <span className="font-medium">Jarayonga o'tkazilgan</span>
+                    </div>
+                    <button
+                      className="btn btn-outline btn-success btn-sm"
+                      onClick={() => {
+                        const orderId = selectedSale.convertedOrderId;
+                        setShowDetailModal(false);
+                        setSelectedSale(null);
+                        navigate(`/orders/${orderId}`);
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Buyurtmani ochish
+                    </button>
+                  </div>
+                ) : selectedSale.status !== 'CANCELLED' ? (
+                  <div className="mt-4 flex flex-col gap-3 rounded-xl border border-info/30 bg-info/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2 text-sm">
+                      <ArrowRightLeft className="h-4 w-4 text-info" />
+                      <span>Onlayn buyurtmani to'liq jarayonga (o'lchov, ishlab chiqarish, treker) o'tkazing</span>
+                    </div>
+                    <button
+                      className="btn btn-primary btn-sm shrink-0"
+                      onClick={handleConvertToOrder}
+                      disabled={converting}
+                    >
+                      {converting ? (
+                        <span className="loading loading-spinner loading-sm" />
+                      ) : (
+                        <ArrowRightLeft className="h-4 w-4" />
+                      )}
+                      {converting ? 'Aylantirilmoqda...' : 'Buyurtmaga aylantirish'}
+                    </button>
+                  </div>
+                ) : null
+              )}
+
               <div className="mt-6 space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="surface-soft rounded-lg p-3">
@@ -616,6 +684,12 @@ export function SalesPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {selectedSale.invoiceNumber?.startsWith('WEB') && (
+                    <span className="badge badge-info badge-outline gap-1">
+                      <ShoppingCart className="h-3 w-3" />
+                      Onlayn
+                    </span>
+                  )}
                   {getPaymentStatusBadge(selectedSale.paymentStatus)}
                   {getSaleStatusBadge(selectedSale.status)}
                 </div>

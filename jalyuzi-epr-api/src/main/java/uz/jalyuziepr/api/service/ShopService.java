@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import uz.jalyuziepr.api.dto.response.PaymentMethodSettingResponse;
 import uz.jalyuziepr.api.dto.shop.*;
 import uz.jalyuziepr.api.entity.*;
 import uz.jalyuziepr.api.enums.*;
@@ -38,6 +39,7 @@ public class ShopService {
     private final SaleRepository saleRepository;
     private final SmsService smsService;
     private final JwtTokenProvider jwtTokenProvider;
+    private final PaymentMethodService paymentMethodService;
 
     // ==================== KATALOG ====================
 
@@ -156,6 +158,13 @@ public class ShopService {
                 .map(m -> ShopMaterialResponse.from(m, countMap.get(m)))
                 .filter(m -> m.getProductCount() > 0)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Onlayn-do'kon checkout'i uchun yoqilgan to'lov usullari (admin paneldan boshqariladi).
+     */
+    public List<PaymentMethodSettingResponse> getShopPaymentMethods() {
+        return paymentMethodService.getShopMethods();
     }
 
     // ==================== NARX HISOBLASH ====================
@@ -332,6 +341,12 @@ public class ShopService {
      */
     @Transactional
     public ShopOrderResponse createOrder(ShopOrderRequest request, Customer customer) {
+        // To'lov usuli onlayn-do'kon uchun yoqilganligini tekshiramiz (admin paneldan boshqariladi).
+        // Bu noto'g'ri/yoqilmagan usul kelganda tushunarli 400 qaytaradi (ilgari NOT NULL → 500 edi).
+        if (!paymentMethodService.isShopMethodAllowed(request.getPaymentMethod())) {
+            throw new BadRequestException("Tanlangan to'lov usuli mavjud emas yoki onlayn-do'konда yoqilmagan");
+        }
+
         // Agar autentifikatsiya qilinmagan bo'lsa, mijoz yaratish yoki topish
         if (customer == null) {
             if (request.getCustomerPhone() == null) {
@@ -533,12 +548,6 @@ public class ShopService {
     }
 
     private String getPaymentMethodName(PaymentMethod method) {
-        if (method == null) return null;
-        return switch (method) {
-            case CASH -> "Naqd";
-            case CARD -> "Karta";
-            case TRANSFER -> "O'tkazma";
-            case MIXED -> "Aralash";
-        };
+        return method != null ? method.getDefaultLabel() : null;
     }
 }

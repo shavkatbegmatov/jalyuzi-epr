@@ -497,7 +497,17 @@ export interface CustomerRequest {
 }
 
 // Sale Types
-export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'MIXED';
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'MIXED' | 'DEBT';
+
+// To'lov usuli sozlamasi — admin paneldan boshqariladi
+export interface PaymentMethodSetting {
+  id: number;
+  code: PaymentMethod;
+  label: string;
+  enabled: boolean;
+  shopEnabled: boolean;
+  sortOrder: number;
+}
 export type PaymentStatus = 'PAID' | 'PARTIAL' | 'UNPAID';
 export type SaleStatus = 'COMPLETED' | 'CANCELLED' | 'REFUNDED';
 

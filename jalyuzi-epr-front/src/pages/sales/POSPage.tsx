@@ -5,11 +5,12 @@ import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
 import { productsApi } from '../../api/products.api';
 import { salesApi } from '../../api/sales.api';
+import { paymentMethodsApi } from '../../api/paymentMethods.api';
 import { customersApi } from '../../api/customers.api';
 import { employeesApi } from '../../api/employees.api';
 import { useCartStore } from '../../store/cartStore';
 import { useNotificationsStore } from '../../store/notificationsStore';
-import { formatCurrency, PAYMENT_METHODS, CUSTOMER_TYPES } from '../../config/constants';
+import { formatCurrency, CUSTOMER_TYPES } from '../../config/constants';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { PercentInput } from '../../components/ui/PercentInput';
 import { Select } from '../../components/ui/Select';
@@ -28,6 +29,21 @@ export function POSPage() {
   const [showCartSheet, setShowCartSheet] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('CASH');
   const [paidAmount, setPaidAmount] = useState(0);
+
+  // To'lov usullari admin paneldan boshqariladi — kassada yoqilganlarini ko'rsatamiz
+  const { data: paymentMethodSettings = [] } = useQuery({
+    queryKey: ['payment-methods'],
+    queryFn: paymentMethodsApi.getAll,
+  });
+  const enabledPaymentMethods = useMemo(
+    () => paymentMethodSettings.filter((m) => m.enabled),
+    [paymentMethodSettings],
+  );
+  useEffect(() => {
+    if (enabledPaymentMethods.length > 0 && !enabledPaymentMethods.some((m) => m.code === paymentMethod)) {
+      setPaymentMethod(enabledPaymentMethods[0].code);
+    }
+  }, [enabledPaymentMethods, paymentMethod]);
 
   // Customer search state
   const [customerSearch, setCustomerSearch] = useState('');
@@ -671,9 +687,9 @@ export function POSPage() {
                 label="To'lov usuli"
                 value={paymentMethod}
                 onChange={(val) => setPaymentMethod(val as PaymentMethod)}
-                options={Object.entries(PAYMENT_METHODS).map(([key, { label }]) => ({
-                  value: key,
-                  label,
+                options={enabledPaymentMethods.map((m) => ({
+                  value: m.code,
+                  label: m.label,
                 }))}
                 placeholder="To'lov usulini tanlang"
               />

@@ -158,7 +158,7 @@ export interface ShopOrderRequest {
   withInstallation?: boolean;
   preferredInstallationDate?: string;
   installationNotes?: string;
-  paymentMethod: 'CASH' | 'CARD' | 'TRANSFER' | 'DEBT';
+  paymentMethod: ShopPaymentMethod['code'];
   notes?: string;
 }
 
@@ -225,6 +225,12 @@ export interface ApiResponse<T> {
 
 // ==================== CATALOG API ====================
 
+export interface ShopPaymentMethod {
+  code: 'CASH' | 'CARD' | 'TRANSFER' | 'MIXED' | 'DEBT';
+  label: string;
+  sortOrder: number;
+}
+
 export const shopCatalogApi = {
   getProducts: async (filter: ShopProductFilter = {}): Promise<PagedResponse<ShopProduct>> => {
     const params = new URLSearchParams();
@@ -272,6 +278,11 @@ export const shopCatalogApi = {
 
   calculatePrice: async (request: ShopPriceCalculateRequest): Promise<ShopPriceCalculateResponse> => {
     const response = await shopApi.post<ApiResponse<ShopPriceCalculateResponse>>('/v1/shop/calculate-price', request);
+    return response.data.data;
+  },
+
+  getPaymentMethods: async (): Promise<ShopPaymentMethod[]> => {
+    const response = await shopApi.get<ApiResponse<ShopPaymentMethod[]>>('/v1/shop/payment-methods');
     return response.data.data;
   },
 };
