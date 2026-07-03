@@ -37,6 +37,7 @@ versiyalash esa [Semantic Versioning](https://semver.org/lang/uz/) (SemVer) qoid
 
 ### Infratuzilma
 - `.dockerignore`, `.gitignore` va `lockfile` sinxronlashtirildi.
+- **Backend Docker image — layered JAR:** `jarmode=tools` orqali JAR to'rt qatlamga (dependencies / spring-boot-loader / snapshot-dependencies / application) ajratildi va `JarLauncher` bilan ishga tushiriladi. Endi oddiy deploy'da server registry'dan butun JAR o'rniga faqat kichik `application` layerni (~1-2MB) tortadi — sekin server↔ghcr.io tarmog'ida ham deploy ishonchli o'tadi.
 
 ---
 
