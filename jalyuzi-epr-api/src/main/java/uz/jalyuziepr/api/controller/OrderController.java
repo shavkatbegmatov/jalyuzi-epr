@@ -67,6 +67,15 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderService.getInstallerOrders(userDetails.getId())));
     }
 
+    @GetMapping("/measurer/my")
+    @RequiresPermission(PermissionCode.ORDERS_VIEW)
+    @Operation(summary = "O'lchuvchi buyurtmalari",
+            description = "Joriy foydalanuvchiga o'lchuvchi sifatida tayinlangan, o'lchov bosqichidagi buyurtmalar")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getMeasurerOrders(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.getMeasurerOrders(userDetails.getId())));
+    }
+
     @GetMapping("/installations")
     @RequiresPermission(PermissionCode.ORDERS_VIEW)
     @Operation(summary = "O'rnatish buyurtmalari",

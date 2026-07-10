@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Phone, MapPin, Navigation, RefreshCw } from 'lucide-react';
+import { ClipboardList, Phone, MapPin, Navigation, RefreshCw, Ruler } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor } from '../../config/constants';
@@ -21,14 +21,20 @@ function isToday(dateStr?: string): boolean {
 export function InstallerDashboardPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [measureOrders, setMeasureOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadOrders = useCallback(async (isInitial = false) => {
     if (!isInitial) setRefreshing(true);
     try {
-      const data = await ordersApi.getInstallerOrders();
-      setOrders(data);
+      // O'rnatish va o'lchov ro'yxatlari parallel yuklanadi
+      const [installs, measures] = await Promise.all([
+        ordersApi.getInstallerOrders(),
+        ordersApi.getMeasurerOrders(),
+      ]);
+      setOrders(installs);
+      setMeasureOrders(measures);
     } catch (error) {
       console.error('Failed to load installer orders:', error);
       toast.error('Buyurtmalarni yuklashda xatolik');
@@ -44,6 +50,7 @@ export function InstallerDashboardPage() {
 
   const todayOrders = orders.filter((o) => isToday(o.installationDate));
   const upcomingOrders = orders.filter((o) => !isToday(o.installationDate));
+  const hasAny = orders.length > 0 || measureOrders.length > 0;
 
   if (loading) {
     return (
@@ -134,7 +141,7 @@ export function InstallerDashboardPage() {
         </button>
       </div>
 
-      {orders.length === 0 ? (
+      {!hasAny ? (
         <div className="flex flex-col items-center justify-center py-16 text-base-content/50">
           <ClipboardList className="h-12 w-12 mb-3" />
           <p className="text-lg font-medium">Buyurtmalar yo'q</p>
@@ -142,6 +149,19 @@ export function InstallerDashboardPage() {
         </div>
       ) : (
         <>
+          {/* O'lchov ishlari (o'lchuvchi sifatida tayinlangan) */}
+          {measureOrders.length > 0 && (
+            <div>
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider text-base-content/50">
+                <Ruler className="h-4 w-4" />
+                O'lchov ishlarim ({measureOrders.length})
+              </h3>
+              <div className="space-y-3">
+                {measureOrders.map(renderOrderCard)}
+              </div>
+            </div>
+          )}
+
           {/* Today's orders */}
           {todayOrders.length > 0 && (
             <div>

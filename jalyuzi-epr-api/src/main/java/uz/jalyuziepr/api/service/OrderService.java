@@ -108,6 +108,22 @@ public class OrderService {
     }
 
     /**
+     * O'lchuvchining o'z ish ro'yxati (texnik app'i uchun).
+     * Kirgan foydalanuvchiga (User) bog'langan xodim o'lchuvchi bo'lib tayinlangan,
+     * o'lchov bosqichidagi buyurtmalarni qaytaradi.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getMeasurerOrders(Long userId) {
+        List<OrderStatus> measurePhase = List.of(
+                OrderStatus.OLCHOV_KUTILMOQDA,
+                OrderStatus.OLCHOV_BAJARILDI
+        );
+        return orderRepository.findByMeasurerUserIdAndStatusIn(userId, measurePhase).stream()
+                .map(OrderResponse::fromList)
+                .toList();
+    }
+
+    /**
      * O'rnatish bosqichidagi buyurtmalar (worklist).
      * "O'rnatishlar" sahifasi shu yagona manbadan o'qiydi: o'rnatish ma'lumotlari
      * (installer, installationDate, manzil, foto, imzo) Order yozuvida saqlanadi —
@@ -375,12 +391,24 @@ public class OrderService {
 
         Order saved = orderRepository.save(order);
 
-        // Notify measurer's linked user
+        // Global bildirishnoma (menejerlar ko'radi)
         staffNotificationService.createGlobalNotification(
                 "O'lchov tayinlandi",
                 String.format("Buyurtma %s uchun o'lchov tayinlandi. Texnik: %s",
                         order.getOrderNumber(), measurer.getFullName()),
                 StaffNotificationType.ORDER, "ORDER", saved.getId());
+
+        // Shaxsiy bildirishnoma — o'lchuvchining o'z login hisobiga (agar bog'langan bo'lsa),
+        // shunda u texnik app'ida "O'lchovlarim" ro'yxatida ko'radi.
+        if (measurer.getUser() != null) {
+            staffNotificationService.createNotificationForUser(
+                    measurer.getUser().getId(),
+                    "Sizga o'lchov tayinlandi",
+                    String.format("Buyurtma %s uchun o'lchov. Manzil: %s",
+                            order.getOrderNumber(),
+                            order.getInstallationAddress() != null ? order.getInstallationAddress() : "—"),
+                    StaffNotificationType.ORDER, "ORDER", saved.getId());
+        }
 
         return OrderResponse.from(saved);
     }

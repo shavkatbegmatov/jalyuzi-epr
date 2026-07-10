@@ -62,6 +62,12 @@ export const ordersApi = {
     return data.data;
   },
 
+  // O'lchuvchi sifatida tayinlangan, o'lchov bosqichidagi buyurtmalar (texnik app)
+  getMeasurerOrders: async (): Promise<Order[]> => {
+    const { data } = await api.get<ApiResponse<Order[]>>('/v1/orders/measurer/my');
+    return data.data;
+  },
+
   // O'rnatish bosqichidagi buyurtmalar (O'rnatishlar sahifasi uchun)
   getInstallations: async (params: {
     status?: string;

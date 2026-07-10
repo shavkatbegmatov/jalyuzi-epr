@@ -52,6 +52,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     @Query("SELECT o FROM Order o WHERE o.installer.id = :installerId")
     Page<Order> findByInstallerId(@Param("installerId") Long installerId, Pageable pageable);
 
+    // O'lchuvchining login (User) hisobiga bog'langan xodim bo'yicha o'lchov ishlari.
+    // measurer — Employee, u user_id orqali login User'ga bog'lanadi (Employee.user).
+    @Query("SELECT o FROM Order o WHERE o.measurer.user.id = :userId AND o.status IN :statuses")
+    List<Order> findByMeasurerUserIdAndStatusIn(@Param("userId") Long userId,
+                                                @Param("statuses") List<OrderStatus> statuses);
+
     @Query("SELECT o FROM Order o WHERE o.createdAt BETWEEN :start AND :end")
     Page<Order> findByCreatedAtBetween(@Param("start") LocalDateTime start,
                                         @Param("end") LocalDateTime end, Pageable pageable);
