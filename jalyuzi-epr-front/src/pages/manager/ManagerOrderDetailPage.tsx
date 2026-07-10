@@ -594,7 +594,7 @@ export function ManagerOrderDetailPage() {
           {order.status === 'OLCHOV_KUTILMOQDA' && (
             <button
               className="btn btn-warning btn-block"
-              onClick={() => navigate(`/orders/${order.id}/measure`)}
+              onClick={() => navigate(`/manager/orders/${order.id}/measure`)}
               disabled={actionLoading}
             >
               <Ruler className="h-5 w-5" />

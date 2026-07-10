@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save, Ruler } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
@@ -23,6 +23,10 @@ interface MeasurementRow {
 export function MeasurementFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Menejer paneli (/manager/...) yoki asosiy panel — qaytish yo'lini shunga moslash
+  const isManagerRoute = location.pathname.startsWith('/manager');
+  const basePath = isManagerRoute ? '/manager/orders' : '/orders';
   const [order, setOrder] = useState<Order | null>(null);
   const [rows, setRows] = useState<MeasurementRow[]>([]);
   const [notes, setNotes] = useState('');
@@ -56,11 +60,11 @@ export function MeasurementFormPage() {
       }
     } catch {
       toast.error("Buyurtma yuklanmadi");
-      navigate('/orders');
+      navigate(basePath);
     } finally {
       setLoading(false);
     }
-  }, [id, navigate]);
+  }, [id, navigate, basePath]);
 
   useEffect(() => { loadOrder(); }, [loadOrder]);
 
@@ -142,7 +146,7 @@ export function MeasurementFormPage() {
 
       await ordersApi.submitMeasurements(Number(id), { items, notes: notes || undefined });
       toast.success("O'lchov natijalari saqlandi");
-      navigate(`/orders/${id}`);
+      navigate(`${basePath}/${id}`);
     } catch {
       toast.error("Saqlashda xatolik yuz berdi");
     } finally {
@@ -165,7 +169,7 @@ export function MeasurementFormPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`/orders/${id}`)}>
+          <button className="btn btn-ghost btn-sm" onClick={() => navigate(`${basePath}/${id}`)}>
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>

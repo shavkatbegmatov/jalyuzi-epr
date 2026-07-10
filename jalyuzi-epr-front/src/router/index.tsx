@@ -629,6 +629,17 @@ export const router = createBrowserRouter([
         handle: { title: 'Menejer - Buyurtma' },
       },
       {
+        path: 'orders/:id/measure',
+        element: (
+          <ProtectedRoute permission={PermissionCode.ORDERS_MEASURE}>
+            <LazyRoute>
+              <MeasurementFormPage />
+            </LazyRoute>
+          </ProtectedRoute>
+        ),
+        handle: { title: "Menejer - O'lchov kiritish" },
+      },
+      {
         path: 'escalations',
         element: (
           <LazyRoute>
