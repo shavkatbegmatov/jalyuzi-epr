@@ -133,9 +133,10 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5175,
+    // PORT env berilsa o'sha portda (preview tooling), aks holda 5175
+    port: Number(process.env.PORT) || 5175,
     host: true, // SHU QATORNI QO'SHING - teldan kirish uchun shart!
-    strictPort: true, // Agar 5175 band bo'lsa, boshqa portga o'tib ketmasligi uchun
+    strictPort: true, // Agar port band bo'lsa, boshqa portga o'tib ketmasligi uchun
     // Port removed - Vite will use any available port (default 5173)
     // This allows flexibility when multiple dev servers are running
     proxy: {
@@ -144,6 +145,12 @@ export default defineConfig({
         // target: 'http://192.168.1.33:8080',
         changeOrigin: true,
         ws: true, // WebSocket support
+        configure: (proxy) => {
+          // Dev server 5175 dan boshqa portda ochilsa ham backend CORS'i o'tishi uchun
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('Origin', 'http://localhost:5175')
+          })
+        },
       },
     },
   },

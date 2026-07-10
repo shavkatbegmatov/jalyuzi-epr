@@ -174,6 +174,8 @@ public class OrderService {
                 .status(OrderStatus.YANGI)
                 .installationAddress(request.getInstallationAddress() != null ?
                         request.getInstallationAddress() : customer.getAddress())
+                .locationLat(request.getLocationLat())
+                .locationLng(request.getLocationLng())
                 .manager(currentUser)
                 .notes(request.getNotes())
                 .createdBy(currentUser)
@@ -222,6 +224,57 @@ public class OrderService {
 
         log.info("Order created: {} for customer: {}", saved.getOrderNumber(), customer.getFullName());
         return OrderResponse.from(saved);
+    }
+
+    /**
+     * Buyurtma o'rnatish joyining geolokatsiyasini belgilash yoki o'zgartirish.
+     * Buyurtma yaratilgandan keyin ham (masalan, o'lchovchi joyida turib) qo'shish mumkin.
+     */
+    @Transactional
+    public OrderResponse updateOrderLocation(Long orderId, OrderLocationRequest request) {
+        Order order = orderRepository.findByIdWithAllDetails(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Buyurtma", "id", orderId));
+
+        order.setLocationLat(request.getLocationLat());
+        order.setLocationLng(request.getLocationLng());
+
+        Order saved = orderRepository.save(order);
+        log.info("Order location updated: {} -> {}, {}",
+                saved.getOrderNumber(), request.getLocationLat(), request.getLocationLng());
+        return OrderResponse.from(saved);
+    }
+
+    /**
+     * Buyurtma lokatsiyasini mijozning Telegram'iga bot orqali yuborish
+     * (mijoz botga telefon raqami bilan ulangan bo'lishi kerak).
+     */
+    @Transactional(readOnly = true)
+    public void sendLocationToCustomerTelegram(Long orderId) {
+        Order order = orderRepository.findByIdWithAllDetails(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Buyurtma", "id", orderId));
+
+        if (order.getLocationLat() == null || order.getLocationLng() == null) {
+            throw new BadRequestException("Buyurtmaga geolokatsiya belgilanmagan");
+        }
+
+        Customer customer = order.getCustomer();
+        if (customer == null || customer.getTelegramChatId() == null) {
+            throw new BadRequestException("Mijoz Telegram botga ulanmagan");
+        }
+        if (!telegramService.isEnabled()) {
+            throw new BadRequestException("Telegram bot hozircha o'chirilgan");
+        }
+
+        boolean sent = telegramService.sendVenue(
+                customer.getTelegramChatId(),
+                order.getLocationLat(),
+                order.getLocationLng(),
+                "Buyurtma " + order.getOrderNumber() + " — o'rnatish joyi",
+                order.getInstallationAddress());
+
+        if (!sent) {
+            throw new BadRequestException("Telegram'ga yuborib bo'lmadi. Keyinroq qayta urinib ko'ring");
+        }
     }
 
     /**

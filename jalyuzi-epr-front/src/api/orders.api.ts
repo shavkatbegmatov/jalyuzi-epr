@@ -2,6 +2,7 @@ import api from './axios';
 import type {
   Order,
   OrderCreateRequest,
+  OrderLocationRequest,
   OrderMeasurementRequest,
   OrderAssignRequest,
   OrderPaymentRequest,
@@ -169,5 +170,15 @@ export const ordersApi = {
   revertStatus: async (id: number, request: { targetStatus: string; reason: string }): Promise<Order> => {
     const { data } = await api.post<ApiResponse<Order>>(`/v1/orders/${id}/revert`, request);
     return data.data;
+  },
+
+  // Geolokatsiya
+  updateLocation: async (id: number, request: OrderLocationRequest): Promise<Order> => {
+    const { data } = await api.post<ApiResponse<Order>>(`/v1/orders/${id}/location`, request);
+    return data.data;
+  },
+
+  sendLocationTelegram: async (id: number): Promise<void> => {
+    await api.post(`/v1/orders/${id}/location/send-telegram`);
   },
 };

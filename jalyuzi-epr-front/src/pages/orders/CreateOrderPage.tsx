@@ -19,6 +19,8 @@ import { ordersApi } from '../../api/orders.api';
 import { customersApi } from '../../api/customers.api';
 import { productsApi } from '../../api/products.api';
 import { ModalPortal } from '../../components/common/Modal';
+import { LocationPickerModal, LocationPreview } from '../../components/common/LocationPicker';
+import { formatCoords, type GeoPoint } from '../../utils/locationUtils';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
 import { formatCurrency, CUSTOMER_TYPES, CUSTOMER_SOURCES, UNIT_TYPES } from '../../config/constants';
@@ -108,6 +110,8 @@ export function CreateOrderPage() {
 
   // Step 2: Address
   const [address, setAddress] = useState('');
+  const [geoPoint, setGeoPoint] = useState<GeoPoint | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
 
   // Step 3: Products
   const [productSearch, setProductSearch] = useState('');
@@ -373,6 +377,8 @@ export function CreateOrderPage() {
       const request: OrderCreateRequest = {
         customerId: selectedCustomer.id,
         installationAddress: address || undefined,
+        locationLat: geoPoint?.lat,
+        locationLng: geoPoint?.lng,
         notes: notes || undefined,
         discountAmount: discountType === 'amount' ? (discountAmount || undefined) : undefined,
         discountPercent: discountType === 'percent' ? (discountPercent || undefined) : undefined,
@@ -625,6 +631,57 @@ export function CreateOrderPage() {
                 Mijoz manzilini tiklash
               </button>
             )}
+
+            {/* Geolokatsiya — xaritadan joy belgilash (Telegram uslubida) */}
+            <div className="mt-6">
+              <label className="label pb-1">
+                <span className="label-text flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  Geolokatsiya
+                </span>
+                <span className="label-text-alt text-base-content/50">ixtiyoriy</span>
+              </label>
+
+              {geoPoint ? (
+                <div className="space-y-2">
+                  <LocationPreview
+                    lat={geoPoint.lat}
+                    lng={geoPoint.lng}
+                    onClick={() => setShowLocationPicker(true)}
+                  />
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-xs text-base-content/60">
+                      {formatCoords(geoPoint.lat, geoPoint.lng)}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => setShowLocationPicker(true)}
+                      >
+                        O'zgartirish
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm text-error"
+                        onClick={() => setGeoPoint(null)}
+                      >
+                        Olib tashlash
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-base-300 p-4 text-base-content/60 transition hover:border-primary hover:text-primary"
+                  onClick={() => setShowLocationPicker(true)}
+                >
+                  <MapPin className="h-5 w-5" />
+                  Xaritadan joy belgilash
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -875,13 +932,18 @@ export function CreateOrderPage() {
             )}
 
             {/* Address */}
-            {address && (
+            {(address || geoPoint) && (
               <div className="surface-soft rounded-xl p-4">
                 <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-base-content/70">
                   <MapPin className="h-4 w-4" />
                   Manzil
                 </h3>
-                <p>{address}</p>
+                {address && <p>{address}</p>}
+                {geoPoint && (
+                  <p className="mt-1 text-sm text-base-content/60">
+                    Xaritada belgilangan: {formatCoords(geoPoint.lat, geoPoint.lng)}
+                  </p>
+                )}
               </div>
             )}
 
@@ -1093,6 +1155,17 @@ export function CreateOrderPage() {
           </button>
         )}
       </div>
+
+      {/* ─── Geolokatsiya tanlash modali ─── */}
+      <LocationPickerModal
+        isOpen={showLocationPicker}
+        initial={geoPoint}
+        onClose={() => setShowLocationPicker(false)}
+        onSelect={(point) => {
+          setGeoPoint(point);
+          setShowLocationPicker(false);
+        }}
+      />
 
       {/* ─── Inline "Yangi mijoz" modal ─── */}
       <ModalPortal isOpen={showNewCustomer} onClose={() => setShowNewCustomer(false)}>

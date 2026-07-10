@@ -131,6 +131,54 @@ public class TelegramService {
     }
 
     /**
+     * Geolokatsiyani venue (nomlangan joy) ko'rinishida yuborish — xarita pin'i
+     * ostida sarlavha va manzil ko'rinadi, undan yo'nalish olish mumkin.
+     */
+    public boolean sendVenue(Long chatId, java.math.BigDecimal latitude, java.math.BigDecimal longitude,
+                             String title, String address) {
+        if (!isEnabled()) {
+            log.warn("Telegram bot o'chirilgan. Lokatsiya yuborilmadi: chatId={}", chatId);
+            return false;
+        }
+        if (latitude == null || longitude == null) {
+            log.warn("Telegram lokatsiyasi bo'sh: chatId={}", chatId);
+            return false;
+        }
+
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("chat_id", chatId);
+            body.put("latitude", latitude);
+            body.put("longitude", longitude);
+            body.put("title", title != null ? title : "Joylashuv");
+            body.put("address", address != null && !address.isBlank()
+                    ? address
+                    : latitude.stripTrailingZeros().toPlainString() + ", " + longitude.stripTrailingZeros().toPlainString());
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    apiUrl("sendVenue"),
+                    request,
+                    String.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Telegram lokatsiyasi yuborildi: chatId={}", chatId);
+                return true;
+            } else {
+                log.error("Telegram lokatsiyasini yuborishda xatolik: {} - {}", response.getStatusCode(), response.getBody());
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Telegram lokatsiyasini yuborishda xatolik: chatId={}, error={}", chatId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * Hujjat (PDF, rasm va h.k.) yuborish — multipart/form-data orqali.
      * Akt-kvitansiya, faktura kabi fayllarni mijozga yuborish uchun ishlatiladi.
      */

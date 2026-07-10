@@ -1,6 +1,8 @@
 package uz.jalyuziepr.api.dto.request;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -15,6 +17,15 @@ public class OrderCreateRequest {
     private Long customerId;
 
     private String installationAddress;
+
+    // O'rnatish joyining geolokatsiyasi (ixtiyoriy, xaritadan tanlanadi)
+    @DecimalMin(value = "-90", message = "Kenglik noto'g'ri")
+    @DecimalMax(value = "90", message = "Kenglik noto'g'ri")
+    private BigDecimal locationLat;
+
+    @DecimalMin(value = "-180", message = "Uzunlik noto'g'ri")
+    @DecimalMax(value = "180", message = "Uzunlik noto'g'ri")
+    private BigDecimal locationLng;
 
     private String notes;
 

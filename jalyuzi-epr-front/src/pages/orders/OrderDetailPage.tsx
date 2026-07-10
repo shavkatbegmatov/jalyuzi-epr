@@ -25,8 +25,15 @@ import {
   Ban,
   Star,
   ShieldCheck,
+  Navigation,
+  Send,
 } from 'lucide-react';
 import { ordersApi } from '../../api/orders.api';
+import { LocationPickerModal, LocationPreview } from '../../components/common/LocationPicker';
+import {
+  googleMapsUrl,
+  telegramShareLocationUrl,
+} from '../../utils/locationUtils';
 import { TrackingLinkCard } from '../../components/orders/TrackingLinkCard';
 import { WarrantyCertificateModal } from '../../components/orders/WarrantyCertificateModal';
 import { CurrencyInput } from '../../components/ui/CurrencyInput';
@@ -449,6 +456,9 @@ export function OrderDetailPage() {
   const [assignInstallerOpen, setAssignInstallerOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [showCert, setShowCert] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [savingLocation, setSavingLocation] = useState(false);
+  const [sendingLocation, setSendingLocation] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -492,6 +502,39 @@ export function OrderDetailPage() {
   }, [loadOrder]);
 
   // ==================== ACTIONS ====================
+
+  const handleSaveLocation = async (point: { lat: number; lng: number }) => {
+    if (!order) return;
+    try {
+      setSavingLocation(true);
+      const updated = await ordersApi.updateLocation(order.id, {
+        locationLat: point.lat,
+        locationLng: point.lng,
+      });
+      setOrder(updated);
+      setLocationPickerOpen(false);
+      toast.success('Geolokatsiya saqlandi');
+    } catch (error) {
+      console.error('Save location failed:', error);
+      toast.error(getApiErrorMessage(error) || 'Geolokatsiyani saqlashda xatolik');
+    } finally {
+      setSavingLocation(false);
+    }
+  };
+
+  const handleSendLocationTelegram = async () => {
+    if (!order) return;
+    try {
+      setSendingLocation(true);
+      await ordersApi.sendLocationTelegram(order.id);
+      toast.success("Lokatsiya mijoz Telegram'iga yuborildi");
+    } catch (error) {
+      console.error('Send location failed:', error);
+      toast.error(getApiErrorMessage(error) || "Telegram'ga yuborishda xatolik");
+    } finally {
+      setSendingLocation(false);
+    }
+  };
 
   const handleAssignMeasurer = async (data: OrderAssignRequest) => {
     if (!order) return;
@@ -1133,6 +1176,81 @@ export function OrderDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Geolokatsiya: xaritada ko'rish, ulashish, o'zgartirish */}
+            {order.locationLat != null && order.locationLng != null ? (
+              <div className="space-y-2 pt-1">
+                <LocationPreview
+                  lat={order.locationLat}
+                  lng={order.locationLng}
+                  onClick={() =>
+                    window.open(
+                      googleMapsUrl(order.locationLat!, order.locationLng!),
+                      '_blank',
+                      'noopener'
+                    )
+                  }
+                />
+                <div className="flex flex-wrap gap-2">
+                  <a
+                    className="btn btn-outline btn-sm gap-1"
+                    href={googleMapsUrl(order.locationLat, order.locationLng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Navigation className="h-4 w-4" />
+                    Yo'nalish
+                  </a>
+                  <a
+                    className="btn btn-outline btn-sm gap-1"
+                    href={telegramShareLocationUrl(
+                      order.locationLat,
+                      order.locationLng,
+                      `Buyurtma ${order.orderNumber} — o'rnatish joyi${
+                        order.installationAddress ? `\n${order.installationAddress}` : ''
+                      }`
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Send className="h-4 w-4" />
+                    Telegram'ga ulashish
+                  </a>
+                  {canUpdate && order.customerTelegramLinked && (
+                    <button
+                      className="btn btn-outline btn-sm gap-1"
+                      onClick={handleSendLocationTelegram}
+                      disabled={sendingLocation}
+                    >
+                      {sendingLocation ? (
+                        <span className="loading loading-spinner loading-xs" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      Mijozga (bot)
+                    </button>
+                  )}
+                  {canUpdate && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => setLocationPickerOpen(true)}
+                    >
+                      O'zgartirish
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              canUpdate && (
+                <button
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-base-300 p-3 text-sm text-base-content/60 transition hover:border-primary hover:text-primary"
+                  onClick={() => setLocationPickerOpen(true)}
+                >
+                  <MapPin className="h-4 w-4" />
+                  Xaritadan lokatsiya qo'shish
+                </button>
+              )
+            )}
           </div>
         </div>
 
@@ -1563,6 +1681,18 @@ export function OrderDetailPage() {
       </div>
 
       {/* ==================== MODALS ==================== */}
+      <LocationPickerModal
+        isOpen={locationPickerOpen}
+        initial={
+          order.locationLat != null && order.locationLng != null
+            ? { lat: order.locationLat, lng: order.locationLng }
+            : null
+        }
+        onClose={() => setLocationPickerOpen(false)}
+        onSelect={handleSaveLocation}
+        saving={savingLocation}
+      />
+
       <AssignModal
         open={assignMeasurerOpen}
         title="O'lchovchi tayinlash"

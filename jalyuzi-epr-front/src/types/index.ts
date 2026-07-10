@@ -1177,6 +1177,11 @@ export interface Order {
   customerName: string;
   customerPhone: string;
   installationAddress: string;
+  // O'rnatish joyining geolokatsiyasi
+  locationLat?: number;
+  locationLng?: number;
+  // Mijoz Telegram botga ulanganmi (lokatsiyani botdan yuborish uchun)
+  customerTelegramLinked?: boolean;
   managerId?: number;
   managerName?: string;
   measurerId?: number;
@@ -1252,10 +1257,17 @@ export interface OrderStatusHistoryItem {
 export interface OrderCreateRequest {
   customerId: number;
   installationAddress?: string;
+  locationLat?: number;
+  locationLng?: number;
   notes?: string;
   discountAmount?: number;
   discountPercent?: number;
   items: OrderCreateItemRequest[];
+}
+
+export interface OrderLocationRequest {
+  locationLat: number;
+  locationLng: number;
 }
 
 export interface OrderCreateItemRequest {

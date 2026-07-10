@@ -90,6 +90,25 @@ public class OrderController {
                 .body(ApiResponse.success("Buyurtma muvaffaqiyatli yaratildi", order));
     }
 
+    @PostMapping("/{id}/location")
+    @RequiresPermission(PermissionCode.ORDERS_UPDATE)
+    @Operation(summary = "Geolokatsiya belgilash",
+            description = "Buyurtma o'rnatish joyining geolokatsiyasini belgilash yoki o'zgartirish")
+    public ResponseEntity<ApiResponse<OrderResponse>> updateLocation(
+            @PathVariable Long id, @Valid @RequestBody OrderLocationRequest request) {
+        return ResponseEntity.ok(ApiResponse.success("Geolokatsiya saqlandi",
+                orderService.updateOrderLocation(id, request)));
+    }
+
+    @PostMapping("/{id}/location/send-telegram")
+    @RequiresPermission(PermissionCode.ORDERS_UPDATE)
+    @Operation(summary = "Lokatsiyani Telegram'ga yuborish",
+            description = "Buyurtma lokatsiyasini mijozning Telegram'iga bot orqali yuborish")
+    public ResponseEntity<ApiResponse<Void>> sendLocationToTelegram(@PathVariable Long id) {
+        orderService.sendLocationToCustomerTelegram(id);
+        return ResponseEntity.ok(ApiResponse.success("Lokatsiya mijoz Telegram'iga yuborildi"));
+    }
+
     @PostMapping("/{id}/assign-measurer")
     @RequiresPermission(PermissionCode.ORDERS_ASSIGN)
     @Operation(summary = "O'lchov tayinlash", description = "O'lchovchi tayinlash")

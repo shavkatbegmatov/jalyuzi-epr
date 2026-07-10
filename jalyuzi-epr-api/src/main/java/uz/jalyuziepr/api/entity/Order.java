@@ -48,6 +48,13 @@ public class Order extends BaseEntity implements Auditable {
     @Column(name = "installation_address", length = 500)
     private String installationAddress;
 
+    // O'rnatish joyining geolokatsiyasi (xaritadan tanlanadi)
+    @Column(name = "location_lat", precision = 10, scale = 7)
+    private BigDecimal locationLat;
+
+    @Column(name = "location_lng", precision = 10, scale = 7)
+    private BigDecimal locationLng;
+
     // Tayinlangan xodimlar
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")

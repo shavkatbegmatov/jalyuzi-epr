@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClipboardList, Phone, MapPin, RefreshCw } from 'lucide-react';
+import { ClipboardList, Phone, MapPin, Navigation, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ordersApi } from '../../api/orders.api';
 import { formatCurrency, getOrderStatusLabel, getOrderStatusColor } from '../../config/constants';
+import { googleMapsUrl } from '../../utils/locationUtils';
 import type { Order } from '../../types';
 
 function isToday(dateStr?: string): boolean {
@@ -89,6 +90,18 @@ export function InstallerDashboardPage() {
               <MapPin className="h-3.5 w-3.5 shrink-0" />
               <span className="line-clamp-1">{order.installationAddress}</span>
             </div>
+          )}
+          {order.locationLat != null && order.locationLng != null && (
+            <a
+              href={googleMapsUrl(order.locationLat, order.locationLng)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline btn-xs mt-1 gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Navigation className="h-3.5 w-3.5" />
+              Yo'nalish (xarita)
+            </a>
           )}
         </div>
 

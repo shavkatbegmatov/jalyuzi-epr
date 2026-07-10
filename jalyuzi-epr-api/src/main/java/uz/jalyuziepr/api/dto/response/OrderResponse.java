@@ -31,6 +31,13 @@ public class OrderResponse {
     // Manzil
     private String installationAddress;
 
+    // O'rnatish joyining geolokatsiyasi
+    private BigDecimal locationLat;
+    private BigDecimal locationLng;
+
+    // Mijoz Telegram botga ulanganmi (lokatsiyani botdan yuborish tugmasi uchun)
+    private Boolean customerTelegramLinked;
+
     // Tayinlangan xodimlar
     private Long managerId;
     private String managerName;
@@ -83,6 +90,10 @@ public class OrderResponse {
                 .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : null)
                 .customerPhone(order.getCustomer() != null ? order.getCustomer().getPhone() : null)
                 .installationAddress(order.getInstallationAddress())
+                .locationLat(order.getLocationLat())
+                .locationLng(order.getLocationLng())
+                .customerTelegramLinked(order.getCustomer() != null
+                        && order.getCustomer().getTelegramChatId() != null)
                 .managerId(order.getManager() != null ? order.getManager().getId() : null)
                 .managerName(order.getManager() != null ? order.getManager().getFullName() : null)
                 .measurerId(order.getMeasurer() != null ? order.getMeasurer().getId() : null)
@@ -131,6 +142,8 @@ public class OrderResponse {
                 .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : null)
                 .customerPhone(order.getCustomer() != null ? order.getCustomer().getPhone() : null)
                 .installationAddress(order.getInstallationAddress())
+                .locationLat(order.getLocationLat())
+                .locationLng(order.getLocationLng())
                 .subtotal(order.getSubtotal())
                 .discountAmount(order.getDiscountAmount())
                 .discountPercent(order.getDiscountPercent())
@@ -167,6 +180,8 @@ public class OrderResponse {
                 .customerName(order.getCustomer() != null ? order.getCustomer().getFullName() : null)
                 .customerPhone(order.getCustomer() != null ? order.getCustomer().getPhone() : null)
                 .installationAddress(order.getInstallationAddress())
+                .locationLat(order.getLocationLat())
+                .locationLng(order.getLocationLng())
                 .installerName(order.getInstaller() != null ? order.getInstaller().getFullName() : null)
                 .totalAmount(order.getTotalAmount())
                 .paidAmount(order.getPaidAmount())
