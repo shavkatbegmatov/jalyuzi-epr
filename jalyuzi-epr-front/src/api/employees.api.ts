@@ -69,4 +69,15 @@ export const employeesApi = {
     );
     return response.data.data;
   },
+
+  /**
+   * Xodimning Telegram Mini App akkauntini uzish (telefon yo'qolganda).
+   * revokeSessions — xodimning barcha faol sessiyalari ham yopiladi.
+   */
+  unlinkTelegram: async (employeeId: number, revokeSessions: boolean): Promise<Employee> => {
+    const response = await api.delete<ApiResponse<Employee>>(`/v1/employees/${employeeId}/telegram`, {
+      params: { revokeSessions },
+    });
+    return response.data.data;
+  },
 };

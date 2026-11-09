@@ -1066,6 +1066,10 @@ export interface Employee {
   username?: string;
   userRole?: string;
   hasUserAccount: boolean;
+  // Telegram Mini App bog'lanishi (V58)
+  telegramLinked?: boolean;
+  telegramUsername?: string | null;
+  telegramLinkedAt?: string | null;
   // Yangi yaratilgan credential'lar (faqat bir marta ko'rsatiladi)
   newCredentials?: CredentialsInfo;
   // Texnik maydonlari

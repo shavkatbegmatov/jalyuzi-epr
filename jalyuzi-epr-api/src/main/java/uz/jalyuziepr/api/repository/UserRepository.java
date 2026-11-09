@@ -56,4 +56,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
         WHERE u.id = :id
         """)
     Optional<User> findByIdWithRolesAndPermissions(@Param("id") Long id);
+
+    /** Telegram Mini App'ga ulangan faol xodimlar (bot bildirishnomalari uchun) */
+    @Query("""
+        SELECT DISTINCT u FROM User u
+        LEFT JOIN FETCH u.roles r
+        LEFT JOIN FETCH r.permissions
+        WHERE u.telegramUserId IS NOT NULL AND u.active = true
+        """)
+    List<User> findTelegramLinkedActiveWithRolesAndPermissions();
 }

@@ -12,6 +12,7 @@ import uz.jalyuziepr.api.enums.EmployeeStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -81,6 +82,11 @@ public class EmployeeResponse {
     @ExportColumn(header = "Hisob bormi", order = 18, type = ColumnType.BOOLEAN)
     private Boolean hasUserAccount;
 
+    // Telegram Mini App bog'lanishi (V58) — export qilinmaydi
+    private Boolean telegramLinked;
+    private String telegramUsername;
+    private LocalDateTime telegramLinkedAt;
+
     /**
      * Credentials for newly created user account.
      * Only populated when a new user is created.
@@ -109,7 +115,10 @@ public class EmployeeResponse {
 
         if (employee.getUser() != null) {
             builder.userId(employee.getUser().getId())
-                   .username(employee.getUser().getUsername());
+                   .username(employee.getUser().getUsername())
+                   .telegramLinked(employee.getUser().getTelegramUserId() != null)
+                   .telegramUsername(employee.getUser().getTelegramUsername())
+                   .telegramLinkedAt(employee.getUser().getTelegramLinkedAt());
 
             // Get role from new RBAC system (roles collection), fallback to legacy role field
             if (!employee.getUser().getRoles().isEmpty()) {

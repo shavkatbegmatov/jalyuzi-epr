@@ -2,11 +2,13 @@ package uz.jalyuziepr.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import uz.jalyuziepr.api.dto.response.TelegramLoginResponse;
 import uz.jalyuziepr.api.dto.response.TelegramStaffInfoResponse;
 import uz.jalyuziepr.api.dto.response.UserResponse;
 import uz.jalyuziepr.api.entity.User;
+import uz.jalyuziepr.api.event.StaffTelegramUnlinkedEvent;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.UserRepository;
@@ -34,6 +36,7 @@ public class TelegramStaffAuthService {
     private final UserRepository userRepository;
     private final AuthService authService;
     private final TelegramService telegramService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public TelegramStaffInfoResponse info() {
         boolean enabled = telegramService.isEnabled();
@@ -112,6 +115,15 @@ public class TelegramStaffAuthService {
      * Joriy xodimdan Telegram akkauntni uzish.
      */
     public UserResponse unlink(Long userId) {
+        return unlink(userId, false);
+    }
+
+    /**
+     * Xodimdan Telegram akkauntni uzish.
+     *
+     * @param byAdmin true — administrator xodim sahifasidan uzdi (telefon yo'qolganda)
+     */
+    public UserResponse unlink(Long userId, boolean byAdmin) {
         User user = userRepository.findByIdWithRolesAndPermissions(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Foydalanuvchi", "id", userId));
 
@@ -125,11 +137,11 @@ public class TelegramStaffAuthService {
         user.setTelegramLinkedAt(null);
         userRepository.save(user);
 
-        log.info("Telegram akkaunt uzildi: user={}, telegramId={}", user.getUsername(), telegramId);
+        log.info("Telegram akkaunt uzildi: user={}, telegramId={}, admin={}", user.getUsername(), telegramId, byAdmin);
 
-        telegramService.resetChatMenuButton(telegramId);
-        telegramService.sendMessage(telegramId,
-                "Telegram akkauntingiz ERP'dan uzildi. Qayta ulash uchun ilovani oching va login qiling.");
+        // Bot tomoni (menyu tugmasi + xabar) — commit'dan keyin, alohida oqimda
+        // (StaffTelegramNotificationService), so'rovni Telegram API kutmaydi.
+        eventPublisher.publishEvent(new StaffTelegramUnlinkedEvent(telegramId, byAdmin));
 
         return UserResponse.from(user);
     }

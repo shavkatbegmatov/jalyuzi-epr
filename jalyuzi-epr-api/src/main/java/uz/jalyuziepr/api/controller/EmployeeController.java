@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.request.ChangeRoleRequest;
 import uz.jalyuziepr.api.dto.request.EmployeeRequest;
@@ -23,6 +24,7 @@ import uz.jalyuziepr.api.dto.response.PagedResponse;
 import uz.jalyuziepr.api.dto.response.UserResponse;
 import uz.jalyuziepr.api.enums.EmployeeStatus;
 import uz.jalyuziepr.api.enums.PermissionCode;
+import uz.jalyuziepr.api.security.CustomUserDetails;
 import uz.jalyuziepr.api.security.RequiresPermission;
 import uz.jalyuziepr.api.service.EmployeeService;
 import uz.jalyuziepr.api.service.export.GenericExportService;
@@ -125,6 +127,20 @@ public class EmployeeController {
             @Valid @RequestBody EmployeeRequest request) {
         EmployeeResponse employee = employeeService.updateEmployee(id, request);
         return ResponseEntity.ok(ApiResponse.success("Xodim yangilandi", employee));
+    }
+
+    @DeleteMapping("/{id}/telegram")
+    @RequiresPermission(PermissionCode.EMPLOYEES_UPDATE)
+    @Operation(summary = "Unlink employee Telegram",
+            description = "Xodimning Telegram Mini App akkauntini uzish (telefon yo'qolganda). "
+                    + "revokeSessions=true — xodimning barcha faol sessiyalari ham yopiladi")
+    public ResponseEntity<ApiResponse<EmployeeResponse>> unlinkTelegram(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean revokeSessions,
+            @AuthenticationPrincipal CustomUserDetails admin) {
+        EmployeeResponse employee = employeeService.unlinkTelegram(
+                id, revokeSessions, admin != null ? admin.getId() : null);
+        return ResponseEntity.ok(ApiResponse.success("Telegram akkaunt uzildi", employee));
     }
 
     @DeleteMapping("/{id}")

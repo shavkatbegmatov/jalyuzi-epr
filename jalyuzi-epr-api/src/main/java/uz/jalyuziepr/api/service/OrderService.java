@@ -2,6 +2,7 @@ package uz.jalyuziepr.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import uz.jalyuziepr.api.dto.response.OrderResponse;
 import uz.jalyuziepr.api.dto.response.OrderStatsResponse;
 import uz.jalyuziepr.api.entity.*;
 import uz.jalyuziepr.api.enums.*;
+import uz.jalyuziepr.api.event.StaffOrderAssignedEvent;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.*;
@@ -52,6 +54,7 @@ public class OrderService {
     private final TelegramService telegramService;
     private final TelegramPhoneLinkRepository telegramPhoneLinkRepository;
     private final OrderTrackingService orderTrackingService;
+    private final ApplicationEventPublisher eventPublisher;
 
     // ==================== QUERY ====================
 
@@ -408,9 +411,31 @@ public class OrderService {
                             order.getOrderNumber(),
                             order.getInstallationAddress() != null ? order.getInstallationAddress() : "—"),
                     StaffNotificationType.ORDER, "ORDER", saved.getId());
+
+            // Telegram (Mini App'ga ulangan bo'lsa) — commit'dan keyin, alohida oqimda
+            publishAssignment(measurer.getUser().getId(), StaffOrderAssignedEvent.Kind.MEASUREMENT,
+                    saved, saved.getMeasurementDate());
         }
 
         return OrderResponse.from(saved);
+    }
+
+    /**
+     * Xodimga Telegram tayinlash xabari uchun hodisa. Xabarni
+     * {@link StaffTelegramNotificationService} commit'dan keyin @Async yuboradi.
+     */
+    private void publishAssignment(Long userId, StaffOrderAssignedEvent.Kind kind, Order order,
+                                   LocalDateTime scheduledDate) {
+        Customer customer = order.getCustomer();
+        eventPublisher.publishEvent(new StaffOrderAssignedEvent(
+                userId,
+                kind,
+                order.getId(),
+                order.getOrderNumber(),
+                customer != null ? customer.getFullName() : null,
+                customer != null ? customer.getPhone() : null,
+                order.getInstallationAddress(),
+                scheduledDate));
     }
 
     @Transactional
@@ -602,6 +627,10 @@ public class OrderService {
                 String.format("Buyurtma %s o'rnatish uchun tayinlandi. Manzil: %s",
                         order.getOrderNumber(), order.getInstallationAddress()),
                 StaffNotificationType.ORDER, "ORDER", saved.getId());
+
+        // Telegram (Mini App'ga ulangan bo'lsa) — commit'dan keyin, alohida oqimda
+        publishAssignment(installer.getId(), StaffOrderAssignedEvent.Kind.INSTALLATION,
+                saved, saved.getInstallationDate());
 
         return OrderResponse.from(saved);
     }

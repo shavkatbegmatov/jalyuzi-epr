@@ -2,6 +2,7 @@ package uz.jalyuziepr.api.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -15,6 +16,7 @@ import uz.jalyuziepr.api.enums.EscalationReason;
 import uz.jalyuziepr.api.enums.EscalationStatus;
 import uz.jalyuziepr.api.enums.PermissionCode;
 import uz.jalyuziepr.api.enums.StaffNotificationType;
+import uz.jalyuziepr.api.event.EscalationCreatedEvent;
 import uz.jalyuziepr.api.exception.BadRequestException;
 import uz.jalyuziepr.api.exception.ResourceNotFoundException;
 import uz.jalyuziepr.api.repository.OrderEscalationRepository;
@@ -38,6 +40,7 @@ public class OrderEscalationService {
     private final OrderRepository orderRepository;
     private final FileStorageService fileStorageService;
     private final StaffNotificationService staffNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Eskalatsiya yaratish (o'rnatuvchi). Ixtiyoriy foto bilan.
@@ -91,6 +94,19 @@ public class OrderEscalationService {
                 StaffNotificationType.WARNING,
                 "ESCALATION",
                 orderId);
+
+        // Telegram'i ulangan menejerlarga — commit'dan keyin, alohida oqimda
+        // (StaffTelegramNotificationService). Bu yerda faqat snapshot hodisa e'lon qilinadi.
+        eventPublisher.publishEvent(new EscalationCreatedEvent(
+                saved.getId(),
+                orderId,
+                order.getOrderNumber(),
+                reason.getLabel(),
+                saved.getDescription(),
+                saved.getCreatedBy(),
+                saved.getCreatedByName(),
+                order.getCustomer() != null ? order.getCustomer().getFullName() : null,
+                order.getInstallationAddress()));
 
         return OrderEscalationResponse.from(saved);
     }

@@ -36,6 +36,8 @@ public class EmployeeService {
     private final UserService userService;
     private final PermissionService permissionService;
     private final NotificationDispatcher notificationDispatcher;
+    private final TelegramStaffAuthService telegramStaffAuthService;
+    private final SessionService sessionService;
 
     public Page<EmployeeResponse> getAllEmployees(Pageable pageable) {
         return employeeRepository.findByStatusNot(EmployeeStatus.TERMINATED, pageable)
@@ -50,6 +52,40 @@ public class EmployeeService {
     public EmployeeResponse getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Xodim", "id", id));
+        return EmployeeResponse.from(employee);
+    }
+
+    /**
+     * Xodimning Telegram Mini App akkauntini administrator tomonidan uzish
+     * (masalan, telefon yo'qolganda).
+     *
+     * @param revokeSessions true — xodimning barcha faol sessiyalari ham yopiladi, shunda
+     *                       yo'qolgan telefondagi ilova saqlangan token bilan ishlay olmaydi
+     */
+    @Transactional
+    public EmployeeResponse unlinkTelegram(Long employeeId, boolean revokeSessions, Long adminUserId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Xodim", "id", employeeId));
+
+        User user = employee.getUser();
+        if (user == null) {
+            throw new BadRequestException("Xodimning login hisobi yo'q");
+        }
+        if (user.getTelegramUserId() == null) {
+            throw new BadRequestException("Xodimning Telegram akkaunti ulanmagan");
+        }
+
+        telegramStaffAuthService.unlink(user.getId(), true);
+
+        int revoked = 0;
+        if (revokeSessions) {
+            revoked = sessionService.revokeAllSessions(user.getId(), adminUserId,
+                    "Telegram akkaunt administrator tomonidan uzildi");
+        }
+
+        log.info("Admin xodim Telegram akkauntini uzdi: employee={}, user={}, admin={}, yopilgan sessiyalar={}",
+                employeeId, user.getUsername(), adminUserId, revoked);
+
         return EmployeeResponse.from(employee);
     }
 

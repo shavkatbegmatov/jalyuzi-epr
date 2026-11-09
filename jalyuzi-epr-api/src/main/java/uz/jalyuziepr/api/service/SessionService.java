@@ -182,6 +182,23 @@ public class SessionService {
     }
 
     /**
+     * Foydalanuvchining barcha faol sessiyalarini boshqa xodim (admin) nomidan bekor qilish —
+     * masalan, telefon yo'qolganda Telegram ilovadagi sessiya ham yopilishi uchun.
+     */
+    @Transactional
+    public int revokeAllSessions(Long userId, Long revokedBy, String reason) {
+        int count = sessionRepository.revokeAllActiveSessions(userId, LocalDateTime.now(), revokedBy, reason);
+
+        log.info("Revoked all {} active sessions for user {} by {}: {}", count, userId, revokedBy, reason);
+
+        if (count > 0) {
+            SessionUpdateMessage message = SessionUpdateMessage.sessionRevoked(null, userId, reason);
+            notificationDispatcher.notifySessionUpdate(userId, message);
+        }
+        return count;
+    }
+
+    /**
      * Check if session is valid (exists and active)
      */
     @Transactional(readOnly = true)

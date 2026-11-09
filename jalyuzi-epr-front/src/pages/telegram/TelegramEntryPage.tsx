@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { AlertCircle, Eye, EyeOff, Link2, Loader2, LogIn, RefreshCw, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -7,6 +7,7 @@ import { authApi } from '../../api/auth.api';
 import { telegramAuthApi } from '../../api/telegramAuth.api';
 import { useAuthStore } from '../../store/authStore';
 import { getRolePanelPath } from '../../utils/roleHome';
+import { getSafeNextPath } from '../../utils/safeNextPath';
 import {
   initTelegramWebApp,
   waitForTelegramWebApp,
@@ -47,6 +48,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
  */
 export function TelegramEntryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<Status>('loading');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [telegramName, setTelegramName] = useState<string | null>(null);
@@ -72,11 +74,15 @@ export function TelegramEntryPage() {
     );
   }, []);
 
+  // Bot xabaridagi tugma Mini App'ni kerakli sahifada ochishi uchun: /tg?next=/installer/12.
+  // Faqat ichki yo'llar qabul qilinadi (ochiq redirect yo'q).
+  const nextPath = useMemo(() => getSafeNextPath(searchParams.get('next')), [searchParams]);
+
   const goHome = useCallback(
     (roles?: Iterable<string> | null) => {
-      navigate(getRolePanelPath(roles) ?? '/', { replace: true });
+      navigate(nextPath ?? getRolePanelPath(roles) ?? '/', { replace: true });
     },
-    [navigate]
+    [navigate, nextPath]
   );
 
   const authenticate = useCallback(async () => {

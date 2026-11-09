@@ -14,10 +14,16 @@ import {
   AlertCircle,
   UserCog,
   Heart,
+  Send,
+  Unlink,
 } from 'lucide-react';
 import clsx from 'clsx';
+import toast from 'react-hot-toast';
 import { employeesApi } from '../../api/employees.api';
-import { formatCurrency, formatDate } from '../../config/constants';
+import { Modal } from '../../components/common/Modal';
+import { PermissionGate } from '../../components/common/PermissionGate';
+import { formatCurrency, formatDate, formatDateTime } from '../../config/constants';
+import { PermissionCode } from '../../hooks/usePermission';
 import type { Employee } from '../../types';
 
 export function EmployeeDetailPage() {
@@ -42,6 +48,31 @@ export function EmployeeDetailPage() {
   useEffect(() => {
     void loadEmployee();
   }, [loadEmployee]);
+
+  // Telegram Mini App akkauntini uzish (telefon yo'qolganda)
+  const [showUnlinkModal, setShowUnlinkModal] = useState(false);
+  const [revokeSessions, setRevokeSessions] = useState(true);
+  const [unlinking, setUnlinking] = useState(false);
+
+  const handleUnlinkTelegram = async () => {
+    if (!employee) return;
+    setUnlinking(true);
+    try {
+      const updated = await employeesApi.unlinkTelegram(employee.id, revokeSessions);
+      setEmployee(updated);
+      setShowUnlinkModal(false);
+      toast.success(
+        revokeSessions
+          ? 'Telegram akkaunt uzildi, xodimning barcha sessiyalari yopildi'
+          : 'Telegram akkaunt uzildi'
+      );
+    } catch (error) {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(err.response?.data?.message || "Telegram akkauntni uzib bo'lmadi");
+    } finally {
+      setUnlinking(false);
+    }
+  };
 
   // Status label helper
   const getStatusLabel = (status?: string) => {
@@ -357,15 +388,108 @@ export function EmployeeDetailPage() {
                 </div>
               )}
               {employee.userRole && (
-                <div className="flex items-center justify-between py-2">
+                <div className="flex items-center justify-between py-2 border-b border-base-200">
                   <span className="text-base-content/70">Rol</span>
                   <span className="badge badge-primary">{employee.userRole}</span>
                 </div>
+              )}
+
+              {/* Telegram Mini App bog'lanishi */}
+              <div className="flex flex-wrap items-center justify-between gap-2 py-2">
+                <span className="flex items-center gap-2 text-base-content/70">
+                  <Send className="h-4 w-4" />
+                  Telegram ilova
+                </span>
+                {employee.telegramLinked ? (
+                  <div className="text-right">
+                    <span className="badge badge-success">Ulangan</span>
+                    {(employee.telegramUsername || employee.telegramLinkedAt) && (
+                      <p className="mt-1 text-xs text-base-content/60">
+                        {employee.telegramUsername && <>@{employee.telegramUsername}</>}
+                        {employee.telegramUsername && employee.telegramLinkedAt && ' · '}
+                        {employee.telegramLinkedAt && formatDateTime(employee.telegramLinkedAt)}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <span className="badge badge-ghost">Ulanmagan</span>
+                )}
+              </div>
+              {employee.telegramLinked && (
+                <PermissionGate permission={PermissionCode.EMPLOYEES_UPDATE}>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-error btn-sm w-full"
+                    onClick={() => {
+                      setRevokeSessions(true);
+                      setShowUnlinkModal(true);
+                    }}
+                  >
+                    <Unlink className="h-4 w-4" />
+                    Telegram'ni uzish
+                  </button>
+                </PermissionGate>
               )}
             </div>
           </div>
         )}
       </div>
+
+      {/* Telegram'ni uzish — tasdiqlash */}
+      <Modal
+        isOpen={showUnlinkModal}
+        onClose={() => !unlinking && setShowUnlinkModal(false)}
+        title="Telegram akkauntni uzish"
+        subtitle={employee.fullName}
+        maxWidth="md"
+        closeOnBackdrop={!unlinking}
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={unlinking}
+              onClick={() => setShowUnlinkModal(false)}
+            >
+              Bekor qilish
+            </button>
+            <button
+              type="button"
+              className="btn btn-error"
+              disabled={unlinking}
+              onClick={() => void handleUnlinkTelegram()}
+            >
+              {unlinking ? <span className="loading loading-spinner loading-sm" /> : <Unlink className="h-4 w-4" />}
+              Uzish
+            </button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm">
+            Xodimning Telegram akkaunti
+            {employee.telegramUsername && <> (<b>@{employee.telegramUsername}</b>)</>} ERP'dan uziladi.
+            Telegram ilova endi avtomatik kirmaydi va bot bildirishnomalari to'xtaydi. Xodim qayta
+            ulash uchun ilovada login va parol bilan kirishi kerak bo'ladi.
+          </p>
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-warning/10 p-3">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-warning checkbox-sm mt-0.5"
+              checked={revokeSessions}
+              disabled={unlinking}
+              onChange={(e) => setRevokeSessions(e.target.checked)}
+            />
+            <span className="text-sm">
+              <b>Barcha faol sessiyalarni ham yopish</b>
+              <span className="block text-xs text-base-content/70">
+                Telefon yo'qolgan bo'lsa, belgilang: aks holda ilovada saqlangan sessiya ishlashda davom
+                etadi. Xodim boshqa qurilmalardan ham chiqib ketadi.
+              </span>
+            </span>
+          </label>
+        </div>
+      </Modal>
 
       {/* Back Button */}
       <div className="flex justify-start">
