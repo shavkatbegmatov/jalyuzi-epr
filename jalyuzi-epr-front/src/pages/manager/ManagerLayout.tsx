@@ -5,10 +5,17 @@ import { useAuthStore } from '../../store/authStore';
 import { useCrossTabSync } from '../../hooks/useCrossTabSync';
 import { useNotificationsStore } from '../../store/notificationsStore';
 import { escalationsApi } from '../../api/escalations.api';
+import { TelegramBridge } from '../../components/telegram/TelegramBridge';
+import { isTelegramMiniApp } from '../../telegram/telegramWebApp';
+
+const MANAGER_ROOT_PATHS = new Set(['/manager', '/manager/orders', '/manager/escalations', '/manager/profile']);
+const isManagerRootPath = (path: string) => MANAGER_ROOT_PATHS.has(path);
 
 export default function ManagerLayout() {
   const { user, isAuthenticated, logout } = useAuthStore();
   useCrossTabSync();
+  // Telegram ichida sessiya tugasa — /tg orqali initData bilan avtomatik qayta kiriladi
+  const inTelegram = isTelegramMiniApp();
 
   // Ochiq SOS so'rovlari soni (nav badge) — yangi bildirishnoma kelganda yangilanadi
   const [escalationCount, setEscalationCount] = useState(0);
@@ -27,7 +34,7 @@ export default function ManagerLayout() {
   }, [notifications.length]);
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={inTelegram ? '/tg' : '/login'} replace />;
   }
 
   // Agar boshqa tabda boshqa profilga kirilgan bo'lsa, to'g'ri panelga yo'naltirish
@@ -38,19 +45,24 @@ export default function ManagerLayout() {
 
   return (
     <div className="max-w-md mx-auto h-[100dvh] overflow-hidden bg-base-200 flex flex-col">
+      <TelegramBridge isRootPath={isManagerRootPath} />
+
       {/* Top Header */}
       <header className="app-safe-header bg-warning text-warning-content px-4 pb-3 flex items-center justify-between shadow-md">
         <div>
           <h1 className="text-lg font-bold">Jalyuzi Menejer</h1>
           <p className="text-xs text-warning-content/70">{user?.fullName}</p>
         </div>
-        <button
-          className="btn btn-ghost btn-sm btn-circle text-warning-content"
-          onClick={() => logout()}
-          title="Chiqish"
-        >
-          <LogOut className="h-5 w-5" />
-        </button>
+        {/* Telegram'da chiqish ma'nosiz (darhol avtomatik qayta kiriladi) — akkaunt profildan uziladi */}
+        {!inTelegram && (
+          <button
+            className="btn btn-ghost btn-sm btn-circle text-warning-content"
+            onClick={() => logout()}
+            title="Chiqish"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
+        )}
       </header>
 
       {/* Main Content */}

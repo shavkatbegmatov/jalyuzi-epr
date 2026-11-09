@@ -6,17 +6,22 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import uz.jalyuziepr.api.dto.request.ChangePasswordRequest;
 import uz.jalyuziepr.api.dto.request.LoginRequest;
+import uz.jalyuziepr.api.dto.request.TelegramWebAppAuthRequest;
 import uz.jalyuziepr.api.dto.response.ApiResponse;
 import uz.jalyuziepr.api.dto.response.JwtResponse;
+import uz.jalyuziepr.api.dto.response.TelegramLoginResponse;
+import uz.jalyuziepr.api.dto.response.TelegramStaffInfoResponse;
 import uz.jalyuziepr.api.dto.response.UserResponse;
 import uz.jalyuziepr.api.entity.Session;
 import uz.jalyuziepr.api.security.CustomUserDetails;
 import uz.jalyuziepr.api.service.AuthService;
 import uz.jalyuziepr.api.service.SessionService;
+import uz.jalyuziepr.api.service.TelegramStaffAuthService;
 import uz.jalyuziepr.api.service.UserService;
 
 @RestController
@@ -28,6 +33,7 @@ public class AuthController {
     private final AuthService authService;
     private final UserService userService;
     private final SessionService sessionService;
+    private final TelegramStaffAuthService telegramStaffAuthService;
 
     @PostMapping("/login")
     @Operation(summary = "Login", description = "Foydalanuvchi tizimga kirish")
@@ -104,6 +110,55 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(ApiResponse.success("Parol muvaffaqiyatli o'zgartirildi"));
+    }
+
+    // ==================== TELEGRAM MINI APP (XODIMLAR) ====================
+
+    @GetMapping("/telegram/info")
+    @Operation(summary = "Telegram Mini App ma'lumoti", description = "Bot yoqilganligi, username va xodim havolasi")
+    public ResponseEntity<ApiResponse<TelegramStaffInfoResponse>> telegramInfo() {
+        return ResponseEntity.ok(ApiResponse.success(telegramStaffAuthService.info()));
+    }
+
+    @PostMapping("/telegram")
+    @Operation(summary = "Telegram orqali kirish",
+            description = "Mini App initData imzosini tekshiradi; Telegram akkaunt ulangan bo'lsa tokenlar qaytaradi")
+    public ResponseEntity<ApiResponse<TelegramLoginResponse>> telegramLogin(
+            @Valid @RequestBody TelegramWebAppAuthRequest request,
+            HttpServletRequest httpRequest) {
+        String ipAddress = getClientIpAddress(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        TelegramLoginResponse response = telegramStaffAuthService.login(request.getInitData(), ipAddress, userAgent);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/telegram/link")
+    @Operation(summary = "Telegram akkauntni ulash", description = "Joriy xodimga Mini App'dagi Telegram akkauntni ulash")
+    public ResponseEntity<ApiResponse<UserResponse>> telegramLink(
+            @Valid @RequestBody TelegramWebAppAuthRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        requireStaff(userDetails);
+        UserResponse response = telegramStaffAuthService.link(userDetails.getId(), request.getInitData());
+        return ResponseEntity.ok(ApiResponse.success("Telegram akkaunt ulandi", response));
+    }
+
+    @DeleteMapping("/telegram/link")
+    @Operation(summary = "Telegram akkauntni uzish", description = "Joriy xodimdan Telegram akkauntni uzish")
+    public ResponseEntity<ApiResponse<UserResponse>> telegramUnlink(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        requireStaff(userDetails);
+        UserResponse response = telegramStaffAuthService.unlink(userDetails.getId());
+        return ResponseEntity.ok(ApiResponse.success("Telegram akkaunt uzildi", response));
+    }
+
+    /**
+     * /v1/auth/** permitAll — shuning uchun autentifikatsiyani shu yerda tekshiramiz.
+     * Mijoz tokeni bilan kelgan so'rovda principal CustomUserDetails bo'lmaydi (null).
+     */
+    private void requireStaff(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new AuthenticationCredentialsNotFoundException("Tizimga kirish talab qilinadi");
+        }
     }
 
     private String getClientIpAddress(HttpServletRequest request) {

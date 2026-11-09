@@ -8,6 +8,9 @@ export interface User {
   role: string; // Changed to string to support custom RBAC roles
   active: boolean;
   mustChangePassword?: boolean;
+  /** Ulangan Telegram akkaunt (Mini App orqali avtomatik kirish) */
+  telegramUserId?: number | null;
+  telegramUsername?: string | null;
 }
 
 export interface LoginRequest {

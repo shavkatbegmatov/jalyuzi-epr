@@ -33,5 +33,14 @@ public class TelegramConfig {
 
         /** Webhook secret token (header orqali yuboriladi, so'rovni tekshirish uchun) */
         private String webhookSecret;
+
+        /**
+         * Xodimlar Mini App manzili (HTTPS bo'lishi shart). Bo'sh bo'lsa
+         * {@code app.public-base-url + "/tg"} ishlatiladi.
+         */
+        private String webappUrl;
+
+        /** Mini App initData'ning amal qilish muddati (soniya). Standart: 24 soat */
+        private long initDataMaxAgeSeconds = 86400;
     }
 }

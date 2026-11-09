@@ -70,43 +70,7 @@ public class AuthService {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-            Long userId = userDetails.getUser().getId();
-
-            // Generate token with permissions
-            String accessToken = tokenProvider.generateStaffTokenWithPermissions(
-                    userDetails.getUsername(),
-                    userId,
-                    userDetails.getRoleCodes(),
-                    userDetails.getPermissions()
-            );
-            String refreshToken = tokenProvider.generateStaffRefreshToken(userDetails.getUsername(), userId);
-
-            // Create session in database. Session lifetime = REFRESH token lifetime
-            // (not access), so the session survives the whole refresh window.
-            LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000);
-            Session session = sessionService.createSession(
-                userDetails.getUser(),
-                accessToken,
-                refreshToken,
-                ipAddress,
-                userAgent,
-                expiresAt
-            );
-
-            // Log successful login attempt
-            loginAttemptService.logSuccessfulAttempt(username, ipAddress, userAgent, session);
-
-            // Check if user must change password
-            Boolean mustChangePassword = Boolean.TRUE.equals(userDetails.getUser().getMustChangePassword());
-
-            return JwtResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .user(UserResponse.from(userDetails.getUser()))
-                    .permissions(userDetails.getPermissions())
-                    .roles(userDetails.getRoleCodes())
-                    .requiresPasswordChange(mustChangePassword)
-                    .build();
+            return issueSession(userDetails, ipAddress, userAgent);
 
         } catch (BadCredentialsException e) {
             // Log failed login attempt
@@ -137,6 +101,69 @@ public class AuthService {
 
             throw new AccountDisabledException("Akkaunt faol emas");
         }
+    }
+
+    /**
+     * Telegram Mini App orqali kirish: foydalanuvchi initData imzosi bilan aniqlangan
+     * (parol tekshiruvi yo'q). Oddiy login kabi to'liq server-side sessiya yaratiladi.
+     *
+     * @param user rollari va ruxsatlari yuklangan foydalanuvchi
+     */
+    public JwtResponse loginWithTelegram(User user, String ipAddress, String userAgent) {
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            loginAttemptService.logFailedAttempt(
+                user.getUsername(),
+                ipAddress,
+                userAgent,
+                LoginAttempt.FailureReason.ACCOUNT_DISABLED,
+                "Account is disabled (Telegram Mini App)"
+            );
+            throw new AccountDisabledException("Akkaunt faol emas");
+        }
+        return issueSession(new CustomUserDetails(user), ipAddress, userAgent);
+    }
+
+    /**
+     * Tokenlar + DB sessiyasi yaratish va muvaffaqiyatli kirishni log qilish.
+     */
+    private JwtResponse issueSession(CustomUserDetails userDetails, String ipAddress, String userAgent) {
+        Long userId = userDetails.getUser().getId();
+
+        // Generate token with permissions
+        String accessToken = tokenProvider.generateStaffTokenWithPermissions(
+                userDetails.getUsername(),
+                userId,
+                userDetails.getRoleCodes(),
+                userDetails.getPermissions()
+        );
+        String refreshToken = tokenProvider.generateStaffRefreshToken(userDetails.getUsername(), userId);
+
+        // Create session in database. Session lifetime = REFRESH token lifetime
+        // (not access), so the session survives the whole refresh window.
+        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshExpiration / 1000);
+        Session session = sessionService.createSession(
+            userDetails.getUser(),
+            accessToken,
+            refreshToken,
+            ipAddress,
+            userAgent,
+            expiresAt
+        );
+
+        // Log successful login attempt
+        loginAttemptService.logSuccessfulAttempt(userDetails.getUsername(), ipAddress, userAgent, session);
+
+        // Check if user must change password
+        Boolean mustChangePassword = Boolean.TRUE.equals(userDetails.getUser().getMustChangePassword());
+
+        return JwtResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .user(UserResponse.from(userDetails.getUser()))
+                .permissions(userDetails.getPermissions())
+                .roles(userDetails.getRoleCodes())
+                .requiresPasswordChange(mustChangePassword)
+                .build();
     }
 
     public JwtResponse refreshToken(String refreshToken, String ipAddress, String userAgent) {

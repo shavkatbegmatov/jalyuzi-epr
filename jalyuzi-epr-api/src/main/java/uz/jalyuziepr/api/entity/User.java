@@ -61,6 +61,16 @@ public class User extends BaseEntity implements Auditable {
     @Column(name = "password_changed_at")
     private LocalDateTime passwordChangedAt;
 
+    /** Telegram foydalanuvchi ID — Mini App orqali avtomatik kirish uchun (V58) */
+    @Column(name = "telegram_user_id", unique = true)
+    private Long telegramUserId;
+
+    @Column(name = "telegram_username", length = 64)
+    private String telegramUsername;
+
+    @Column(name = "telegram_linked_at")
+    private LocalDateTime telegramLinkedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
@@ -114,6 +124,7 @@ public class User extends BaseEntity implements Auditable {
         map.put("phone", this.phone);
         map.put("active", this.active);
         map.put("mustChangePassword", this.mustChangePassword);
+        map.put("telegramUserId", this.telegramUserId);
         map.put("password", this.password); // Will be masked by SensitiveDataMasker
 
         // Include simple fields only - avoid lazy collections

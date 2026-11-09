@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -32,6 +33,12 @@ public class TelegramService {
     private final TelegramConfig telegramConfig;
     private final RestTemplate restTemplate = buildTimeoutRestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Value("${app.public-base-url:https://kanjaltib.uz}")
+    private String publicBaseUrl;
+
+    /** Xodimlar Mini App'ini botda ochish uchun /start payload'i */
+    public static final String STAFF_START_PAYLOAD = "xodim";
 
     /**
      * Timeout bilan RestTemplate — Telegram API javob bermasa, so'rov cheksiz
@@ -125,7 +132,7 @@ public class TelegramService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("Telegram xabarini yuborishda xatolik: chatId={}, error={}", chatId, e.getMessage());
+            log.error("Telegram xabarini yuborishda xatolik: chatId={}, error={}", chatId, redact(e.getMessage()));
             return false;
         }
     }
@@ -173,7 +180,7 @@ public class TelegramService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("Telegram lokatsiyasini yuborishda xatolik: chatId={}, error={}", chatId, e.getMessage());
+            log.error("Telegram lokatsiyasini yuborishda xatolik: chatId={}, error={}", chatId, redact(e.getMessage()));
             return false;
         }
     }
@@ -228,7 +235,7 @@ public class TelegramService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("Telegram hujjatini yuborishda xatolik: chatId={}, file={}, error={}", chatId, filename, e.getMessage());
+            log.error("Telegram hujjatini yuborishda xatolik: chatId={}, file={}, error={}", chatId, filename, redact(e.getMessage()));
             return false;
         }
     }
@@ -243,6 +250,86 @@ public class TelegramService {
         Map<String, Object> markup = new HashMap<>();
         markup.put("inline_keyboard", new Object[][]{{button}});
         return markup;
+    }
+
+    /**
+     * Mini App'ni ochadigan inline tugma. Inline (va menyu) tugmalardan ochilganda
+     * Telegram to'liq, imzolangan initData beradi — avtomatik kirish shunga tayanadi.
+     */
+    public Map<String, Object> inlineWebAppButton(String text, String url) {
+        Map<String, Object> button = new HashMap<>();
+        button.put("text", text);
+        button.put("web_app", Map.of("url", url));
+        Map<String, Object> markup = new HashMap<>();
+        markup.put("inline_keyboard", new Object[][]{{button}});
+        return markup;
+    }
+
+    /**
+     * Xodimlar Mini App manzili: sozlamadagi {@code telegram.bot.webapp-url}
+     * yoki {@code app.public-base-url + "/tg"}.
+     */
+    public String getWebAppUrl() {
+        String configured = telegramConfig.getBot().getWebappUrl();
+        if (configured != null && !configured.isBlank()) {
+            return configured.trim();
+        }
+        String base = publicBaseUrl != null && publicBaseUrl.endsWith("/")
+                ? publicBaseUrl.substring(0, publicBaseUrl.length() - 1)
+                : publicBaseUrl;
+        return base + "/tg";
+    }
+
+    /**
+     * Shu chat uchun bot menyu tugmasini Mini App'ga almashtirish
+     * (chat pastidagi "Ilova" tugmasi).
+     */
+    public boolean setChatMenuWebApp(Long chatId, String text, String url) {
+        Map<String, Object> menuButton = new HashMap<>();
+        menuButton.put("type", "web_app");
+        menuButton.put("text", text);
+        menuButton.put("web_app", Map.of("url", url));
+        Map<String, Object> body = new HashMap<>();
+        body.put("chat_id", chatId);
+        body.put("menu_button", menuButton);
+        return postJson("setChatMenuButton", body);
+    }
+
+    /**
+     * Shu chat uchun menyu tugmasini standart holatga qaytarish.
+     */
+    public boolean resetChatMenuButton(Long chatId) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("chat_id", chatId);
+        body.put("menu_button", Map.of("type", "default"));
+        return postJson("setChatMenuButton", body);
+    }
+
+    /**
+     * Bot API metodini JSON tana bilan chaqirish. Xatoliklar log qilinadi, tashlanmaydi.
+     */
+    private boolean postJson(String method, Map<String, Object> body) {
+        if (!isEnabled()) {
+            log.warn("Telegram bot o'chirilgan. {} chaqirilmadi", method);
+            return false;
+        }
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    apiUrl(method),
+                    new HttpEntity<>(body, headers),
+                    String.class
+            );
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return true;
+            }
+            log.error("Telegram {} xatolik: {} - {}", method, response.getStatusCode(), response.getBody());
+            return false;
+        } catch (Exception e) {
+            log.error("Telegram {} xatolik: {}", method, redact(e.getMessage()));
+            return false;
+        }
     }
 
     /**
@@ -306,13 +393,25 @@ public class TelegramService {
                 return false;
             }
         } catch (Exception e) {
-            log.error("Telegram webhook o'rnatishda xatolik: {}", e.getMessage());
+            log.error("Telegram webhook o'rnatishda xatolik: {}", redact(e.getMessage()));
             return false;
         }
     }
 
     public String getWebhookSecret() {
         return telegramConfig.getBot().getWebhookSecret();
+    }
+
+    /**
+     * Xato xabaridan bot tokenini yashirish — RestTemplate istisnolari so'rov URL'ini
+     * (unda token bor) o'z ichiga oladi, token loglarga tushmasligi kerak.
+     */
+    private String redact(String message) {
+        String token = telegramConfig.getBot().getToken();
+        if (message == null || token == null || token.isBlank()) {
+            return message;
+        }
+        return message.replace(token, "***");
     }
 
     private String apiUrl(String method) {

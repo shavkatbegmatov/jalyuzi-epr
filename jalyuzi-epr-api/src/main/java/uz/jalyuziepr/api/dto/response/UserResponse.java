@@ -19,6 +19,9 @@ public class UserResponse {
     private String role; // Changed from Role enum to String to support custom roles
     private Boolean active;
     private Boolean mustChangePassword;
+    // Telegram Mini App bog'lanishi (null = ulanmagan)
+    private Long telegramUserId;
+    private String telegramUsername;
 
     public static UserResponse from(User user) {
         // Get role from new RBAC system (roles collection), fallback to legacy role field
@@ -42,6 +45,8 @@ public class UserResponse {
                 .role(roleCode)
                 .active(user.getActive())
                 .mustChangePassword(user.getMustChangePassword())
+                .telegramUserId(user.getTelegramUserId())
+                .telegramUsername(user.getTelegramUsername())
                 .build();
     }
 }

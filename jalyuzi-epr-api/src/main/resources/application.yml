@@ -103,6 +103,8 @@ telegram:
     api-url: https://api.telegram.org
     webhook-url: ${TELEGRAM_WEBHOOK_URL:}
     webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+    # Xodimlar Mini App manzili (bo'sh bo'lsa: app.public-base-url + /tg)
+    webapp-url: ${TELEGRAM_WEBAPP_URL:}
 
 # Logging
 logging:

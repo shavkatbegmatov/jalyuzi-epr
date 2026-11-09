@@ -16,6 +16,9 @@ const PrivacyPolicyPage = lazy(() => import('../pages/legal/PrivacyPolicyPage').
 // Public order tracking ("Jalyuzimni kuzat") — auth talab qilinmaydi
 const OrderTrackingPage = lazy(() => import('../pages/tracking/OrderTrackingPage').then(m => ({ default: m.OrderTrackingPage })));
 
+// Xodimlar Telegram Mini App kirish nuqtasi (initData orqali avtomatik kirish)
+const TelegramEntryPage = lazy(() => import('../pages/telegram/TelegramEntryPage').then(m => ({ default: m.TelegramEntryPage })));
+
 // Lazy-loaded main app pages
 const DashboardPage = lazy(() => import('../pages/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const ProductsPage = lazy(() => import('../pages/products/ProductsPage').then(m => ({ default: m.ProductsPage })));
@@ -126,6 +129,12 @@ export const router = createBrowserRouter([
     path: '/t/:code',
     element: <LazyRoute><OrderTrackingPage /></LazyRoute>,
     handle: { title: 'Buyurtma kuzatuvi' },
+  },
+  {
+    // Telegram Mini App (xodimlar) — bot tugmasidan ochiladi
+    path: '/tg',
+    element: <LazyRoute><TelegramEntryPage /></LazyRoute>,
+    handle: { title: 'Xodimlar ilovasi' },
   },
   {
     path: '/',

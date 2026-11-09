@@ -9,11 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 import uz.jalyuziepr.api.entity.Customer;
 import uz.jalyuziepr.api.entity.Order;
 import uz.jalyuziepr.api.entity.TelegramPhoneLink;
+import uz.jalyuziepr.api.entity.User;
 import uz.jalyuziepr.api.enums.OrderStatus;
 import uz.jalyuziepr.api.repository.CustomerRepository;
 import uz.jalyuziepr.api.repository.DebtRepository;
 import uz.jalyuziepr.api.repository.OrderRepository;
 import uz.jalyuziepr.api.repository.TelegramPhoneLinkRepository;
+import uz.jalyuziepr.api.repository.UserRepository;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -38,6 +40,7 @@ public class TelegramBotService {
     private final CustomerRepository customerRepository;
     private final OrderRepository orderRepository;
     private final DebtRepository debtRepository;
+    private final UserRepository userRepository;
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final NumberFormat MONEY = NumberFormat.getInstance(new Locale("uz"));
@@ -80,7 +83,9 @@ public class TelegramBotService {
         String lower = text.toLowerCase().trim();
 
         if (text.startsWith("/start")) {
-            handleStart(chatId, text);
+            handleStart(chatId, fromUserId, text);
+        } else if (lower.equals("/xodim") || lower.equals("/ilova")) {
+            handleStaffStart(chatId, fromUserId);
         } else if (lower.equals("/help") || lower.equals("/yordam")) {
             sendHelp(chatId);
         } else if (lower.equals("/buyurtmalarim") || lower.equals("/orders")) {
@@ -203,7 +208,7 @@ public class TelegramBotService {
     /**
      * /start [payload] buyrug'i
      */
-    private void handleStart(Long chatId, String text) {
+    private void handleStart(Long chatId, Long fromUserId, String text) {
         String payload = "";
         int spaceIdx = text.indexOf(' ');
         if (spaceIdx > 0) {
@@ -216,6 +221,13 @@ public class TelegramBotService {
         if (payload.startsWith(OrderTrackingService.TRACK_PAYLOAD_PREFIX)) {
             String code = payload.substring(OrderTrackingService.TRACK_PAYLOAD_PREFIX.length()).trim();
             handleTrackSubscribe(chatId, code);
+            return;
+        }
+
+        // Xodimlar Mini App'i: /start xodim (profil sahifasidagi havola) yoki ulangan xodimning oddiy /start'i
+        if (TelegramService.STAFF_START_PAYLOAD.equals(payload)
+                || (payload.isEmpty() && findStaffByTelegramId(fromUserId).isPresent())) {
+            handleStaffStart(chatId, fromUserId);
             return;
         }
 
@@ -232,6 +244,43 @@ public class TelegramBotService {
                 welcome,
                 telegramService.requestContactKeyboard("📱 Telefon raqamni ulashish")
         );
+    }
+
+    private Optional<User> findStaffByTelegramId(Long telegramUserId) {
+        if (telegramUserId == null || telegramUserId == 0) {
+            return Optional.empty();
+        }
+        return userRepository.findByTelegramUserId(telegramUserId)
+                .filter(u -> Boolean.TRUE.equals(u.getActive()));
+    }
+
+    /**
+     * Xodimlar Mini App'ini ochish tugmasi. Ulangan xodimga shaxsiy menyu tugmasi ham o'rnatiladi.
+     */
+    private void handleStaffStart(Long chatId, Long fromUserId) {
+        String webAppUrl = telegramService.getWebAppUrl();
+        Optional<User> staff = findStaffByTelegramId(fromUserId);
+
+        String text;
+        if (staff.isPresent()) {
+            telegramService.setChatMenuWebApp(chatId, "Ilova", webAppUrl);
+            text = "👷 Salom, <b>" + escapeHtml(staff.get().getFullName()) + "</b>!\n\n"
+                    + "Xodim ilovasini ochish uchun pastdagi tugmani bosing.";
+        } else {
+            text = """
+                    👷 <b>Xodimlar ilovasi</b>
+
+                    Birinchi marta ERP login va parolingiz bilan kirasiz — shundan so'ng \
+                    Telegram akkauntingiz ulanadi va keyingi safar ilova avtomatik ochiladi.""";
+        }
+
+        telegramService.sendMessage(chatId, text,
+                telegramService.inlineWebAppButton("📱 Ilovani ochish", webAppUrl));
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     /**
@@ -356,6 +405,7 @@ public class TelegramBotService {
                 /profil — sizning ma'lumotlaringiz
                 /shikoyat — kafolat shikoyati uchun yo'riqnoma
 
+                /xodim — xodimlar ilovasi (o'rnatuvchi, menejer)
                 /start — boshlash
                 /help — yordam""";
         telegramService.sendMessage(chatId, help);

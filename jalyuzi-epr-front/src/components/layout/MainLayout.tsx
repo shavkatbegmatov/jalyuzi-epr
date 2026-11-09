@@ -8,6 +8,11 @@ import { Header } from './Header';
 import { Footer } from './Footer';
 import { MobileBottomNav } from './MobileBottomNav';
 import { PasswordChangeModal } from '../common/PasswordChangeModal';
+import { TelegramBridge } from '../telegram/TelegramBridge';
+import { isTelegramMiniApp } from '../../telegram/telegramWebApp';
+
+// Asosiy ERP'da bir segmentli yo'llar (/orders, /products ...) — bo'lim sahifalari
+const isMainRootPath = (path: string) => path.split('/').filter(Boolean).length <= 1;
 
 export function MainLayout() {
   const { isAuthenticated, user } = useAuthStore();
@@ -37,6 +42,10 @@ export function MainLayout() {
   }, [user?.mustChangePassword]);
 
   if (!isAuthenticated) {
+    // Telegram ichida — /tg orqali initData bilan avtomatik qayta kirish
+    if (isTelegramMiniApp()) {
+      return <Navigate to="/tg" replace />;
+    }
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
@@ -52,6 +61,7 @@ export function MainLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden text-base-content">
+      <TelegramBridge isRootPath={isMainRootPath} />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header />

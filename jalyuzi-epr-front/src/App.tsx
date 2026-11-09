@@ -7,6 +7,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import { router } from './router';
 import { useUIStore } from './store/uiStore';
 import { PWAUpdatePrompt } from './components/common/PWAUpdatePrompt';
+import { waitForTelegramWebApp, type TelegramWebApp } from './telegram/telegramWebApp';
 
 function useNativeStatusBar() {
   const { themeMode, getEffectiveTheme } = useUIStore();
@@ -44,6 +45,29 @@ function useTheme() {
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, [themeMode, applyTheme]);
+
+  // Telegram Mini App: skript yuklangach va Telegram mavzusi o'zgarganda qayta qo'llash
+  useEffect(() => {
+    let cancelled = false;
+    let webApp: TelegramWebApp | null = null;
+    const handleTelegramTheme = () => {
+      if (useUIStore.getState().themeMode === 'system') {
+        applyTheme();
+      }
+    };
+
+    waitForTelegramWebApp().then((wa) => {
+      if (cancelled || !wa) return;
+      webApp = wa;
+      handleTelegramTheme();
+      wa.onEvent('themeChanged', handleTelegramTheme);
+    });
+
+    return () => {
+      cancelled = true;
+      webApp?.offEvent('themeChanged', handleTelegramTheme);
+    };
+  }, [applyTheme]);
 }
 
 const queryClient = new QueryClient({

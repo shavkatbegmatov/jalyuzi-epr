@@ -12,6 +12,7 @@ import {
 import toast from 'react-hot-toast';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
+import { getRolePanelPath } from '../../utils/roleHome';
 import type { LoginRequest } from '../../types';
 
 export function LoginPage() {
@@ -57,15 +58,9 @@ export function LoginPage() {
 
       toast.success('Muvaffaqiyatli kirish!');
 
-      // Role-based redirects to mobile panels
-      if (response.roles?.includes('INSTALLER')) {
-        navigate('/installer/', { replace: true });
-      } else if (response.roles?.includes('MANAGER')) {
-        navigate('/manager/', { replace: true });
-      } else {
-        // Navigate to main app - modal will show automatically if mustChangePassword is true
-        navigate(redirectTo, { replace: true });
-      }
+      // Role-based redirects to mobile panels; otherwise main app
+      // (modal will show automatically if mustChangePassword is true)
+      navigate(getRolePanelPath(response.roles) ?? redirectTo, { replace: true });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err.response?.data?.message || 'Kirish xatosi');

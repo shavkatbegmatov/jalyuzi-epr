@@ -10,6 +10,7 @@ interface AuthState {
   roles: Set<string>;
   isAuthenticated: boolean;
   setAuth: (user: User, accessToken: string, refreshToken: string, permissions?: string[], roles?: string[]) => void;
+  updateUser: (updates: Partial<User>) => void;
   logout: () => void;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (...permissions: string[]) => boolean;
@@ -42,6 +43,13 @@ export const useAuthStore = create<AuthState>()(
           roles: newRolesSet,
           isAuthenticated: true,
         });
+      },
+
+      updateUser: (updates) => {
+        const { user } = get();
+        if (user) {
+          set({ user: { ...user, ...updates } });
+        }
       },
 
       logout: () => {

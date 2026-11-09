@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { getTelegramColorScheme } from '../telegram/telegramWebApp';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -17,6 +18,11 @@ interface UIState {
 
 const getSystemTheme = (): 'jalyuzi' | 'jalyuzi-dark' => {
   if (typeof window !== 'undefined') {
+    // Telegram Mini App ichida — Telegram'ning rang sxemasi (WebView prefers-color-scheme'ni bermaydi)
+    const telegramScheme = getTelegramColorScheme();
+    if (telegramScheme) {
+      return telegramScheme === 'dark' ? 'jalyuzi-dark' : 'jalyuzi';
+    }
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'jalyuzi-dark' : 'jalyuzi';
   }
   return 'jalyuzi';

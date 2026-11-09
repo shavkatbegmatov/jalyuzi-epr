@@ -28,6 +28,7 @@ import type { ChangePasswordRequest, User as UserType, Role } from '../../types'
 import { SessionsTab } from './SessionsTab';
 import { LoginActivityTab } from './LoginActivityTab';
 import { ActivityHistoryTab } from './ActivityHistoryTab';
+import { TelegramLinkCard } from '../../components/telegram/TelegramLinkCard';
 
 type Tab = 'profile' | 'security' | 'sessions' | 'login-activity' | 'activity';
 
@@ -314,6 +315,9 @@ export function ProfilePage() {
               </div>
             </div>
           </div>
+
+          {/* Telegram Mini App */}
+          <TelegramLinkCard />
         </div>
       )}
 

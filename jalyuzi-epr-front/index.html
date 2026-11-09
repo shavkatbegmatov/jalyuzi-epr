@@ -25,6 +25,28 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
 
     <title>Jalyuzi ERP</title>
+
+    <!--
+      Telegram Mini App SDK — faqat Telegram ichida ochilganda yuklanadi
+      (URL hash'da tgWebApp* parametrlari, /tg yo'li yoki oldingi ochilishdan qolgan sessionStorage).
+      Oddiy brauzer va Android APK'da tashqi skript yuklanmaydi.
+    -->
+    <script>
+      (function () {
+        try {
+          var path = location.pathname;
+          var isTelegram =
+            /tgWebApp(Data|Platform|Version)=/.test(location.hash) ||
+            path === '/tg' || path.indexOf('/tg/') === 0 ||
+            !!sessionStorage.getItem('__telegram__initParams');
+          if (isTelegram) {
+            var s = document.createElement('script');
+            s.src = 'https://telegram.org/js/telegram-web-app.js';
+            document.head.appendChild(s);
+          }
+        } catch (e) { /* sessionStorage yopiq bo'lishi mumkin */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

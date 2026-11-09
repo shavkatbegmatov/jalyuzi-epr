@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import clsx from 'clsx';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/authStore';
+import { TelegramLinkCard } from '../../components/telegram/TelegramLinkCard';
 import type { ChangePasswordRequest } from '../../types';
 
 interface PasswordFormData {
@@ -106,6 +107,9 @@ export function InstallerProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Telegram Mini App */}
+      <TelegramLinkCard />
 
       {/* Change Password */}
       <div className="card bg-base-100 shadow-sm">
